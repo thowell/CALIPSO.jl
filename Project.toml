@@ -2,3 +2,18 @@ name = "CALIPSO"
 uuid = "4c24e94e-21a7-4591-8ee4-d226b67258b2"
 authors = ["thowell <thowell@stanford.edu>"]
 version = "0.1.0"
+
+[deps]
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+QDLDL = "bfc457fd-c171-5ab7-bd9e-d5dbfc242d63"
+Scratch = "6c6a2e73-6563-6170-7368-637461726353"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+
+[compat]
+JLD2 = "0.4.22"
+QDLDL = "0.2.0"
+Scratch = "1.1.0"
+Symbolics = "0.1.29"
+julia = "1.7"
