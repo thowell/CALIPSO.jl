@@ -1,0 +1,4 @@
+name = "CALIPSO"
+uuid = "4c24e94e-21a7-4591-8ee4-d226b67258b2"
+authors = ["thowell <thowell@stanford.edu>"]
+version = "0.1.0"
