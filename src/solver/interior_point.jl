@@ -286,14 +286,16 @@ function interior_point_solve!(ip::InteriorPoint{T,R,RZ,Rθ}) where {T,R,RZ,Rθ}
 end
 
 function rz!(ip::InteriorPoint, rz::AbstractMatrix{T}, z::AbstractVector{T},
-    θ::AbstractVector{T}; reg=0.0) where {T}
+    θ::AbstractVector{T}; reg::T=0.0) where {T}
     z_reg = ip.z_reg
     ortz = ip.idx.ortz
     socz = ip.idx.socz
     z_reg .= z
-    for i in eachindex(ortz) # primal-dual
-        zi_reg = @view z_reg[ortz[i]]
-        zi_reg .= max.(zi_reg, reg)
+    if reg >= 0.0
+        for i in eachindex(ortz) # primal-dual
+            zi_reg = @view z_reg[ortz[i]]
+            zi_reg .= max.(zi_reg, reg)
+        end
     end
     ip.methods.rz!(rz, z_reg, θ)
     return nothing
