@@ -30,10 +30,10 @@ function Dynamics(f::Function, num_next_state::Int, num_state::Int, num_action::
     if evaluate_hessian
         @variables λ[1:num_next_state] 
         lag_con = dot(λ, evaluate)
-        hess = Symbolics.sparsehessian(lag_con, [x; u; y])
-        hessian_func = eval(Symbolics.build_function(hess.nzval, y, x, u, w, λ)[2])
-        hessian_sparsity = [findnz(hess)[1:2]...]
-        num_hessian = length(hess.nzval)
+        hessian = Symbolics.sparsehessian(lag_con, [x; u; y])
+        hessian_func = eval(Symbolics.build_function(hessian.nzval, y, x, u, w, λ)[2])
+        hessian_sparsity = [findnz(hessian)[1:2]...]
+        num_hessian = length(hessian.nzval)
     else 
         hessian_func = Expr(:null) 
         hessian_sparsity = [Int[]]
@@ -154,9 +154,10 @@ function sparsity_hessian(constraints::Vector{Dynamics{T}}, num_state::Vector{In
     return collect(zip(row, col))
 end
 
-num_constraint(constriants::Vector{Dynamics{T}}) where T = sum([con.num_next_state for con in constriants])
-num_state_action_next_state(constriants::Vector{Dynamics{T}}) where T = sum([con.num_state + con.num_action for con in constriants]) + constriants[end].num_next_state
-num_jacobian(constriants::Vector{Dynamics{T}}) where T = sum([con.num_jacobian for con in constriants])
+num_state_action_next_state(constraints::Vector{Dynamics{T}}) where T = sum([con.num_state + con.num_action for con in constraints]) + constraints[end].num_next_state
+num_constraint(constraints::Vector{Dynamics{T}}) where T = sum([con.num_next_state for con in constraints])
+num_jacobian(constraints::Vector{Dynamics{T}}) where T = sum([con.num_jacobian for con in constraints])
+# num_hessian(constraints::Vector{Dynamics{T}}) where T = sum([con.num_hessian for con in constraints])
 
 function constraint_indices(constraints::Vector{Dynamics{T}}; 
     shift=0) where T

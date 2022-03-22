@@ -1,7 +1,7 @@
 struct Constraint{T}
-    evaluate 
-    jacobian 
-    hessian
+    evaluate::Any 
+    jacobian::Any 
+    hessian::Any
     num_state::Int 
     num_action::Int 
     num_parameter::Int
@@ -35,10 +35,10 @@ function Constraint(f::Function, num_state::Int, num_action::Int;
     if evaluate_hessian
         @variables λ[1:num_constraint]
         lag_con = dot(λ, evaluate) 
-        hess = Symbolics.sparsehessian(lag_con, [x; u])
-        hess_func = eval(Symbolics.build_function(hess.nzval, x, u, w, λ)[2])
-        hessian_sparsity = [findnz(hess)[1:2]...]
-        num_hessian = length(hess.nzval)
+        hessian = Symbolics.sparsehessian(lag_con, [x; u])
+        hess_func = eval(Symbolics.build_function(hessian.nzval, x, u, w, λ)[2])
+        hessian_sparsity = [findnz(hessian)[1:2]...]
+        num_hessian = length(hessian.nzval)
     else 
         hess_func = Expr(:null) 
         hessian_sparsity = [Int[]]
@@ -103,13 +103,13 @@ function hessian_lagrangian!(hessians, indices, constraints::Constraints{T}, sta
     end
 end
 
-function sparsity_jacobian(cons::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}; 
+function sparsity_jacobian(constraints::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}; 
     row_shift=0) where T
 
     row = Int[]
     col = Int[]
 
-    for (t, con) in enumerate(cons)
+    for (t, con) in enumerate(constraints)
         col_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
         push!(row, (con.jacobian_sparsity[1] .+ row_shift)...) 
         push!(col, (con.jacobian_sparsity[2] .+ col_shift)...) 
@@ -119,11 +119,11 @@ function sparsity_jacobian(cons::Constraints{T}, num_state::Vector{Int}, num_act
     return collect(zip(row, col))
 end
 
-function sparsity_hessian(cons::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}) where T
+function sparsity_hessian(constraints::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}) where T
     row = Int[]
     col = Int[]
 
-    for (t, con) in enumerate(cons)
+    for (t, con) in enumerate(constraints)
         if !isempty(con.hessian_sparsity[1])
             shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
             push!(row, (con.hessian_sparsity[1] .+ shift)...) 
@@ -134,8 +134,9 @@ function sparsity_hessian(cons::Constraints{T}, num_state::Vector{Int}, num_acti
     return collect(zip(row, col))
 end
 
-num_constraint(cons::Constraints{T}) where T = sum([con.num_constraint for con in cons])
-num_jacobian(cons::Constraints{T}) where T = sum([con.num_jacobian for con in cons])
+num_constraint(constraints::Constraints{T}) where T = sum([con.num_constraint for con in constraints])
+num_jacobian(constraints::Constraints{T}) where T = sum([con.num_jacobian for con in constraints])
+# num_hessian(constraints::Constraints{T}) where T = sum([con.num_hessian for con in constraints])
 
 function constraint_indices(constraints::Constraints{T}; 
     shift=0) where T
@@ -163,9 +164,9 @@ function jacobian_indices(constraints::Constraints{T};
     return indices
 end
 
-function hessian_indices(cons::Constraints{T}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}) where T
+function hessian_indices(constraints::Constraints{T}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}) where T
     indices = Vector{Int}[]
-    for (t, con) in enumerate(cons) 
+    for (t, con) in enumerate(constraints) 
         if !isempty(con.hessian_sparsity[1])
             row = Int[]
             col = Int[]

@@ -7,12 +7,18 @@
 # dimensions
 nz = solver.nlp.num_variables
 ny = solver.nlp.num_constraint
+nw = nz + ny
 nj = solver.nlp.num_jacobian
 nh = solver.nlp.num_hessian_lagrangian
 
 # variables
 z = rand(nz)
 y = rand(ny)
+
+w = zeros(nw)
+for idx in solver.nlp.indices.states
+    w[idx] = 
+end
 
 # data
 obj_grad = zeros(nz)
@@ -103,9 +109,41 @@ cond(H_dense)
 rank(H_dense)
 
 using QDLDL
-H
+
 F = qdldl(H)
 sol = zeros(nz + ny)
 sol = copy(h)
 QDLDL.solve!(F, sol)
 norm(sol - (H \ h), Inf)
+
+## solver 
+idx = IndicesOptimization(
+    nw, nw,
+    [collect(1:0), collect(1:0)], [collect(1:0), collect(1:0)],
+    Vector{Vector{Vector{Int}}}(), Vector{Vector{Vector{Int}}}(),
+    collect(1:nw),
+    collect(1:0),
+    Vector{Int}(),
+    Vector{Vector{Int}}(),
+    collect(1:0),
+)
+
+
+ip = interior_point(w0, θ0;
+    s = RoboDojo.Euclidean(length(w0)),
+    idx = idx,
+    r! = r_func, rz! = rw_func_reg, rθ! = rθ_func,
+    r  = zeros(idx.nΔ),
+    rz = zeros(idx.nΔ, idx.nΔ),
+    rθ = zeros(idx.nΔ, length(θ0)),
+    opts = RoboDojo.InteriorPointOptions(
+            undercut=Inf,
+            γ_reg=0.1,
+            r_tol=1e-6,
+            κ_tol=1e-6,  
+            max_ls=25,
+            ϵ_min=0.25,
+            diff_sol=true,
+            verbose=true))
+
+RoboDojo.interior_point_solve!(ip)

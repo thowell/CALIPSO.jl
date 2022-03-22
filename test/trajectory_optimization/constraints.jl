@@ -16,27 +16,27 @@
     cont = Constraint(ct, num_state, num_action, num_parameter=num_parameter, indices_inequality=collect(1:2num_state))
     conT = Constraint(cT, num_state, 0, num_parameter=0)
 
-    cons = [[cont for t = 1:T-1]..., conT]
-    nc = CALIPSO.num_constraint(cons)
-    nj = CALIPSO.num_jacobian(cons)
-    idx_c = CALIPSO.constraint_indices(cons)
-    idx_j = CALIPSO.jacobian_indices(cons)
+    constraints = [[cont for t = 1:T-1]..., conT]
+    nc = CALIPSO.num_constraint(constraints)
+    nj = CALIPSO.num_jacobian(constraints)
+    idx_c = CALIPSO.constraint_indices(constraints)
+    idx_j = CALIPSO.jacobian_indices(constraints)
     c = zeros(nc) 
     j = zeros(nj)
     cont.evaluate(c[idx_c[1]], x[1], u[1], w[1])
     conT.evaluate(c[idx_c[T]], x[T], u[T], w[T])
 
-    CALIPSO.constraints!(c, idx_c, cons, x, u, w)
-    # info = @benchmark CALIPSO.constraints!($c, $idx_c, $cons, $x, $u, $w)
+    CALIPSO.constraints!(c, idx_c, constraints, x, u, w)
+    # info = @benchmark CALIPSO.constraints!($c, $idx_c, $constraints, $x, $u, $w)
 
     @test norm(c - vcat([ct(x[t], u[t], w[t]) for t = 1:T-1]..., cT(x[T], u[T], w[T]))) < 1.0e-8
-    CALIPSO.jacobian!(j, idx_j, cons, x, u, w)
-    # info = @benchmark CALIPSO.jacobian!($j, $idx_j, $cons, $x, $u, $w)
+    CALIPSO.jacobian!(j, idx_j, constraints, x, u, w)
+    # info = @benchmark CALIPSO.jacobian!($j, $idx_j, $constraints, $x, $u, $w)
 
     dct = [-I zeros(num_state, num_action); I zeros(num_state, num_action)]
     dcT = Diagonal(ones(num_state))
     dc = cat([dct for t = 1:T-1]..., dcT, dims=(1,2))
-    sp = CALIPSO.sparsity_jacobian(cons, dim_x, dim_u) 
+    sp = CALIPSO.sparsity_jacobian(constraints, dim_x, dim_u) 
     j_dense = zeros(nc, sum(dim_x) + sum(dim_u)) 
     for (i, v) in enumerate(sp)
         j_dense[v[1], v[2]] = j[i]

@@ -1,7 +1,7 @@
 struct GeneralConstraint{T}
-    evaluate 
-    jacobian 
-    hessian
+    evaluate::Any 
+    jacobian::Any 
+    hessian::Any
     num_variables::Int 
     num_parameter::Int
     num_constraint::Int
@@ -117,6 +117,7 @@ end
 
 num_constraint(general::GeneralConstraint{T}) where T = general.num_constraint
 num_jacobian(general::GeneralConstraint{T}) where T = general.num_jacobian
+# num_hessian(general::GeneralConstraint{T}) where T = general.num_hessian
 
 constraint_indices(general::GeneralConstraint{T}; shift=0) where T = collect(shift .+ (1:general.num_constraint))
 

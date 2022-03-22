@@ -7,10 +7,10 @@
     oT = (x, u, w) -> 10.0 * dot(x, x)
     ct = Cost(ot, num_state, num_action, num_parameter=num_parameter)
     cT = Cost(oT, num_state, 0, num_parameter=num_parameter)
-    obj = [[ct for t = 1:T-1]..., cT]
+    objective = [[ct for t = 1:T-1]..., cT]
 
     J = [0.0]
-    grad = zeros((T - 1) * (num_state + num_action) + num_state)
+    gradient = zeros((T - 1) * (num_state + num_action) + num_state)
     idx_xu = [collect((t - 1) * (num_state + num_action) .+ (1:(num_state + (t == T ? 0 : num_action)))) for t = 1:T]
     x1 = ones(num_state) 
     u1 = ones(num_action)
@@ -29,10 +29,10 @@
     @test cT.evaluate_cache[1] ≈ oT(x1, u1, w1)
     @test norm(cT.gradient_cache - 20.0 * x1) < 1.0e-8
 
-    @test CALIPSO.objective(obj, X, U, X) - sum([ot(X[t], U[t], W[t]) for t = 1:T-1]) - oT(X[T], U[T], W[T]) ≈ 0.0
-    CALIPSO.gradient!(grad, idx_xu, obj, X, U, W) 
-    @test norm(grad - vcat([[2.0 * x1; 0.2 * u1] for t = 1:T-1]..., 20.0 * x1)) < 1.0e-8
+    @test CALIPSO.cost(objective, X, U, X) - sum([ot(X[t], U[t], W[t]) for t = 1:T-1]) - oT(X[T], U[T], W[T]) ≈ 0.0
+    CALIPSO.gradient!(gradient, idx_xu, objective, X, U, W) 
+    @test norm(gradient - vcat([[2.0 * x1; 0.2 * u1] for t = 1:T-1]..., 20.0 * x1)) < 1.0e-8
 
-    # info = @benchmark CALIPSO.objective($obj, $X, $U, $W)
-    # info = @benchmark CALIPSO.gradient!($grad, $idx_xu, $obj, $X, $U, $W)
+    # info = @benchmark CALIPSO.cost($objective, $X, $U, $W)
+    # info = @benchmark CALIPSO.gradient!($gradient, $idx_xu, $objective, $X, $U, $W)
 end

@@ -5,7 +5,7 @@ function MOI.eval_objective(nlp::NLPData{T}, variables::Vector{T}) where T
         variables, 
         nlp.indices.states, 
         nlp.indices.actions)
-    objective(
+    cost(
         nlp.trajopt.objective, 
         nlp.trajopt.states, 
         nlp.trajopt.actions, 
@@ -26,6 +26,7 @@ function MOI.eval_objective_gradient(nlp::NLPData{T}, gradient, variables) where
         nlp.trajopt.states, 
         nlp.trajopt.actions, 
         nlp.trajopt.parameters) 
+    return 
 end
 
 function MOI.eval_constraint(nlp::NLPData{T}, violations, variables) where T
@@ -45,6 +46,7 @@ function MOI.eval_constraint(nlp::NLPData{T}, violations, variables) where T
         nlp.trajopt.parameters)
     !isempty(nlp.indices.stage_constraints) && constraints!(violations, nlp.indices.stage_constraints, nlp.trajopt.constraints, nlp.trajopt.states, nlp.trajopt.actions, nlp.trajopt.parameters)
     nlp.general_constraint.num_constraint != 0 && constraints!(violations, nlp.indices.general_constraint, nlp.general_constraint, variables, nlp.parameters)
+    return 
 end
 
 function MOI.eval_constraint_jacobian(nlp::NLPData{T}, jacobian, variables) where T
@@ -64,7 +66,7 @@ function MOI.eval_constraint_jacobian(nlp::NLPData{T}, jacobian, variables) wher
         nlp.trajopt.parameters)
     !isempty(nlp.indices.stage_jacobians) && jacobian!(jacobian, nlp.indices.stage_jacobians, nlp.trajopt.constraints, nlp.trajopt.states, nlp.trajopt.actions, nlp.trajopt.parameters)
     nlp.general_constraint.num_constraint != 0 && jacobian!(jacobian, nlp.indices.general_jacobian, nlp.general_constraint, variables, nlp.parameters)
-    return nothing
+    return
 end
 
 function MOI.eval_hessian_lagrangian(nlp::MOI.AbstractNLPEvaluator, hessian, variables, scaling, duals)
@@ -114,9 +116,10 @@ function MOI.eval_hessian_lagrangian(nlp::MOI.AbstractNLPEvaluator, hessian, var
         variables, 
         nlp.parameters, 
         nlp.duals_general)
+    return 
 end
 
-MOI.features_available(nlp::MOI.AbstractNLPEvaluator) = nlp.hessian_lagrangian ? [:Grad, :jacobian, :hessian] : [:Grad, :jacobian]
+MOI.features_available(nlp::MOI.AbstractNLPEvaluator) = nlp.hessian_lagrangian ? [:Grad, :Jac, :Hess] : [:Grad, :Jac]
 MOI.initialize(nlp::MOI.AbstractNLPEvaluator, features) = nothing
 MOI.jacobian_structure(nlp::MOI.AbstractNLPEvaluator) = nlp.jacobian_sparsity
 MOI.hessian_lagrangian_structure(nlp::MOI.AbstractNLPEvaluator) = nlp.hessian_lagrangian_sparsity

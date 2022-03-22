@@ -13,7 +13,7 @@ struct TrajectoryOptimizationData{T}
     parameter_dimensions::Vector{Int}
 end
 
-function TrajectoryOptimizationData(obj::Objective{T}, dynamics::Vector{Dynamics{T}}, constraints::Constraints{T}, bounds::Bounds{T}; 
+function TrajectoryOptimizationData(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, constraints::Constraints{T}, bounds::Bounds{T}; 
     parameters=[zeros(num_parameter) for num_parameter in dimensions(dynamics)[3]]) where T
 
     state_dimensions, action_dimensions, parameter_dimensions = dimensions(dynamics)
@@ -28,7 +28,7 @@ function TrajectoryOptimizationData(obj::Objective{T}, dynamics::Vector{Dynamics
         states, 
         actions, 
         parameters,
-        obj, 
+        objective, 
         dynamics, 
         constraints, 
         bounds, 
@@ -39,7 +39,7 @@ function TrajectoryOptimizationData(obj::Objective{T}, dynamics::Vector{Dynamics
         parameter_dimensions)
 end
 
-TrajectoryOptimizationData(obj::Objective, dynamics::Vector{Dynamics}) = TrajectoryOptimizationData(obj, dynamics, [Constraint() for t = 1:length(dynamics)], [Bound() for t = 1:length(dynamics)])
+TrajectoryOptimizationData(objective::Objective, dynamics::Vector{Dynamics}) = TrajectoryOptimizationData(objective, dynamics, [Constraint() for t = 1:length(dynamics)], [Bound() for t = 1:length(dynamics)])
 
 struct TrajectoryOptimizationIndices 
     objective_hessians::Vector{Vector{Int}}
@@ -58,7 +58,7 @@ struct TrajectoryOptimizationIndices
     state_action_next_state::Vector{Vector{Int}}
 end
 
-function indices(obj::Objective{T}, dynamics::Vector{Dynamics{T}}, constraints::Constraints{T}, general::GeneralConstraint{T},
+function indices(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, constraints::Constraints{T}, general::GeneralConstraint{T},
     key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}, num_trajectory::Int) where T 
     # Jacobians
     dynamics_constraints = constraint_indices(dynamics, 
@@ -75,7 +75,7 @@ function indices(obj::Objective{T}, dynamics::Vector{Dynamics{T}}, constraints::
         shift=(num_jacobian(dynamics) + num_jacobian(constraints))) 
 
     # Hessian of Lagrangian 
-    objective_hessians = hessian_indices(obj, key, num_state, num_action)
+    objective_hessians = hessian_indices(objective, key, num_state, num_action)
     dynamics_hessians = hessian_indices(dynamics, key, num_state, num_action)
     stage_hessians = hessian_indices(constraints, key, num_state, num_action)
     general_hessian = hessian_indices(general, key, num_trajectory)
@@ -122,6 +122,7 @@ end
 
 function primal_bounds(bounds::Bounds{T}, num_variables::Int, state_indices::Vector{Vector{Int}}, action_indices::Vector{Vector{Int}}) where T 
     lower, upper = -Inf * ones(num_variables), Inf * ones(num_variables) 
+
     for (t, bnd) in enumerate(bounds)
         length(bnd.state_lower)  > 0 && (lower[state_indices[t]]  = bnd.state_lower)
         length(bnd.state_upper)  > 0 && (upper[state_indices[t]]  = bnd.state_upper)
@@ -165,9 +166,6 @@ function NLPData(trajopt::TrajectoryOptimizationData;
     num_general_jacobian = num_jacobian(general_constraint)
     total_jacobians = num_dynamics_jacobian + num_constraint_jacobian + num_general_jacobian
 
-    # number of nonzeros in Hessian of Lagrangian
-    num_hessian_lagrangian = 0
-
     # constraint Jacobian sparsity
     sparsity_dynamics = sparsity_jacobian(trajopt.dynamics, trajopt.state_dimensions, trajopt.action_dimensions, 
         row_shift=0)
@@ -185,6 +183,9 @@ function NLPData(trajopt::TrajectoryOptimizationData;
     hessian_lagrangian_sparsity = !isempty(hessian_lagrangian_sparsity) ? hessian_lagrangian_sparsity : Tuple{Int,Int}[]
     hessian_sparsity_key = sort(unique(hessian_lagrangian_sparsity))
 
+    # number of nonzeros in Hessian of Lagrangian
+    num_hessian_lagrangian = length(hessian_lagrangian_sparsity)
+
     # indices 
     idx = indices(
         trajopt.objective, 
@@ -195,7 +196,7 @@ function NLPData(trajopt::TrajectoryOptimizationData;
         trajopt.state_dimensions, 
         trajopt.action_dimensions, 
         total_variables)
-
+        
     # primal variable bounds
     primal_lower, primal_upper = primal_bounds(trajopt.bounds, total_variables, idx.states, idx.actions) 
 
@@ -221,7 +222,7 @@ end
 struct SolverData 
     # nlp_bounds::Vector{MOI.NLPBoundsPair}
     # block_data::MOI.NLPBlockData
-    # solver::Ipopt.Optimizer
+    # optimizer::Ipopt.Optimizer
     # variables::Vector{MOI.VariableIndex} 
 end
 
@@ -235,24 +236,24 @@ function SolverData(nlp::NLPData;
     # block_data = MOI.NLPBlockData(nlp_bounds, nlp, true)
     
     # # instantiate NLP solver
-    # solver = Ipopt.Optimizer()
+    # optimizer = Ipopt.Optimizer()
 
-    # # set NLP solver options
+    # # set NLP optimizer options
     # for name in fieldnames(typeof(options))
-    #     solver.options[String(name)] = getfield(options, name)
+    #     optimizer.options[String(name)] = getfield(options, name)
     # end
     
-    # z = MOI.add_variables(solver, nlp.num_variables)
+    # z = MOI.add_variables(optimizer, nlp.num_variables)
     
     # for i = 1:nlp.num_variables
-    #     MOI.add_constraint(solver, z[i], MOI.LessThan(nlp.variable_bounds[2][i]))
-    #     MOI.add_constraint(solver, z[i], MOI.GreaterThan(nlp.variable_bounds[1][i]))
+    #     MOI.add_constraint(optimizer, z[i], MOI.LessThan(nlp.variable_bounds[2][i]))
+    #     MOI.add_constraint(optimizer, z[i], MOI.GreaterThan(nlp.variable_bounds[1][i]))
     # end
     
-    # MOI.set(solver, MOI.NLPBlock(), block_data)
-    # MOI.set(solver, MOI.ObjectiveSense(), MOI.MIN_SENSE) 
+    # MOI.set(optimizer, MOI.NLPBlock(), block_data)
+    # MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MIN_SENSE) 
 
-    # return SolverData(nlp_bounds, block_data, solver, z)
+    # return SolverData(nlp_bounds, block_data, optimizer, z)
 end
 
 
