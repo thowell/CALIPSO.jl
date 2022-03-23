@@ -6,7 +6,7 @@
 eval_hess = true 
 
 # ## horizon 
-T = 101 
+T = 51 
 
 # ## acrobot 
 num_state = 4 
@@ -82,9 +82,13 @@ function acrobot(x, u, w)
     return [x[3]; x[4]; qdd[1]; qdd[2]]
 end
 
-function midpoint_implicit(y, x, u, w)
+function midpoint_explicit(x, u, w)
     h = 0.05 # timestep 
-    y - (x + h * acrobot(0.5 * (x + y), u, w))
+    x + h * acrobot(x + 0.5 * h * acrobot(x, u, w), u, w)
+end
+
+function midpoint_implicit(y, x, u, w)
+    y - midpoint_explicit(x, u, w)
 end
 
 # ## model
@@ -130,13 +134,15 @@ solver = Solver(dyn, obj, cons, bounds,
 
 # ## initialize
 u_guess = [0.01 * ones(num_action) for t = 1:T-1]
-x_rollout = [x1] 
-for t = 1:T-1 
-    push!(x_rollout, rk3_explicit(x_rollout[end], u_guess[t], zeros(num_parameter)))
-end
+# x_rollout = [x1] 
+# for t = 1:T-1 
+#     push!(x_rollout, midpoint_explicit(x_rollout[end], u_guess[t], zeros(num_parameter)))
+# end
+# initialize_states!(solver, x_rollout)
+x_interpolation = linear_interpolation(x1, xT, T)
 
-initialize_states!(p, x_rollout)
-initialize_controls!(p, u_guess)
+initialize_states!(solver, x_interpolation)
+initialize_controls!(solver, u_guess)
 
 # # ## solve
 # @time solve!(p)

@@ -50,7 +50,7 @@ Base.@kwdef mutable struct InteriorPointOptions{T}
     κ_tol::T = 1.0e-5
     ls_scale::T = 0.5
     max_iter::Int = 100
-    max_ls::Int = 3
+    max_ls::Int = 30
     max_time::T = 1e5
     diff_sol::Bool = false
     reg::Bool = false

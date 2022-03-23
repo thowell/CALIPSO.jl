@@ -22,19 +22,13 @@ end
 
 function initialize_states!(solver::Solver, states) 
     for (t, xt) in enumerate(states) 
-        n = length(xt)
-        for i = 1:n
-            MOI.set(solver.data.optimizer, MOI.VariablePrimalStart(), solver.data.variables[solver.nlp.indices.states[t][i]], xt[i])
-        end
+        solver.nlp.trajopt.states[t] .= xt
     end
 end 
 
 function initialize_controls!(solver::Solver, actions)
     for (t, ut) in enumerate(actions) 
-        m = length(ut) 
-        for j = 1:m
-            MOI.set(solver.data.optimizer, MOI.VariablePrimalStart(), solver.data.variables[solver.nlp.indices.actions[t][j]], ut[j])
-        end
+        solver.nlp.trajopt.actions[t] .= ut
     end
 end
 

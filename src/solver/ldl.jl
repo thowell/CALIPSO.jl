@@ -33,8 +33,8 @@ function factorize!(s::LDLSolver{Tv,Ti}, A::SparseMatrixCSC{Tv,Ti}) where {Tv<:A
     # Update the workspace, triuA is the only field we need to update
     s.F.workspace.triuA.nzval .= A.nzval
 
-    #factor the matrix
-    QDLDL.factor!(s.F.workspace, s.F.logical)
+    # factor the matrix
+    QDLDL.factor!(s.F.workspace, s.F.logical.x)
 
     return nothing
 end
