@@ -3,9 +3,12 @@
 # PKG_SETUP
 
 # ## Setup
+using LinearAlgebra
+
+eval_hess = true
 
 # ## horizon 
-T = 101
+T = 51
 
 # ## cartpole 
 num_state = 4 
@@ -37,23 +40,33 @@ function cartpole(x, u, w)
     return [qd; qdd]
 end
 
-function rk3_explicit(x, u, w)
+function midpoint_explicit(x, u, w)
     h = 0.05 # timestep 
+    x + h * cartpole(x + 0.5 * h * cartpole(x, u, w), u, w)
+end
 
-    k1 = h * cartpole(x, u, w)
-    k2 = h * cartpole(x + 0.5 * k1, u, w)
-    k3 = h * cartpole(x - k1 + 2.0 * k2, u, w)
+function midpoint_implicit(y, x, u, w)
+    y - midpoint_explicit(x, u, w)
+end
+
+# function rk3_explicit(x, u, w)
+#     h = 0.05 # timestep 
+
+#     k1 = h * cartpole(x, u, w)
+#     k2 = h * cartpole(x + 0.5 * k1, u, w)
+#     k3 = h * cartpole(x - k1 + 2.0 * k2, u, w)
     
-    return x + (k1 + 4.0 * k2 + k3) / 6.0
-end
+#     return x + (k1 + 4.0 * k2 + k3) / 6.0
+# end
 
-function rk3_implicit(y, x, u, w)
-    return y - rk3_explicit(x, u, w)
-end
+# function rk3_implicit(y, x, u, w)
+#     return y - rk3_explicit(x, u, w)
+# end
 
 # ## model
-dt = Dynamics(rk3_implicit, num_state, num_state, num_action, 
-    num_parameter=num_parameter)
+dt = Dynamics(midpoint_implicit, num_state, num_state, num_action, 
+    num_parameter=num_parameter,
+    evaluate_hessian=false)
 dyn = [dt for t = 1:T-1] 
 
 # ## initialization
@@ -68,47 +81,57 @@ Qf = 1.0e2
 ot = (x, u, w) -> 0.5 * Q * dot(x - xT, x - xT) + 0.5 * R * dot(u, u)
 oT = (x, u, w) -> 0.5 * Qf * dot(x - xT, x - xT)
 ct = Cost(ot, num_state, num_action, 
-    num_parameter=num_parameter)
+    num_parameter=num_parameter,
+    evaluate_hessian=eval_hess)
 cT = Cost(oT, num_state, 0, 
-    num_parameter=num_parameter)
+    num_parameter=num_parameter,
+    evaluate_hessian=eval_hess)
+
 obj = [[ct for t = 1:T-1]..., cT]
 
 # ## constraints
 u_bnd = 3.0
-bnd1 = Bound(num_state, num_action,
-    action_lower=[-u_bnd], 
-    action_upper=[u_bnd])
-bndt = Bound(num_state, num_action,
-    action_lower=[-u_bnd], 
-    action_upper=[u_bnd])
+bnd1 = Bound(num_state, num_action)
+    # action_lower=[-u_bnd], 
+    # action_upper=[u_bnd])
+bndt = Bound(num_state, num_action)
+    # action_lower=[-u_bnd], 
+    # action_upper=[u_bnd])
 bndT = Bound(num_state, 0)
 bounds = [bnd1, [bndt for t = 2:T-1]..., bndT]
 
 cons = [
-            Constraint((x, u, w) -> x - x1, num_state, num_action), 
+            Constraint((x, u, w) -> x - x1, num_state, num_action,
+                evaluate_hessian=true), 
             [Constraint() for t = 2:T-1]..., 
-            Constraint((x, u, w) -> x - xT, num_state, 0)
+            Constraint((x, u, w) -> x - xT, num_state, 0,
+                evaluate_hessian=true)
        ]
 
 # ## problem 
-p = Solver(dyn, obj, cons, bounds,
+solver = Solver(dyn, obj, cons, bounds,
+    evaluate_hessian=eval_hess,
     options=Options{Float64}())
 
+solver.nlp.trajopt.objective[end-1].sparsity
 # ## initialize
 u_guess = [0.01 * ones(num_action) for t = 1:T-1]
-x_rollout = [x1] 
-for t = 1:T-1 
-    push!(x_rollout, rk3_explicit(x_rollout[end], u_guess[t], zeros(num_parameter)))
-end
+initialize_controls!(solver, u_guess)
 
-initialize_states!(p, x_rollout)
-initialize_controls!(p, u_guess)
+# x_rollout = [x1] 
+# for t = 1:T-1 
+#     push!(x_rollout, midpoint_explicit(x_rollout[end], u_guess[t], zeros(num_parameter)))
+# end
+# initialize_states!(solver, x_rollout)
+
+x_interpolation = linear_interpolation(x1, xT, T)
+initialize_states!(solver, x_interpolation)
 
 # ## solve
 # @time solve!(p)
 
 # ## solution
-x_sol, u_sol = get_trajectory(p)
+x_sol, u_sol = get_trajectory(solver)
 
 @show x_sol[1]
 @show x_sol[T]

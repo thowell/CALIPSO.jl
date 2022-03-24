@@ -228,13 +228,17 @@ norm(r - h)
 rw_func(rw, w, zeros(nθ))
 norm(rw - H)
 
-using QDLDL
+# using QDLDL
 
-F = qdldl(H)
+F = CALIPSO.qdldl(H)
 sol = zeros(nz + ny)
 sol = copy(h)
-QDLDL.solve!(F, sol)
+CALIPSO.solve!(F, sol)
 norm(sol - (H \ h), Inf)
+I, J, V = findnz(H)
+
+update_A!(F, H)
+
 
 ## solver 
 idx = IndicesOptimization(
@@ -259,12 +263,13 @@ ip = interior_point(w, θ;
     rθ = zeros(idx.nΔ, nθ),
     opts = InteriorPointOptions(
             undercut=10.0,
+            max_iter=500,
             max_ls=50,
             γ_reg=0.0,
             r_tol=1e-5,
             κ_tol=1e-5,  
             ϵ_min=0.0,
-            solver=:lu_solver,
+            solver=:ldl_solver,
             diff_sol=false,
             verbose=true))
 
@@ -272,3 +277,4 @@ interior_point_solve!(ip)
 
 x_sol = [ip.z[idx] for idx in solver.nlp.indices.states]
 u_sol = [ip.z[idx] for idx in solver.nlp.indices.actions]
+x_sol[end]
