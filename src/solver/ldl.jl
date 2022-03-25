@@ -137,11 +137,6 @@ function linear_solve!(solver::LDLSolver{Tv,Ti}, x::Vector{Tv}, A::AbstractMatri
     linear_solve!(solver, x, solver.A_sparse, b, reg=reg, fact=fact)
 end
 
-# function linear_solve!(solver::LDLSolver{Tv,Ti}, X::Matrix{Tv}, A, B::AbstractMatrix{Tv};
-#     reg=0.0, fact::Bool=true) where {Tv<:AbstractFloat,Ti<:Integer}
-#     X .= A \ B # TODO: fix
-# end
-
 function linear_solve!(s::LDLSolver{T}, x::Matrix{T}, A::Matrix{T},
     b::Matrix{T}; 
     reg::T = 0.0, 
@@ -159,3 +154,11 @@ function linear_solve!(s::LDLSolver{T}, x::Matrix{T}, A::Matrix{T},
         QDLDL.solve!(solver.F, xv)
     end
 end
+
+_A = rand(10, 10)
+A = _A' * _A
+x = zeros(10) 
+b = randn(10)
+solver = ldl_solver(A)
+
+linear_solve!(solver, x, A, b) 
