@@ -71,6 +71,7 @@ struct SolverData{T}
     residual_symmetric::Vector{T} 
     matrix_symmetric::SparseMatrixCSC{T,Int}
     step::Vector{T}
+    step_correction::Vector{T}
     step_symmetric::Vector{T}
 end
 
@@ -85,6 +86,7 @@ function SolverData(num_variables, num_equality, num_inequality)
     matrix_symmetric = spzeros(num_symmetric, num_symmetric)
 
     step = zeros(num_total) 
+    step_correction = zeros(num_total) 
     step_symmetric = zeros(num_symmetric)
 
     SolverData(
@@ -93,6 +95,7 @@ function SolverData(num_variables, num_equality, num_inequality)
         residual_symmetric,
         matrix_symmetric,
         step,
+        step_correction,
         step_symmetric,
     )
 end

@@ -240,15 +240,15 @@ function residual_symmetric!(s_data::SolverData, p_data::ProblemData, idx::Indic
     return 
 end
 
-function step!(data::SolverData)
-    fill!(data.step, 0.0)
-    data.step .= data.matrix \ data.residual
+function step!(step, data::SolverData)
+    fill!(step, 0.0)
+    step .= data.matrix \ data.residual
     return 
 end
 
-function step_symmetric!(solver::LinearSolver, data::SolverData, idx::Indices, w, κ)
+function step_symmetric!(step, solver::LinearSolver, data::SolverData, idx::Indices, w, κ)
     # reset
-    fill!(data.step, 0.0) 
+    fill!(step, 0.0) 
     fill!(data.step_symmetric, 0.0)
     
     # solve symmetric system
@@ -259,16 +259,16 @@ function step_symmetric!(solver::LinearSolver, data::SolverData, idx::Indices, w
     Δx = @views data.step_symmetric[idx.primal]
     Δy = @views data.step_symmetric[idx.equality]
     Δz = @views data.step_symmetric[idx.inequality]
-    data.step[idx.primal] = Δx
-    data.step[idx.equality] = Δy
-    data.step[idx.inequality] = Δz
+    step[idx.primal] = Δx
+    step[idx.equality] = Δy
+    step[idx.inequality] = Δz
 
     # recover Δs, Δt
     z = @views w[idx.inequality]
     s = @views w[idx.slack_primal]
     t = @views w[idx.slack_dual]
-    Δs = @views data.step[idx.slack_primal]
-    Δt = @views data.step[idx.slack_dual]
+    Δs = @views step[idx.slack_primal]
+    Δt = @views step[idx.slack_dual]
     num_inequality = length(z) 
 
     # Δt = z + t - Δz
