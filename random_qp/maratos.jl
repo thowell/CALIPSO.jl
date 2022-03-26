@@ -33,7 +33,7 @@ ineq(x) = zeros(0)
 # solver
 methods = ProblemMethods(num_variables, obj, eq, ineq)
 solver = Solver(methods, num_variables, num_equality, num_inequality,
-    options=Options(penalty_initial=1.0e32))
+    options=Options(penalty_initial=1.0))
 
 # initialize 
 θ = 1.0

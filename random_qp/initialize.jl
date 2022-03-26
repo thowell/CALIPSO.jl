@@ -1,12 +1,12 @@
-function initialize_variables!(variables, guess, idx::Indices)
-    variables[idx.primal] = guess 
+function initialize_primals!(variables, guess, idx::Indices)
+    variables[idx.variables] = guess 
+    variables[idx.slack_primal] .= 1.0 
     return 
 end
 
 function initialize_duals!(variables, idx::Indices)
     variables[idx.equality] .= 0.0
     variables[idx.inequality] .= 0.0
-    variables[idx.slack_primal] .= 1.0 
     variables[idx.slack_dual] .= 1.0 
     return 
 end
@@ -25,5 +25,5 @@ end
 # solver 
 function initialize!(solver::Solver, x)
     # variables 
-    initialize_variables!(solver.variables, x, solver.indices)
+    initialize_primals!(solver.variables, x, solver.indices)
 end
