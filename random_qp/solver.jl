@@ -1,4 +1,4 @@
-struct Solver{T}
+mutable struct Solver{T}
     problem::ProblemData{T} 
     methods::ProblemMethods 
     data::SolverData{T}
@@ -9,7 +9,12 @@ struct Solver{T}
     linear_solver::LinearSolver
     central_path::Vector{T} 
     penalty::Vector{T}
-    dual::Vector{T}
+    dual::Vector{T} 
+
+    regularization::Vector{T}
+    primal_regularization::T 
+    dual_regularization::T
+    
     options::Options{T}
 end
 
@@ -52,6 +57,11 @@ function Solver(methods, num_variables, num_equality, num_inequality;
 
     linear_solver = ldl_solver(s_data.matrix_symmetric)
 
+    # regularization 
+    regularization = zeros(dim.total)
+    primal_regularization = 0.0 
+    dual_regularization = 0.0
+
     Solver(
         p_data, 
         methods, 
@@ -64,9 +74,11 @@ function Solver(methods, num_variables, num_equality, num_inequality;
         central_path, 
         penalty, 
         dual,
+        regularization, 
+        primal_regularization, 
+        dual_regularization,
         options,
     )
 end
-
 
 

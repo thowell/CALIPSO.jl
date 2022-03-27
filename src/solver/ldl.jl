@@ -10,6 +10,7 @@ mutable struct LDLSolver{Tf<:AbstractFloat,Ti<:Integer} <: LinearSolver
     Pc::Vector{Ti}
     Pv::Vector{Tf}
     num_entries::Vector{Ti}
+    inertia::Inertia
 end
 
 function LDLSolver(A::SparseMatrixCSC{Tv,Ti}, F::QDLDL.QDLDLFactorisation{Tv,Ti}) where {Tv<:AbstractFloat,Ti<:Integer}
@@ -17,7 +18,8 @@ function LDLSolver(A::SparseMatrixCSC{Tv,Ti}, F::QDLDL.QDLDLFactorisation{Tv,Ti}
     Pc = zeros(Ti, size(A, 1) + 1)
     Pv = zeros(Tv, nnz(A))
     num_entries = zeros(Ti, size(A, 2))
-    return LDLSolver{Tv,Ti}(F, copy(A), Pr, Pc, Pv, num_entries)
+    inertia = Inertia(0, 0, 0)
+    return LDLSolver{Tv,Ti}(F, copy(A), Pr, Pc, Pv, num_entries, inertia)
 end
 
 function factorize!(s::LDLSolver{Tv,Ti}, A::SparseMatrixCSC{Tv,Ti}) where {Tv<:AbstractFloat, Ti<:Integer}
@@ -106,6 +108,13 @@ function permute_symmetricAF(A::SparseMatrixCSC{Tv, Ti}, iperm::AbstractVector{T
     return (P')'
 end
 
+function compute_inertia!(ls::LDLSolver)
+    ls.inertia.positive = ls.F.workspace.positive_inertia.x 
+    ls.inertia.negative = count(ls.F.workspace.D .<= 0.0)
+    ls.inertia.zero = count(ls.F.workspace.D .== 0.0)
+    return nothing
+end
+
 
 """
     LDL solver
@@ -154,11 +163,3 @@ function linear_solve!(s::LDLSolver{T}, x::Matrix{T}, A::Matrix{T},
         QDLDL.solve!(solver.F, xv)
     end
 end
-
-_A = rand(10, 10)
-A = _A' * _A
-x = zeros(10) 
-b = randn(10)
-solver = ldl_solver(A)
-
-linear_solve!(solver, x, A, b) 

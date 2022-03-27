@@ -23,7 +23,7 @@ function problem!(data::ProblemData{T}, methods::ProblemMethods, idx::Indices, v
     return
 end
 
-function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, ρ, λ)
+function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, ρ, λ, ϵp, ϵd)
     # slacks 
     s = @views w[idx.slack_primal]
     t = @views w[idx.slack_dual]
@@ -38,11 +38,6 @@ function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, �
             H[i, j]  = p_data.objective_hessian[i, j] 
             H[i, j] += p_data.equality_hessian[i, j]
             H[i, j] += p_data.inequality_hessian[i, j]
-
-            if i == j 
-                # regularization 
-                # H[i, j] += 
-            end
         end
     end
 
@@ -92,6 +87,27 @@ function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, �
         H[ii, ii] = s[i] 
     end
 
+    # regularization 
+    for i in idx.variables 
+        H[i, i] += ϵp 
+    end
+
+    for i in idx.slack_primal 
+        H[i, i] += ϵp
+    end 
+
+    for i in idx.equality 
+        H[i, i] -= ϵd
+    end
+
+    for i in idx.inequality 
+        H[i, i] -= ϵd 
+    end
+
+    for i in idx.slack_dual 
+        H[i, i] -= ϵd 
+    end 
+
     return
 end
 
@@ -127,11 +143,15 @@ function matrix_symmetric!(matrix_symmetric, matrix, idx::Indices)
         end
     end
 
-    # -T \ S block 
+    # -T \ S block | -(T + S̄P) \ S̄ + D
     for (i, ii) in enumerate(idx.slack_dual)
-        matrix_symmetric[idx.symmetric_inequality[i], idx.symmetric_inequality[i]] -= 1.0 * matrix[ii, ii] / matrix[ii, idx.slack_primal[i]]
+        S̄i = matrix[ii, ii] 
+        Ti = matrix[ii, idx.slack_primal[i]]
+        Pi = matrix[idx.slack_primal[i], idx.slack_primal[i]] 
+        Di = matrix[idx.inequality[i], idx.inequality[i]]
+        matrix_symmetric[idx.symmetric_inequality[i], idx.symmetric_inequality[i]] += -1.0 * S̄i / (Ti + S̄i * Pi) + Di
     end
-
+   
     return
 end
 
@@ -207,9 +227,11 @@ function residual_symmetric!(residual_symmetric, residual, matrix, idx::Indices)
     residual_symmetric[idx.symmetric_inequality] = rz
  
     # inequality correction
-    for (i, ii) in enumerate(idx.symmetric_inequality) 
-        residual_symmetric[ii] += rt[i] / matrix[idx.slack_dual[i], idx.slack_primal[i]]
-        residual_symmetric[ii] += matrix[idx.slack_dual[i], idx.slack_dual[i]] * rs[i] / matrix[idx.slack_dual[i], idx.slack_primal[i]]
+    for (i, ii) in enumerate(idx.slack_dual) 
+        S̄i = matrix[ii, ii] 
+        Ti = matrix[ii, idx.slack_primal[i]]
+        Pi = matrix[idx.slack_primal[i], idx.slack_primal[i]] 
+        residual_symmetric[idx.symmetric_inequality[i]] += (rt[i] + S̄i * rs[i]) / (Ti + S̄i * Pi)
     end
 
     return 
@@ -249,10 +271,12 @@ function step_symmetric!(step, residual, matrix, step_symmetric, residual_symmet
     # Δt = z + t - Δz | -rs - Δz
     # Δs = s - κ[1] ./ t - s.* Δt ./ t | rt / t + rs * s / t + Δz  * s / t
     for i = 1:num_inequality
-        si = matrix[idx.slack_dual[i], idx.slack_dual[i]]
-        ti = matrix[idx.slack_dual[i], idx.slack_primal[i]]
-        Δt[i] = -rs[i] - Δz[i]
-        Δs[i] = rt[i] / ti + rs[i] * si / ti + Δz[i] * si / ti
+        S̄i = matrix[idx.slack_dual[i], idx.slack_dual[i]]
+        Ti = matrix[idx.slack_dual[i], idx.slack_primal[i]]
+        Pi = matrix[idx.slack_primal[i], idx.slack_primal[i]] 
+        Di = matrix[idx.inequality[i], idx.inequality[i]]
+        Δs[i] = (rt[i] + S̄i * (rs[i] + Δz[i])) ./ (Ti + S̄i * Pi)
+        Δt[i] = Pi * Δs[i] -rs[i] - Δz[i]
     end
     
     return 

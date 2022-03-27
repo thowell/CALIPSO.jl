@@ -12,14 +12,16 @@ include("generate.jl")
 include("indices.jl")
 include("data.jl")
 include("cones.jl")
-include("dimensions.jl")
+include("dimensions.jl") 
 include(joinpath("linear_solvers", "abstract.jl"))
+include(joinpath("linear_solvers", "inertia.jl"))
 include(joinpath(@__DIR__, "..", "src/solver/ldl.jl"))
 include("problem.jl")
 include("options.jl")
 include("solver.jl")
 include("initialize.jl")
 include("solve.jl")
+include("iterative_refinement.jl")
 
 # dimensions 
 num_variables = 10 
@@ -39,3 +41,11 @@ initialize!(solver, x)
 
 # solve 
 solve!(solver)
+
+compute_inertia!(solver.linear_solver)
+inertia(solver)
+
+solver.linear_solver.inertia
+solver.dimensions.primal 
+solver.dimensions.total
+solver.dimensions.dual
