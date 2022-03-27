@@ -46,7 +46,10 @@ function Solver(methods, num_variables, num_equality, num_inequality;
         constraint=true,
         jacobian=true,
         hessian=true)
-    matrix_symmetric!(s_data, p_data, idx, random_variables, central_path, penalty, dual)
+
+    matrix!(s_data, p_data, idx, random_variables, [1.0], [1.0], zeros(num_equality))
+    matrix_symmetric!(s_data.matrix_symmetric, s_data.matrix, idx)
+
     linear_solver = ldl_solver(s_data.matrix_symmetric)
 
     Solver(

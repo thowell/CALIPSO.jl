@@ -67,6 +67,7 @@ end
 
 struct SolverData{T}
     residual::Vector{T}
+    residual_error::Vector{T}
     matrix::SparseMatrixCSC{T,Int}
     residual_symmetric::Vector{T} 
     matrix_symmetric::SparseMatrixCSC{T,Int}
@@ -80,6 +81,7 @@ function SolverData(num_variables, num_equality, num_inequality)
     num_symmetric = num_variables + num_inequality + num_equality
 
     residual = zeros(num_total)
+    residual_error = zeros(num_total)
     matrix = spzeros(num_total, num_total)
 
     residual_symmetric = zeros(num_symmetric)
@@ -91,6 +93,7 @@ function SolverData(num_variables, num_equality, num_inequality)
 
     SolverData(
         residual, 
+        residual_error,
         matrix,
         residual_symmetric,
         matrix_symmetric,

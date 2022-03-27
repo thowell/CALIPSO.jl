@@ -28,11 +28,11 @@ problem!(solver.problem, solver.methods, solver.indices, w)
 
 matrix!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
 
-matrix_symmetric!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
+matrix_symmetric!(solver.data.matrix_symmetric, solver.data.matrix, solver.indices)
 
 residual!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
 
-residual_symmetric!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
+residual_symmetric!(solver.data.residual_symmetric, solver.data.residual, solver.data.matrix, solver.indices)
 
 # KKT matrix 
 @test rank(solver.data.matrix) == solver.dimensions.total
@@ -71,8 +71,19 @@ residual_symmetric!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
 @test norm(solver.data.residual_symmetric[solver.indices.symmetric_inequality] - (solver.problem.inequality - w[solver.indices.slack_primal] - w[solver.indices.slack_primal] .* w[solver.indices.inequality] ./ w[solver.indices.slack_dual] - κ[1] * ones(num_inequality) ./ w[solver.indices.slack_dual])) < 1.0e-6
 
 # step
+fill!(solver.data.residual, 0.0)
+residual!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
 step!(solver.data.step, solver.data)
 Δ = deepcopy(solver.data.step)
-step_symmetric!(solver.data.step, solver.linear_solver, solver.data, solver.indices, w, κ)
+
+step_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
+    solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
+    solver.indices, solver.linear_solver)
 Δ_symmetric = deepcopy(solver.data.step)
+
 @test norm(Δ - Δ_symmetric) < 1.0e-6
+
+# iterative refinement
+noisy_step = solver.data.step + randn(length(solver.data.step))
+iterative_refinement!(noisy_step, solver)
+@test norm(solver.data.residual - solver.data.matrix * noisy_step) < solver.options.iterative_refinement_tolerance
