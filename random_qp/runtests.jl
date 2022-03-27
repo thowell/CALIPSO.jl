@@ -11,7 +11,7 @@ t = rand(num_inequality)
 
 w = [x; s; y; z; t]
 κ = [1.0]
-ρ = [1.0e6]
+ρ = [1.0]
 λ = zeros(num_equality)
 ϵp = 0.12 #1.0e-5 
 ϵd = 0.21 #1.0e-6 

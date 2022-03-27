@@ -38,9 +38,12 @@ solver = Solver(methods, num_variables, num_equality, num_inequality,
 # initialize 
 θ = 1.0
 x = [cos(θ); sin(θ)]
-x = [1.0; 0.0]
+x = [0.0; 0.0]
 initialize!(solver, x)
 
 # solve 
 solve!(solver)
 solver.variables[1:2]
+
+
+compute_inertia!(solver.linear_solver)

@@ -23,21 +23,28 @@ include("initialize.jl")
 include("solve.jl")
 include("iterative_refinement.jl")
 
-# dimensions 
-num_variables = 10 
-num_equality = 0 
-num_inequality = 5
+num_variables = 50
+num_equality = 30
+num_inequality = 0#3
 
-# methods
-objective, equality, inequality, flag = generate_random_qp(num_variables, num_equality, num_inequality);
+x0 = ones(num_variables)
+
+obj(x) = transpose(x) * x
+eq(x) = x[1:30].^2 .- 1.2
+ineq(x) = zeros(0)#[x[1] + 10.0; x[2] + 5.0; 20.0 - x[5]]
 
 # solver
-methods = ProblemMethods(num_variables, objective, equality, inequality)
-solver = Solver(methods, num_variables, num_equality, num_inequality)
-
-# initialize 
-x = randn(num_variables)
-initialize!(solver, x)
+m = ProblemMethods(num_variables, obj, eq, ineq)
+solver = Solver(m, num_variables, num_equality, num_inequality)
 
 # solve 
 solve!(solver)
+
+compute_inertia!(solver.linear_solver)
+inertia(solver)
+
+solver.linear_solver.inertia
+solver.dimensions.variables
+solver.dimensions.primal 
+solver.dimensions.total
+solver.dimensions.dual

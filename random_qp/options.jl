@@ -17,5 +17,12 @@ Base.@kwdef mutable struct Options{T}
     scaling_penalty::T=10.0
     dual_initial::T=0.0
     dual_tolerance::T=1.0e-5
+    min_regularization::T = 1.0e-20
+    primal_regularization_initial::T = 1.0e-4
+    max_regularization::T = 1.0e40
+    dual_regularization::T = 1.0e-8
+    scaling_regularization_initial::T = 100.0
+    scaling_regularization::T = 8.0
+    scaling_regularization_last::T = 1.0 / 3.0
     verbose::Bool=true
 end

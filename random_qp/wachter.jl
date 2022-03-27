@@ -37,7 +37,7 @@ solver = Solver(methods, num_variables, num_equality, num_inequality,
 
 # initialize 
 x = [-2.0, 3.0, 1.0]
-x = [1.0, 0.0, 0.5]
+# x = [1.0, 0.0, 0.5]
 initialize!(solver, x)
 
 # solve 

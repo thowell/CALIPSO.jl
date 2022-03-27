@@ -30,9 +30,7 @@ function solve!(solver::Solver)
                 jacobian=false,
                 hessian=true)
 
-            matrix!(solver.data, solver.problem, solver.indices, solver.variables, 
-                solver.central_path, solver.penalty, solver.dual,
-                solver.primal_regularization, solver.dual_regularization)
+            inertia_correction!(solver)
 
             step_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
                 solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
@@ -44,28 +42,28 @@ function solve!(solver::Solver)
             step_size = 1.0 
             solver.candidate .= solver.variables - step_size * solver.data.step
 
-            ### second order correction 
-            step_copy = deepcopy(solver.data.step)
-            for i = 1:solver.options.max_second_order_correction
-                problem!(solver.problem, solver.methods, solver.indices, solver.candidate,
-                    gradient=false,
-                    constraint=true,
-                    jacobian=false,
-                    hessian=false)
+            # ### second order correction 
+            # step_copy = deepcopy(solver.data.step)
+            # for i = 1:solver.options.max_second_order_correction
+            #     problem!(solver.problem, solver.methods, solver.indices, solver.candidate,
+            #         gradient=false,
+            #         constraint=true,
+            #         jacobian=false,
+            #         hessian=false)
 
-                solver.data.residual[solver.indices.equality] .+= solver.problem.equality + 1.0 / solver.penalty[1] * (solver.dual - solver.candidate[solver.indices.equality])
-                solver.data.residual[solver.indices.inequality] .+= (solver.problem.inequality - solver.candidate[solver.indices.slack_primal])
-                
-                step_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
-                    solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
-                    solver.indices, solver.linear_solver)
+            #     solver.data.residual[solver.indices.equality] .+= solver.problem.equality + 1.0 / solver.penalty[1] * (solver.dual - solver.candidate[solver.indices.equality])
+            #     solver.data.residual[solver.indices.inequality] .+= (solver.problem.inequality - solver.candidate[solver.indices.slack_primal])
+                                
+            #     step_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
+            #         solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
+            #         solver.indices, solver.linear_solver)
 
-                solver.options.iterative_refinement && iterative_refinement!(solver.data.step, solver)
+            #     solver.options.iterative_refinement && iterative_refinement!(solver.data.step, solver)
                 
-                solver.candidate .= solver.variables - step_size * solver.data.step
-            end
-            @show norm(solver.data.step - step_copy)
-            ### 
+            #     solver.candidate .= solver.variables - step_size * solver.data.step
+            # end
+            # @show norm(solver.data.step - step_copy)
+            # ### 
             
             s_candidate = @views solver.candidate[solver.indices.slack_primal] 
             t_candidate = @views solver.candidate[solver.indices.slack_dual]
@@ -105,7 +103,7 @@ function solve!(solver::Solver)
                     step_size *= solver.options.scaling_line_search
                     solver.candidate .= solver.variables - step_size * solver.data.step
                 
-                    i == solver.options.max_residual_line_search && error("residual line search failure")
+                    # i == solver.options.max_residual_line_search && error("residual line search failure")
                 end
             end
         end

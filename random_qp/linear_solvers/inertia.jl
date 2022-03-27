@@ -10,6 +10,19 @@ function inertia(s)
   && s.linear_solver.inertia.zero     == 0)
 end
 
+function factorize_regularized_matrix!(s::Solver)
+    matrix!(s.data, s.problem, s.indices, s.variables, 
+        s.central_path, s.penalty, s.dual,
+        s.primal_regularization, s.dual_regularization)
+
+    matrix_symmetric!(s.data.matrix_symmetric, s.data.matrix, s.indices) 
+
+    factorize!(s.linear_solver, s.data.matrix_symmetric)
+    compute_inertia!(s.linear_solver)
+
+    return nothing
+end
+
 function inertia_correction!(s)
 
     # initialize_regularization!(s.linear_solver, s)
@@ -17,7 +30,7 @@ function inertia_correction!(s)
     s.dual_regularization = 1.0e-7
 
     # IC-1
-    # factorize_regularized_matrix!(s)
+    factorize_regularized_matrix!(s)
 
     if inertia(s)
         return nothing
@@ -38,13 +51,13 @@ function inertia_correction!(s)
 
     while !inertia(s)
         # IC-4
-        # factorize_regularized_matrix!(s)
+        factorize_regularized_matrix!(s)
 
         if inertia(s)
             break
         else
             # IC-5
-            if s.primal_regularization_last == 0
+            if s.primal_regularization_last == 0.0
                 s.primal_regularization = s.options.scaling_regularization_initial * s.primal_regularization
             else
                 s.primal_regularization = s.options.scaling_regularization * s.primal_regularization
@@ -62,3 +75,4 @@ function inertia_correction!(s)
 
     return nothing
 end
+

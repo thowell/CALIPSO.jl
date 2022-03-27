@@ -13,6 +13,7 @@ mutable struct Solver{T}
 
     regularization::Vector{T}
     primal_regularization::T 
+    primal_regularization_last::T
     dual_regularization::T
 
     options::Options{T}
@@ -59,6 +60,7 @@ function Solver(methods, num_variables, num_equality, num_inequality;
     # regularization 
     regularization = zeros(dim.total)
     primal_regularization = 0.0 
+    primal_regularization_last = 0.0 
     dual_regularization = 0.0
 
     Solver(
@@ -75,6 +77,7 @@ function Solver(methods, num_variables, num_equality, num_inequality;
         dual,
         regularization, 
         primal_regularization, 
+        primal_regularization_last,
         dual_regularization,
         options,
     )
