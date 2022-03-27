@@ -30,7 +30,9 @@ function solve!(solver::Solver)
                 jacobian=false,
                 hessian=true)
 
-            matrix!(solver.data, solver.problem, solver.indices, solver.variables, solver.central_path, solver.penalty, solver.dual)
+            matrix!(solver.data, solver.problem, solver.indices, solver.variables, 
+                solver.central_path, solver.penalty, solver.dual,
+                solver.primal_regularization, solver.dual_regularization)
 
             step_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
                 solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 

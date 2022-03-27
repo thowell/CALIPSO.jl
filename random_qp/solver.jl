@@ -14,7 +14,7 @@ mutable struct Solver{T}
     regularization::Vector{T}
     primal_regularization::T 
     dual_regularization::T
-    
+
     options::Options{T}
 end
 
@@ -51,8 +51,7 @@ function Solver(methods, num_variables, num_equality, num_inequality;
         constraint=true,
         jacobian=true,
         hessian=true)
-
-    matrix!(s_data, p_data, idx, random_variables, [1.0], [1.0], zeros(num_equality))
+    matrix!(s_data, p_data, idx, random_variables, [1.0], [1.0], zeros(num_equality), 1.0e-5, 1.0e-5)
     matrix_symmetric!(s_data.matrix_symmetric, s_data.matrix, idx)
 
     linear_solver = ldl_solver(s_data.matrix_symmetric)
