@@ -39,5 +39,4 @@ solver = Solver(methods, num_variables, num_equality, num_inequality)
 x = randn(num_variables)
 initialize!(solver, x)
 
-# solve 
 solve!(solver)

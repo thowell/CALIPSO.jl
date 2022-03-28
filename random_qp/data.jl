@@ -77,7 +77,7 @@ struct SolverData{T}
 end
 
 function SolverData(num_variables, num_equality, num_inequality)
-    num_total = num_variables + num_inequality + num_equality + 2 * num_inequality
+    num_total = num_variables + num_equality + num_inequality + num_equality + 2 * num_inequality
     num_symmetric = num_variables + num_inequality + num_equality
 
     residual = zeros(num_total)
