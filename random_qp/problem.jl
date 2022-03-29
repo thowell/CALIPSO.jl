@@ -181,7 +181,7 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
 
     # reset
     res = s_data.residual 
-    fill!(r, 0.0)
+    fill!(res, 0.0)
 
     # gradient of Lagrangian 
     res[idx.variables] = p_data.objective_gradient 
