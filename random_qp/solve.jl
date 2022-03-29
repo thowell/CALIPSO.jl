@@ -65,8 +65,8 @@ function solve!(solver::Solver)
             # @show norm(solver.data.step - step_copy)
             # ### 
             
-            s_candidate = @views solver.candidate[solver.indices.slack_primal] 
-            t_candidate = @views solver.candidate[solver.indices.slack_dual]
+            s_candidate = @views solver.candidate[solver.indices.inequality_slack] 
+            t_candidate = @views solver.candidate[solver.indices.inequality_slack_dual]
 
             # cone line search
             for i = 1:solver.options.max_cone_line_search 
@@ -75,8 +75,8 @@ function solve!(solver::Solver)
                 else
                     step_size *= solver.options.scaling_line_search
                     solver.candidate .= solver.variables - step_size * solver.data.step
-                    s_candidate = @views solver.candidate[solver.indices.slack_primal] 
-                    t_candidate = @views solver.candidate[solver.indices.slack_dual]
+                    s_candidate = @views solver.candidate[solver.indices.inequality_slack] 
+                    t_candidate = @views solver.candidate[solver.indices.inequality_slack_dual]
 
                     i == solver.options.max_cone_line_search && error("cone line search failure")
                 end
@@ -108,7 +108,7 @@ function solve!(solver::Solver)
             end
         end
 
-        if solver.central_path[1] < solver.options.central_path_tolerance && norm(solver.problem.equality, 1) / max(1, solver.dimensions.equality) < solver.options.dual_tolerance 
+        if solver.central_path[1] < solver.options.central_path_tolerance && norm(solver.problem.equality, 1) / max(1, solver.dimensions.equality_dual) < solver.options.dual_tolerance 
             return true 
         else
             # interior-point 

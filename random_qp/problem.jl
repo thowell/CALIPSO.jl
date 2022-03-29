@@ -306,7 +306,7 @@ function step_symmetric!(step, residual, matrix, step_symmetric, residual_symmet
         Di = matrix[idx.inequality_dual[i], idx.inequality_dual[i]]
         
         Δs[i] = (rt[i] + S̄i * (rs[i] + Δz[i])) ./ (Ti + S̄i * Pi)
-        Δt[i] = (rt[i] - t[i] * Δs[i]) / S̄i
+        Δt[i] = (rt[i] - Ti * Δs[i]) / S̄i
     end
     
     return 
