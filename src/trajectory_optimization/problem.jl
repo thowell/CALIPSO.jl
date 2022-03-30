@@ -15,13 +15,13 @@ end
 
 function initialize_states!(solver::TrajectoryOptimizationProblem, states) 
     for (t, xt) in enumerate(states) 
-        solver.nlp.trajopt.states[t] .= xt
+        solver.trajopt.states[t] .= xt
     end
 end 
 
 function initialize_controls!(solver::TrajectoryOptimizationProblem, actions)
     for (t, ut) in enumerate(actions) 
-        solver.nlp.trajopt.actions[t] .= ut
+        solver.trajopt.actions[t] .= ut
     end
 end
 

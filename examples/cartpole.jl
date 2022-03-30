@@ -127,17 +127,3 @@ initialize_controls!(solver, u_guess)
 x_interpolation = linear_interpolation(x1, xT, T)
 initialize_states!(solver, x_interpolation)
 
-# ## solve
-# @time solve!(p)
-
-# ## solution
-x_sol, u_sol = get_trajectory(solver)
-
-@show x_sol[1]
-@show x_sol[T]
-
-# # ## state
-# plot(hcat(x_sol...)')
-
-# # ## control
-# plot(hcat(u_sol[1:end-1]..., u_sol[end-1])', linetype = :steppost)

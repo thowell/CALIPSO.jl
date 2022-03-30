@@ -110,7 +110,7 @@ ct = Cost(ot, num_state, num_action,
 cT = Cost(oT, num_state, 0, 
     num_parameter=num_parameter,
     evaluate_hessian=eval_hess)
-obj = [[ct for t = 1:T-1]..., cT]
+ob = [[ct for t = 1:T-1]..., cT]
 
 # ## constraints
 bnd1 = Bound(num_state, num_action)
@@ -128,9 +128,8 @@ cons = [
        ]
 
 # ## problem 
-solver = Solver(dyn, obj, cons, bounds, 
-    evaluate_hessian=eval_hess,
-    options=Options{Float64}())
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, ob, cons, bounds, 
+    evaluate_hessian=eval_hess)
 
 # ## initialize
 u_guess = [0.01 * ones(num_action) for t = 1:T-1]
@@ -141,20 +140,21 @@ u_guess = [0.01 * ones(num_action) for t = 1:T-1]
 # initialize_states!(solver, x_rollout)
 x_interpolation = linear_interpolation(x1, xT, T)
 
-initialize_states!(solver, x_interpolation)
-initialize_controls!(solver, u_guess)
+num_variables = trajopt.num_variables
+num_equality = trajopt.num_constraint
+num_inequality = 0
 
-# # ## solve
-# @time solve!(p)
+x0 = zeros(num_variables)
 
-# ## solution
-x_sol, u_sol = get_trajectory(solver)
+obj(x) = transpose(x) * x
+eq(x) = x[1:30].^2 .- 1.2
+ineq(x) = [x[1] + 10.0; x[2] + 5.0; 20.0 - x[5]]
 
-@show x_sol[1]
-@show x_sol[T]
+# solver
+methods = ProblemMethods(num_variables, obj, eq, ineq)
+solver = Solver(methods, num_variables, num_equality, num_inequality)
+initialize!(solver, x0)
 
-# # ## state
-# plot(hcat(x_sol...)')
-
-# # ## control
-# plot(hcat(u_sol[1:end-1]..., u_sol[end-1])', linetype = :steppost)
+# solve 
+solve!(solver)
+@test norm(solver.data.residual, Inf) < 1.0e-5
