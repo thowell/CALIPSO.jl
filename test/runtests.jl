@@ -1,5 +1,4 @@
 using Test
-using JLD2
 using ForwardDiff 
 using SparseArrays
 using Symbolics
@@ -9,15 +8,19 @@ using BenchmarkTools
 using CALIPSO
 
 # Solver
-include("solver/lu.jl")
-include("solver/random_qp.jl")
-include("solver/soc.jl")
+include("solver/problem.jl")
+include("solver/test1.jl")
+include("solver/test2.jl")
+include("solver/test3.jl")
+include("solver/test4.jl")
+include("solver/maratos.jl")
+include("solver/knitro.jl")
+include("solver/wachter.jl")
 
 # Trajectory Optimization 
 include("trajectory_optimization/objective.jl")
 include("trajectory_optimization/dynamics.jl")
 include("trajectory_optimization/constraints.jl")
 include("trajectory_optimization/hessian_lagrangian.jl")
-# include("trajectory_optimization/solve.jl")
 
 

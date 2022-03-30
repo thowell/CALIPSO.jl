@@ -1,4 +1,4 @@
-function MOI.eval_objective(nlp::NLPData{T}, variables::Vector{T}) where T
+function MOI.eval_objective(nlp::TrajectoryOptimizationProblem{T}, variables::Vector{T}) where T
     trajectory!(
         nlp.trajopt.states, 
         nlp.trajopt.actions, 
@@ -12,7 +12,7 @@ function MOI.eval_objective(nlp::NLPData{T}, variables::Vector{T}) where T
         nlp.trajopt.parameters) 
 end
 
-function MOI.eval_objective_gradient(nlp::NLPData{T}, gradient, variables) where T
+function MOI.eval_objective_gradient(nlp::TrajectoryOptimizationProblem{T}, gradient, variables) where T
     fill!(gradient, 0.0)
     trajectory!(
         nlp.trajopt.states, 
@@ -29,7 +29,7 @@ function MOI.eval_objective_gradient(nlp::NLPData{T}, gradient, variables) where
     return 
 end
 
-function MOI.eval_constraint(nlp::NLPData{T}, violations, variables) where T
+function MOI.eval_constraint(nlp::TrajectoryOptimizationProblem{T}, violations, variables) where T
     fill!(violations, 0.0)
     trajectory!(
         nlp.trajopt.states, 
@@ -49,7 +49,7 @@ function MOI.eval_constraint(nlp::NLPData{T}, violations, variables) where T
     return 
 end
 
-function MOI.eval_constraint_jacobian(nlp::NLPData{T}, jacobian, variables) where T
+function MOI.eval_constraint_jacobian(nlp::TrajectoryOptimizationProblem{T}, jacobian, variables) where T
     fill!(jacobian, 0.0)
     trajectory!(
         nlp.trajopt.states, 

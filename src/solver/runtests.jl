@@ -127,10 +127,10 @@ rt = solver.data.residual[solver.indices.inequality_slack_dual]
 # step
 fill!(solver.data.residual, 0.0)
 residual!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
-step!(solver.data.step, solver.data)
+search_direction!(solver.data.step, solver.data)
 Δ = deepcopy(solver.data.step)
 
-step_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
+search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
     solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
     solver.indices, solver.linear_solver)
 Δ_symmetric = deepcopy(solver.data.step)
@@ -155,7 +155,7 @@ problem!(solver.problem, solver.methods, solver.indices, solver.candidate,
 solver.data.residual[solver.indices.equality_dual] .+= solver.problem.equality + 1.0 / solver.penalty[1] * (solver.dual - solver.candidate[solver.indices.equality_dual])
 solver.data.residual[solver.indices.inequality_dual] .+= (solver.problem.inequality - solver.candidate[solver.indices.inequality_slack])
 
-step_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
+search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
     solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
     solver.indices, solver.linear_solver)
 

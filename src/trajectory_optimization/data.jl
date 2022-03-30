@@ -103,7 +103,7 @@ function indices(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, constra
         xuy_idx) 
 end
 
-struct NLPData{T} <: MOI.AbstractNLPEvaluator
+struct TrajectoryOptimizationProblem{T} <: MOI.AbstractNLPEvaluator
     trajopt::TrajectoryOptimizationData{T}
     num_variables::Int                 
     num_constraint::Int 
@@ -147,7 +147,7 @@ function constraint_bounds(constraints::Constraints{T}, general::GeneralConstrai
     return lower, upper
 end 
 
-function NLPData(trajopt::TrajectoryOptimizationData; 
+function TrajectoryOptimizationProblem(trajopt::TrajectoryOptimizationData; 
     evaluate_hessian=false, 
     general_constraint=GeneralConstraint()) 
 
@@ -203,7 +203,7 @@ function NLPData(trajopt::TrajectoryOptimizationData;
     # nonlinear constraint bounds
     constraint_lower, constraint_upper = constraint_bounds(trajopt.constraints, general_constraint, num_dynamics, num_stage, idx) 
 
-    NLPData(trajopt, 
+    TrajectoryOptimizationProblem(trajopt, 
         total_variables, 
         total_constraints, 
         total_jacobians, 
@@ -218,44 +218,6 @@ function NLPData(trajopt::TrajectoryOptimizationData;
         vcat(trajopt.parameters...),
         zeros(general_constraint.num_constraint))
 end
-
-struct SolverData 
-    # nlp_bounds::Vector{MOI.NLPBoundsPair}
-    # block_data::MOI.NLPBlockData
-    # optimizer::Ipopt.Optimizer
-    # variables::Vector{MOI.VariableIndex} 
-end
-
-function SolverData(nlp::NLPData; 
-    options=Options()) 
-
-    return SolverData()
-
-    # # solver
-    # nlp_bounds = MOI.NLPBoundsPair.(nlp.constraint_bounds...)
-    # block_data = MOI.NLPBlockData(nlp_bounds, nlp, true)
-    
-    # # instantiate NLP solver
-    # optimizer = Ipopt.Optimizer()
-
-    # # set NLP optimizer options
-    # for name in fieldnames(typeof(options))
-    #     optimizer.options[String(name)] = getfield(options, name)
-    # end
-    
-    # z = MOI.add_variables(optimizer, nlp.num_variables)
-    
-    # for i = 1:nlp.num_variables
-    #     MOI.add_constraint(optimizer, z[i], MOI.LessThan(nlp.variable_bounds[2][i]))
-    #     MOI.add_constraint(optimizer, z[i], MOI.GreaterThan(nlp.variable_bounds[1][i]))
-    # end
-    
-    # MOI.set(optimizer, MOI.NLPBlock(), block_data)
-    # MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MIN_SENSE) 
-
-    # return SolverData(nlp_bounds, block_data, optimizer, z)
-end
-
 
 function trajectory!(states::Vector{Vector{T}}, actions::Vector{Vector{T}}, 
     trajectory::Vector{T}, 

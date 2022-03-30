@@ -16,7 +16,7 @@ function iterative_refinement!(step, solver::Solver)
         # @show norm(solver.data.residual_error)
         norm(solver.data.residual_error) < solver.options.iterative_refinement_tolerance && return 
         # correction
-        step_symmetric!(solver.data.step_correction, solver.data.residual_error, solver.data.matrix, 
+        search_direction_symmetric!(solver.data.step_correction, solver.data.residual_error, solver.data.matrix, 
             solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
             solver.indices, solver.linear_solver)
         

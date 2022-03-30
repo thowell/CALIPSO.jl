@@ -65,40 +65,27 @@ function ProblemMethods(num_variables::Int, objective::Function, equality::Funct
     )
 end
 
-struct SolverData{T}
-    residual::Vector{T}
-    residual_error::Vector{T}
-    matrix::SparseMatrixCSC{T,Int}
-    residual_symmetric::Vector{T} 
-    matrix_symmetric::SparseMatrixCSC{T,Int}
-    step::Vector{T}
-    step_correction::Vector{T}
-    step_symmetric::Vector{T}
-end
+function problem!(data::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
+    gradient=true,
+    constraint=true,
+    jacobian=true,
+    hessian=true) where T
 
-function SolverData(num_variables, num_equality, num_inequality)
-    num_total = num_variables + num_equality + num_inequality + num_equality + 2 * num_inequality
-    num_symmetric = num_variables + num_inequality + num_equality
+    x = @views variables[idx.variables]
+    y = @views variables[idx.equality_dual]
+    z = @views variables[idx.inequality_dual]
 
-    residual = zeros(num_total)
-    residual_error = zeros(num_total)
-    matrix = spzeros(num_total, num_total)
+    # TODO: remove final allocations
+    gradient && methods.objective_gradient(data.objective_gradient, x)
+    hessian && methods.objective_hessian(data.objective_hessian, x)
 
-    residual_symmetric = zeros(num_symmetric)
-    matrix_symmetric = spzeros(num_symmetric, num_symmetric)
+    constraint && methods.equality(data.equality, x)
+    jacobian && methods.equality_jacobian(data.equality_jacobian, x)
+    hessian && methods.equality_hessian(data.equality_hessian, x, y)
 
-    step = zeros(num_total) 
-    step_correction = zeros(num_total) 
-    step_symmetric = zeros(num_symmetric)
+    constraint && methods.inequality(data.inequality, x)
+    jacobian && methods.inequality_jacobian(data.inequality_jacobian, x)
+    hessian && methods.inequality_hessian(data.inequality_hessian, x, z)
 
-    SolverData(
-        residual, 
-        residual_error,
-        matrix,
-        residual_symmetric,
-        matrix_symmetric,
-        step,
-        step_correction,
-        step_symmetric,
-    )
+    return
 end

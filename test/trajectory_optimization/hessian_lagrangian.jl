@@ -46,11 +46,11 @@
         function Minv(x, w)
             a = (inertia1 + inertia2 + mass2 * length1 * length1
                 + 2.0 * mass2 * length1 * lengthcom2 * cos(x[2]))
-    
+
             b = inertia2 + mass2 * length1 * lengthcom2 * cos(x[2])
-    
+
             c = inertia2
-    
+
             return 1.0 / (a * c - b * b) * [c -b; -b a]
         end
 
@@ -123,7 +123,7 @@
     constraints = [[cont for t = 1:T-1]..., conT]
 
     # data 
-    solver = Solver(dynamics, objective, constraints, bounds, evaluate_hessian=true)
+    solver = CALIPSO.TrajectoryOptimizationProblem(dynamics, objective, constraints, bounds, evaluate_hessian=true)
 
     # Lagrangian
     function lagrangian(z) 
@@ -163,27 +163,27 @@
     Lxx_sp_func = eval(Symbolics.build_function(Lxx_sp.nzval, z)[1])
 
     z0 = rand(nz)
-    nh = length(solver.nlp.hessian_lagrangian_sparsity)
+    nh = length(solver.hessian_lagrangian_sparsity)
     h0 = zeros(nh)
 
     σ = 1.0
     fill!(h0, 0.0)
-    CALIPSO.trajectory!(solver.nlp.trajopt.states, solver.nlp.trajopt.actions, z0[1:np], 
-        solver.nlp.indices.states, solver.nlp.indices.actions)
-    CALIPSO.duals!(solver.nlp.trajopt.duals_dynamics, solver.nlp.trajopt.duals_constraints, solver.nlp.duals_general, z0[np .+ (1:nd)], solver.nlp.indices.dynamics_constraints, solver.nlp.indices.stage_constraints, solver.nlp.indices.general_constraint)
-    CALIPSO.hessian!(h0, solver.nlp.indices.objective_hessians, solver.nlp.trajopt.objective, solver.nlp.trajopt.states, solver.nlp.trajopt.actions, solver.nlp.trajopt.parameters, σ)
-    CALIPSO.hessian_lagrangian!(h0, solver.nlp.indices.dynamics_hessians, solver.nlp.trajopt.dynamics, solver.nlp.trajopt.states, solver.nlp.trajopt.actions, solver.nlp.trajopt.parameters, solver.nlp.trajopt.duals_dynamics)
-    CALIPSO.hessian_lagrangian!(h0, solver.nlp.indices.stage_hessians, solver.nlp.trajopt.constraints, solver.nlp.trajopt.states, solver.nlp.trajopt.actions, solver.nlp.trajopt.parameters, solver.nlp.trajopt.duals_constraints)
+    CALIPSO.trajectory!(solver.trajopt.states, solver.trajopt.actions, z0[1:np], 
+        solver.indices.states, solver.indices.actions)
+    CALIPSO.duals!(solver.trajopt.duals_dynamics, solver.trajopt.duals_constraints, solver.duals_general, z0[np .+ (1:nd)], solver.indices.dynamics_constraints, solver.indices.stage_constraints, solver.indices.general_constraint)
+    CALIPSO.hessian!(h0, solver.indices.objective_hessians, solver.trajopt.objective, solver.trajopt.states, solver.trajopt.actions, solver.trajopt.parameters, σ)
+    CALIPSO.hessian_lagrangian!(h0, solver.indices.dynamics_hessians, solver.trajopt.dynamics, solver.trajopt.states, solver.trajopt.actions, solver.trajopt.parameters, solver.trajopt.duals_dynamics)
+    CALIPSO.hessian_lagrangian!(h0, solver.indices.stage_hessians, solver.trajopt.constraints, solver.trajopt.states, solver.trajopt.actions, solver.trajopt.parameters, solver.trajopt.duals_constraints)
 
-    sparsity_objective_hessians = CALIPSO.sparsity_hessian(objective, solver.nlp.trajopt.state_dimensions, solver.nlp.trajopt.action_dimensions)
-    sparsity_dynamics_hessians = CALIPSO.sparsity_hessian(dynamics, solver.nlp.trajopt.state_dimensions, solver.nlp.trajopt.action_dimensions)
-    sparsity_constraint_hessian = CALIPSO.sparsity_hessian(constraints, solver.nlp.trajopt.state_dimensions, solver.nlp.trajopt.action_dimensions)
+    sparsity_objective_hessians = CALIPSO.sparsity_hessian(objective, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
+    sparsity_dynamics_hessians = CALIPSO.sparsity_hessian(dynamics, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
+    sparsity_constraint_hessian = CALIPSO.sparsity_hessian(constraints, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
     hessian_sparsity = collect([sparsity_objective_hessians..., sparsity_dynamics_hessians..., sparsity_constraint_hessian...]) 
     sp_key = sort(unique(hessian_sparsity))
 
-    idx_objective_hessians = CALIPSO.hessian_indices(objective, sp_key, solver.nlp.trajopt.state_dimensions, solver.nlp.trajopt.action_dimensions)
-    idx_dynamics_hessians = CALIPSO.hessian_indices(dynamics, sp_key, solver.nlp.trajopt.state_dimensions, solver.nlp.trajopt.action_dimensions)
-    idx_con_hess = CALIPSO.hessian_indices(constraints, sp_key, solver.nlp.trajopt.state_dimensions, solver.nlp.trajopt.action_dimensions)
+    idx_objective_hessians = CALIPSO.hessian_indices(objective, sp_key, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
+    idx_dynamics_hessians = CALIPSO.hessian_indices(dynamics, sp_key, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
+    idx_con_hess = CALIPSO.hessian_indices(constraints, sp_key, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
 
     # indices
     @test sp_key[vcat(idx_objective_hessians...)] == sparsity_objective_hessians
@@ -199,10 +199,10 @@
     @test norm(norm(h0 - Lxx_sp_func(z0))) < 1.0e-8
 
     h0 = zeros(nh)
-    MOI.eval_hessian_lagrangian(solver.nlp, h0, z0[1:np], σ, z0[np .+ (1:nd)])
+    MOI.eval_hessian_lagrangian(solver, h0, z0[1:np], σ, z0[np .+ (1:nd)])
     @test norm(norm(h0 - Lxx_sp_func(z0))) < 1.0e-8
 
-    # a = z0[1:np]
-    # b = z0[np .+ (1:nd)]
-    # info = @benchmark MOI.evaluate_hessianian_lagrangian($solver, $h0, $a, $σ, $b)
+# a = z0[1:np]
+# b = z0[np .+ (1:nd)]
+# info = @benchmark MOI.evaluate_hessianian_lagrangian($solver, $h0, $a, $σ, $b)
 end

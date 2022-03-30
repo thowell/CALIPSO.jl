@@ -10,7 +10,7 @@ function inertia(s)
   && s.linear_solver.inertia.zero     == 0)
 end
 
-function factorize_regularized_matrix!(s::Solver)
+function factorize_regularized_matrix!(s)
     matrix!(s.data, s.problem, s.indices, s.variables, 
         s.central_path, s.penalty, s.dual,
         s.primal_regularization, s.dual_regularization)

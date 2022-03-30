@@ -1,53 +1,38 @@
-################################################################################
-# Indices
-################################################################################
+struct Indices 
+    variables::Vector{Int} 
+    equality_slack::Vector{Int} 
+    inequality_slack::Vector{Int}
+    equality_dual::Vector{Int} 
+    inequality_dual::Vector{Int} 
+    inequality_slack_dual::Vector{Int} 
+    symmetric::Vector{Int}
+    symmetric_equality::Vector{Int}
+    symmetric_inequality::Vector{Int}
+end 
 
-struct IndicesOptimization 
-	# Set the residual to 0
-	# r(z) = 0
-	# z <- z + Δz
+function Indices(num_variables, num_equality, num_inequality)
+    # variables, equality_slack, inequality_slack, equality_dual, inequality_dual, inequality_slack_dual
+    variables = collect(1:num_variables)
+    equality_slack = collect(num_variables .+ (1:num_equality))
+    inequality_slack = collect(num_variables + num_equality .+ (1:num_inequality))
 
-	# Dimensions
-	nz::Int # dimension of the optimization variable z
-	nΔ::Int # dimension of the optimization variable Δz and of the residual r
+    equality_dual = collect(num_variables + num_equality + num_inequality .+ (1:num_equality))
+    inequality_dual = collect(num_variables + num_equality + num_inequality + num_equality .+ (1:num_inequality))
+    inequality_slack_dual = collect(num_variables + num_equality + num_inequality + num_equality + num_inequality .+ (1:num_inequality))
+    
+    symmetric = collect(1:(num_variables + num_equality + num_inequality))
+    symmetric_equality = collect(num_variables .+ (1:num_equality))
+    symmetric_inequality = collect(num_variables + num_equality .+ (1:num_inequality))
 
-	# Variables
-	ortz::Vector{Vector{Int}} # indices of the variables associated with the positive ORThant constraints in z
-	ortΔ::Vector{Vector{Int}} # indices of the variables associated with the positive ORThant constraints in Δz
-	socz::Vector{Vector{Vector{Int}}} # indices of the variables associated with the Second Order Cone constraints in z
-	socΔ::Vector{Vector{Vector{Int}}} # indices of the variables associated with the Second Order Cone constraints in Δz
-
-	# Residual
-	equr::Vector{Int} # indices of the residual associated with the EQUality constraints in r
-	ortr::Vector{Int} # indices of the residual associated with the positive ORThant constraints in r
-	socr::Vector{Int} # indices of the residual associated with the Second-Order Constraints in r
-	socri::Vector{Vector{Int}} # indices of the residual associated with individual Second-Order Cone constraints in r
-	bil::Vector{Int} # indices of the residual associated with the bilinear constraints in r
+    return Indices(
+        variables, 
+        equality_slack, 
+        inequality_slack,
+        equality_dual,
+        inequality_dual,
+        inequality_slack_dual,
+        symmetric,
+        symmetric_equality,
+        symmetric_inequality
+    )
 end
-
-function IndicesOptimization()
-	v1 = Vector{Int}()
-	v2 = Vector{Vector{Int}}()
-	v3 = Vector{Vector{Vector{Int}}}()
-
-	s = IndicesOptimization(
-		0, 0,
-		v2, v2, v3, v3,
-		v1, v1, v1, v2, v1)
-	return s
-end
-
-a = Vector{Vector{Int}}()
-b = Vector{Vector{Vector{Int}}}()
-isempty(a)
-isempty(b)
-
-c = [[collect(1:0), collect(1:0)], [collect(1:0), collect(1:0)]]
-isempty(c)
-isempty(c[1])
-length(c[1][1])
-c[1][1]
-for bi in b 
-	@show bi 
-end
-
