@@ -21,7 +21,7 @@ Constraints{T} = Vector{Constraint{T}} where T
 function Constraint(f::Function, num_state::Int, num_action::Int; 
     num_parameter::Int=0,
     indices_inequality=collect(1:0), 
-    evaluate_hessian=false)
+    evaluate_hessian=true)
 
     #TODO: option to load/save methods
     @variables x[1:num_state], u[1:num_action], w[1:num_parameter]

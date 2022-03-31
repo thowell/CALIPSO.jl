@@ -5,8 +5,6 @@ using Symbolics
 using SparseArrays
 using Scratch
 using QDLDL
-using MathOptInterface 
-const MOI = MathOptInterface
 
 # Solver
 include("solver/indices.jl")
@@ -32,12 +30,12 @@ export
 # Trajectory Optimization 
 include("trajectory_optimization/costs.jl")
 include("trajectory_optimization/constraints.jl")
-include("trajectory_optimization/bounds.jl")
 include("trajectory_optimization/general_constraint.jl")
 include("trajectory_optimization/dynamics.jl")
 include("trajectory_optimization/data.jl")
+include("trajectory_optimization/indices.jl")
 include("trajectory_optimization/problem.jl")
-include("trajectory_optimization/moi.jl")
+include("trajectory_optimization/evaluate.jl")
 include("trajectory_optimization/utilities.jl")
 
 # objective 

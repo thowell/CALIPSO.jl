@@ -17,7 +17,7 @@ end
 
 function GeneralConstraint(f::Function, num_variables::Int, num_parameter::Int; 
     indices_inequality=collect(1:0), 
-    evaluate_hessian=false)
+    evaluate_hessian=true)
 
     #TODO: option to load/save methods
     @variables z[1:num_variables], w[1:num_parameter]

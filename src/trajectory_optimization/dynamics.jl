@@ -17,7 +17,7 @@ end
 
 function Dynamics(f::Function, num_next_state::Int, num_state::Int, num_action::Int; 
     num_parameter::Int=0, 
-    evaluate_hessian=false)
+    evaluate_hessian=true)
 
     #TODO: option to load/save methods
     @variables y[1:num_next_state], x[1:num_state], u[1:num_action], w[1:num_parameter] 

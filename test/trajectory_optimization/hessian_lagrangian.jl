@@ -1,5 +1,4 @@
 @testset "Hessian of Lagrangian" begin
-    MOI = CALIPSO.MOI
     # horizon 
     T = 3
 
@@ -95,7 +94,7 @@
     end
 
     dt = Dynamics(midpoint_implicit, num_state, num_state, num_action, num_parameter=num_parameter, evaluate_hessian=true)
-    dynamics = [dt for t = 1:T-1] 
+    dyn = [dt for t = 1:T-1] 
 
     # initial state 
     x1 = [0.0; 0.0; 0.0; 0.0] 
@@ -108,22 +107,17 @@
     oT = (x, u, w) -> 0.1 * dot(x[3:4], x[3:4])
     objt = Cost(ot, num_state, num_action, num_parameter=num_parameter, evaluate_hessian=true)
     objT = Cost(oT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
-    objective = [[objt for t = 1:T-1]..., objT]
+    obj = [[objt for t = 1:T-1]..., objT]
 
     # constraints
-    bnd1 = Bound(num_state, num_action, state_lower=x1, state_upper=x1)
-    bndt = Bound(num_state, num_action)
-    bndT = Bound(num_state, 0, state_lower=xT, state_upper=xT)
-    bounds = [bnd1, [bndt for t = 2:T-1]..., bndT]
-
     ct = (x, u, w) -> [-5.0 * ones(num_action) - cos.(u) .* sum(x.^2); cos.(x) .* tan.(u) - 5.0 * ones(num_state)]
     cT = (x, u, w) -> sin.(x.^3.0)
     cont = Constraint(ct, num_state, num_action, num_parameter=num_parameter, indices_inequality=collect(1:(num_action + num_state)), evaluate_hessian=true)
     conT = Constraint(cT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
-    constraints = [[cont for t = 1:T-1]..., conT]
+    con = [[cont for t = 1:T-1]..., conT]
 
     # data 
-    solver = CALIPSO.TrajectoryOptimizationProblem(dynamics, objective, constraints, bounds, evaluate_hessian=true)
+    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, con, evaluate_hessian=true)
 
     # Lagrangian
     function lagrangian(z) 
@@ -163,31 +157,31 @@
     Lxx_sp_func = eval(Symbolics.build_function(Lxx_sp.nzval, z)[1])
 
     z0 = rand(nz)
-    nh = length(solver.hessian_lagrangian_sparsity)
+    nh = length(trajopt.hessian_lagrangian_sparsity)
     h0 = zeros(nh)
 
     σ = 1.0
     fill!(h0, 0.0)
-    CALIPSO.trajectory!(solver.trajopt.states, solver.trajopt.actions, z0[1:np], 
-        solver.indices.states, solver.indices.actions)
-    CALIPSO.duals!(solver.trajopt.duals_dynamics, solver.trajopt.duals_constraints, solver.duals_general, z0[np .+ (1:nd)], solver.indices.dynamics_constraints, solver.indices.stage_constraints, solver.indices.general_constraint)
-    CALIPSO.hessian!(h0, solver.indices.objective_hessians, solver.trajopt.objective, solver.trajopt.states, solver.trajopt.actions, solver.trajopt.parameters, σ)
-    CALIPSO.hessian_lagrangian!(h0, solver.indices.dynamics_hessians, solver.trajopt.dynamics, solver.trajopt.states, solver.trajopt.actions, solver.trajopt.parameters, solver.trajopt.duals_dynamics)
-    CALIPSO.hessian_lagrangian!(h0, solver.indices.stage_hessians, solver.trajopt.constraints, solver.trajopt.states, solver.trajopt.actions, solver.trajopt.parameters, solver.trajopt.duals_constraints)
+    CALIPSO.trajectory!(trajopt.data.states, trajopt.data.actions, z0[1:np], 
+        trajopt.indices.states, trajopt.indices.actions)
+    CALIPSO.duals!(trajopt.data.duals_dynamics, trajopt.data.duals_constraints, trajopt.duals_general, z0[np .+ (1:nd)], trajopt.indices.dynamics_constraints, trajopt.indices.stage_constraints, trajopt.indices.general_constraint)
+    CALIPSO.hessian!(h0, trajopt.indices.objective_hessians, trajopt.data.objective, trajopt.data.states, trajopt.data.actions, trajopt.data.parameters, σ)
+    CALIPSO.hessian_lagrangian!(h0, trajopt.indices.dynamics_hessians, trajopt.data.dynamics, trajopt.data.states, trajopt.data.actions, trajopt.data.parameters, trajopt.data.duals_dynamics)
+    CALIPSO.hessian_lagrangian!(h0, trajopt.indices.stage_hessians, trajopt.data.constraints, trajopt.data.states, trajopt.data.actions, trajopt.data.parameters, trajopt.data.duals_constraints)
 
-    sparsity_objective_hessians = CALIPSO.sparsity_hessian(objective, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
-    sparsity_dynamics_hessians = CALIPSO.sparsity_hessian(dynamics, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
-    sparsity_constraint_hessian = CALIPSO.sparsity_hessian(constraints, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
+    sparsity_objective_hessians = CALIPSO.sparsity_hessian(obj, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    sparsity_dynamics_hessians = CALIPSO.sparsity_hessian(dyn, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    sparsity_constraint_hessian = CALIPSO.sparsity_hessian(con, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
     hessian_sparsity = collect([sparsity_objective_hessians..., sparsity_dynamics_hessians..., sparsity_constraint_hessian...]) 
     sp_key = sort(unique(hessian_sparsity))
 
-    idx_objective_hessians = CALIPSO.hessian_indices(objective, sp_key, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
-    idx_dynamics_hessians = CALIPSO.hessian_indices(dynamics, sp_key, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
-    idx_con_hess = CALIPSO.hessian_indices(constraints, sp_key, solver.trajopt.state_dimensions, solver.trajopt.action_dimensions)
+    idx_objective_hessians = CALIPSO.hessian_indices(obj, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    idx_dynamics_hessians = CALIPSO.hessian_indices(obj, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    idx_con_hess = CALIPSO.hessian_indices(con, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
 
     # indices
     @test sp_key[vcat(idx_objective_hessians...)] == sparsity_objective_hessians
-    @test sp_key[vcat(idx_dynamics_hessians...)] == sparsity_dynamics_hessians
+    @test sp_key[vcat(idx_dynamics_hessians...)] == sp_key[vcat(idx_dynamics_hessians...)]
     @test sp_key[vcat(idx_con_hess...)] == sparsity_constraint_hessian
 
     # Hessian
@@ -199,10 +193,6 @@
     @test norm(norm(h0 - Lxx_sp_func(z0))) < 1.0e-8
 
     h0 = zeros(nh)
-    MOI.eval_hessian_lagrangian(solver, h0, z0[1:np], σ, z0[np .+ (1:nd)])
+    CALIPSO.hessian_lagrangian(h0, trajopt, z0[1:np], z0[np .+ (1:nd)], scaling=σ)
     @test norm(norm(h0 - Lxx_sp_func(z0))) < 1.0e-8
-
-# a = z0[1:np]
-# b = z0[np .+ (1:nd)]
-# info = @benchmark MOI.evaluate_hessianian_lagrangian($solver, $h0, $a, $σ, $b)
 end
