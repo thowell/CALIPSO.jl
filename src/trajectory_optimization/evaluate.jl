@@ -1,4 +1,4 @@
-function objective(trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective!(trajopt::TrajectoryOptimizationProblem{T}, variables) where T
     trajectory!(
         trajopt.data.states, 
         trajopt.data.actions, 
@@ -12,7 +12,7 @@ function objective(trajopt::TrajectoryOptimizationProblem{T}, variables) where T
         trajopt.data.parameters) 
 end
 
-function objective_gradient(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective_gradient!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
     fill!(gradient, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -29,7 +29,25 @@ function objective_gradient(gradient, trajopt::TrajectoryOptimizationProblem{T},
     return 
 end
 
-function constraint(violations, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+    fill!(hessian, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    hessian!(
+        hessian, 
+        trajopt.sparsity_objective_hessian, 
+        trajopt.data.objective, 
+        trajopt.data.states, 
+        trajopt.data.actions,
+        trajopt.data.parameters)
+   return
+end
+
+function equality!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
     fill!(violations, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -44,7 +62,7 @@ function constraint(violations, trajopt::TrajectoryOptimizationProblem{T}, varia
         trajopt.data.states, 
         trajopt.data.actions, 
         trajopt.data.parameters)
-    if !isempty(trajopt.indices.equality_constraints) 
+    if trajopt.num_equality_constraints > 0
         constraints!(
             violations, 
             trajopt.indices.equality_constraints, 
@@ -53,7 +71,18 @@ function constraint(violations, trajopt::TrajectoryOptimizationProblem{T}, varia
             trajopt.data.actions, 
             trajopt.data.parameters)
     end
-    if !isempty(trajopt.indices.inequality_constraints) 
+    return 
+end
+
+function inequality!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+    fill!(violations, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    if trajopt.num_inequality > 0
         constraints!(
             violations, 
             trajopt.indices.inequality_constraints, 
@@ -65,7 +94,7 @@ function constraint(violations, trajopt::TrajectoryOptimizationProblem{T}, varia
     return 
 end
 
-function constraint_jacobian(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function equality_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -75,24 +104,35 @@ function constraint_jacobian(jacobian, trajopt::TrajectoryOptimizationProblem{T}
         trajopt.indices.actions)
     jacobian!(
         jacobian, 
-        trajopt.sparsity_dynamics, 
+        trajopt.sparsity_dynamics_jacobian, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
         trajopt.data.parameters)
-    if !isempty(trajopt.indices.equality_constraints) 
+    if trajopt.num_equality_constraints > 0
         jacobian!(
             jacobian, 
-            trajopt.sparsity_equality, 
+            trajopt.sparsity_equality_jacobian, 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
             trajopt.data.parameters)
     end
-    if !isempty(trajopt.indices.inequality_constraints) 
+    return
+end
+
+function inequality_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+    fill!(jacobian, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    if trajopt.num_inequality > 0
         jacobian!(
             jacobian, 
-            trajopt.sparsity_inequality, 
+            trajopt.sparsity_inequality_jacobian, 
             trajopt.data.inequality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -101,9 +141,7 @@ function constraint_jacobian(jacobian, trajopt::TrajectoryOptimizationProblem{T}
     return
 end
 
-function hessian_lagrangian(hessian, trajopt::TrajectoryOptimizationProblem{T}, variables, duals; 
-    scaling=1.0) where T
-
+function equality_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, variables, equality_duals) where T
     fill!(hessian, 0.0)
 
     trajectory!(
@@ -112,22 +150,12 @@ function hessian_lagrangian(hessian, trajopt::TrajectoryOptimizationProblem{T}, 
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
-    duals!(
+    equality_duals!(
         trajopt.data.duals_dynamics, 
         trajopt.data.duals_equality, 
-        trajopt.data.duals_inequality,
-        duals, 
-        trajopt.indices.dynamics_constraints, 
-        trajopt.indices.equality_constraints, 
-        trajopt.indices.inequality_constraints)
-    hessian!(
-        hessian, 
-        trajopt.sparsity_objective_hessian, 
-        trajopt.data.objective, 
-        trajopt.data.states, 
-        trajopt.data.actions,
-        trajopt.data.parameters, 
-        scaling=scaling)
+        equality_duals, 
+        trajopt.indices.dynamics_duals, 
+        trajopt.indices.equality_duals)
     hessian_lagrangian!(
         hessian, 
         trajopt.sparsity_dynamics_hessian, 
@@ -136,7 +164,7 @@ function hessian_lagrangian(hessian, trajopt::TrajectoryOptimizationProblem{T}, 
         trajopt.data.actions, 
         trajopt.data.parameters, 
         trajopt.data.duals_dynamics)
-    if !isempty(trajopt.indices.equality_jacobians) 
+    if trajopt.num_equality > 0 
         hessian_lagrangian!(
             hessian, 
             trajopt.sparsity_equality_hessian, 
@@ -146,7 +174,22 @@ function hessian_lagrangian(hessian, trajopt::TrajectoryOptimizationProblem{T}, 
             trajopt.data.parameters, 
             trajopt.data.duals_equality)
     end
-    if !isempty(trajopt.indices.inequality_jacobians) 
+    return 
+end
+
+function inequality_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, variables, inequality_duals) where T
+    fill!(hessian, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    inequality_duals!(
+        trajopt.data.duals_inequality,
+        inequality_duals, 
+        trajopt.indices.inequality_duals)
+    if trajopt.num_inequality > 0 
         hessian_lagrangian!(
             hessian, 
             trajopt.sparsity_inequality_hessian, 

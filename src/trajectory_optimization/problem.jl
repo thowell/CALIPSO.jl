@@ -3,6 +3,8 @@ struct TrajectoryOptimizationProblem{T}
     data::TrajectoryOptimizationData{T}
     num_variables::Int                 
     num_equality::Int 
+    num_equality_dynamics::Int 
+    num_equality_constraints::Int
     num_inequality::Int
     num_jacobian_equality::Int 
     num_jacobian_inequality::Int
@@ -82,6 +84,8 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
         data, 
         total_variables, 
         total_equality,
+        num_dynamics, 
+        num_equality,
         total_inequality, 
         total_equality_jacobians, 
         total_inequality_jacobians,
@@ -130,7 +134,7 @@ function get_trajectory(trajopt::TrajectoryOptimizationProblem)
 end
 
 function trajectory!(states::Vector{Vector{T}}, actions::Vector{Vector{T}}, 
-    trajectory::Vector{T}, 
+    trajectory, 
     state_indices::Vector{Vector{Int}}, action_indices::Vector{Vector{Int}}) where T
     for (t, idx) in enumerate(state_indices)
         states[t] .= @views trajectory[idx]
@@ -141,9 +145,9 @@ function trajectory!(states::Vector{Vector{T}}, actions::Vector{Vector{T}},
     return 
 end
 
-function duals!(duals_dynamics::Vector{Vector{T}}, duals_equality::Vector{Vector{T}}, duals_inequality::Vector{Vector{T}}, 
+function equality_duals!(duals_dynamics::Vector{Vector{T}}, duals_equality::Vector{Vector{T}}, 
     duals, 
-    dynamics_indices::Vector{Vector{Int}}, equality_indices::Vector{Vector{Int}}, inequality_indices::Vector{Vector{Int}}) where T
+    dynamics_indices::Vector{Vector{Int}}, equality_indices::Vector{Vector{Int}}) where T
     
     for (t, idx) in enumerate(dynamics_indices)
         duals_dynamics[t] .= @views duals[idx]
@@ -151,6 +155,12 @@ function duals!(duals_dynamics::Vector{Vector{T}}, duals_equality::Vector{Vector
     for (t, idx) in enumerate(equality_indices)
         duals_equality[t] .= @views duals[idx]
     end
+    return 
+end
+
+function inequality_duals!(duals_inequality::Vector{Vector{T}}, duals, 
+    inequality_indices::Vector{Vector{Int}}) where T
+    
     for (t, idx) in enumerate(inequality_indices)
         duals_inequality[t] .= @views duals[idx]
     end

@@ -8,6 +8,7 @@ using QDLDL
 
 # Solver
 include("solver/indices.jl")
+include("solver/methods.jl")
 include("solver/problem_data.jl")
 include("solver/solver_data.jl")
 include("solver/cones.jl")
@@ -37,11 +38,14 @@ include("trajectory_optimization/problem.jl")
 include("trajectory_optimization/evaluate.jl")
 include("trajectory_optimization/utilities.jl")
 
+# Interface 
+include("trajectory_optimization/methods.jl")
+
 # objective 
 export Cost
 
 # constraints 
-export Bound, Bounds, Constraint, Constraints, GeneralConstraint
+export Bound, Bounds, Constraint, Constraints
 
 # dynamics 
 export Dynamics

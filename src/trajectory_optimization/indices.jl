@@ -9,6 +9,9 @@ struct TrajectoryOptimizationIndices
     inequality_constraints::Vector{Vector{Int}} 
     inequality_jacobians::Vector{Vector{Int}} 
     inequality_hessians::Vector{Vector{Int}}
+    dynamics_duals::Vector{Vector{Int}}
+    equality_duals::Vector{Vector{Int}} 
+    inequality_duals::Vector{Vector{Int}}
     states::Vector{Vector{Int}}
     actions::Vector{Vector{Int}}
     state_action::Vector{Vector{Int}}
@@ -36,6 +39,14 @@ function indices(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, equalit
     inequality_jacobians = jacobian_indices(inequality, 
         shift=num_jacobian(dynamics) + num_jacobian(equality)) 
 
+    # equality duals 
+    dynamics_duals = constraint_indices(dynamics)
+    equality_duals = constraint_indices(equality,
+        shift=num_constraint(dynamics))
+
+    # inequality duals
+    inequality_duals = constraint_indices(inequality)
+
     # Hessian of Lagrangian 
     objective_hessians = hessian_indices(objective, key, num_state, num_action)
     dynamics_hessians = hessian_indices(dynamics, key, num_state, num_action)
@@ -59,6 +70,9 @@ function indices(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, equalit
         inequality_constraints, 
         inequality_jacobians, 
         inequality_hessians,
+        dynamics_duals,
+        equality_duals, 
+        inequality_duals,
         x_idx, 
         u_idx, 
         xu_idx, 

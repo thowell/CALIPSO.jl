@@ -161,7 +161,10 @@
 
     nz = num_state + num_action + num_state + num_action + num_state + num_state + num_state + num_action + num_state + num_action + num_state + num_state + T * num_state
     np = num_state + num_action + num_state + num_action + num_state
-    nd = num_state + num_state + num_action + num_state + num_action + num_state + num_state + T * num_state
+
+    nde = num_state + num_state + num_action + num_state + num_action + num_state + num_state
+    ndi = T * num_state
+    nd = nde + ndi
     @variables z[1:nz]
     L = lagrangian(z)
     Lxx = Symbolics.hessian(L, z[1:np])
@@ -194,7 +197,13 @@
 
     z0 = rand(nz)
     σ = 1.0
-    h0 = zeros(trajopt.num_variables, trajopt.num_variables)
-    CALIPSO.hessian_lagrangian(h0, trajopt, z0[1:np], z0[np .+ (1:nd)], scaling=σ)
-    @test norm(norm(h0 - Lxx_func(z0))) < 1.0e-8
+    ho = zeros(trajopt.num_variables, trajopt.num_variables)
+    he = zeros(trajopt.num_variables, trajopt.num_variables)
+    hi = zeros(trajopt.num_variables, trajopt.num_variables)
+
+    CALIPSO.objective_hessian!(ho, trajopt, z0[1:np])
+    CALIPSO.equality_hessian!(he, trajopt, z0[1:np], z0[np .+ (1:nde)])
+    CALIPSO.inequality_hessian!(hi, trajopt, z0[1:np], z0[np + nde .+ (1:ndi)])
+
+    @test norm(norm((ho + he + hi) - Lxx_func(z0))) < 1.0e-8
 end
