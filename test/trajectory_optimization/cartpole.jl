@@ -90,7 +90,7 @@
     solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_inequality,
         options=Options(verbose=false))
     initialize_states!(solver, trajopt, x_interpolation)
-    initialize_actions!(solver, trajopt, u_guess)
+    initialize_controls!(solver, trajopt, u_guess)
 
     # solve 
     solve!(solver)

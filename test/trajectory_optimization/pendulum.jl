@@ -48,7 +48,7 @@
 
     # ## constraints 
     eq1 = Constraint((x, u, w) -> x - x1, num_state, num_action)
-    eqT = Constraint((x, u, w) -> x - xT, num_state, num_action)
+    eqT = Constraint((x, u, w) -> x - xT, num_state, 0)
     eq = [eq1, [Constraint() for t = 2:T-1]..., eqT]
 
     ineq = [Constraint() for t = 1:T]
@@ -66,7 +66,7 @@
     solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_inequality,
         options=Options(verbose=true))
     initialize_states!(solver, trajopt, x_interpolation) 
-    initialize_actions!(solver, trajopt, u_guess)
+    initialize_controls!(solver, trajopt, u_guess)
 
     # ## solve 
     solve!(solver)

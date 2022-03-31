@@ -129,7 +129,7 @@
     solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_inequality, 
         options=Options(residual_norm=Inf, verbose=false))
     initialize_states!(solver, trajopt, x_rollout)
-    initialize_actions!(solver, trajopt, u_guess) 
+    initialize_controls!(solver, trajopt, u_guess) 
 
     # solve 
     solve!(solver)

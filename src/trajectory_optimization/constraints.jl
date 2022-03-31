@@ -79,9 +79,11 @@ end
 
 function constraints!(violations, indices, constraints::Constraints{T}, states, actions, parameters) where T
     for (t, con) in enumerate(constraints)
-        con.evaluate(con.evaluate_cache, states[t], actions[t], parameters[t])
-        @views violations[indices[t]] .= con.evaluate_cache
-        # fill!(con.evaluate_cache, 0.0) # TODO: confirm this is necessary 
+        if con.num_constraint > 0
+            con.evaluate(con.evaluate_cache, states[t], actions[t], parameters[t])
+            @views violations[indices[t]] .= con.evaluate_cache
+            # fill!(con.evaluate_cache, 0.0) # TODO: confirm this is necessary 
+        end
     end
 end
 
