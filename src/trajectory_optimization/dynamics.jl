@@ -108,50 +108,65 @@ function constraints!(violations, indices, constraints::Vector{Dynamics{T}}, sta
     end
 end
 
-function jacobian!(jacobians, indices, constraints::Vector{Dynamics{T}}, states, actions, parameters) where T
+function jacobian!(jacobians, sparsity, constraints::Vector{Dynamics{T}}, states, actions, parameters) where T
     for (t, con) in enumerate(constraints) 
         con.jacobian(con.jacobian_cache, states[t+1], states[t], actions[t], parameters[t])
-        @views jacobians[indices[t]] .= con.jacobian_cache
-        fill!(con.jacobian_cache, 0.0) # TODO: confirm this is necessary
+        for (i, idx) in enumerate(sparsity[t]) 
+            jacobians[idx...] = con.jacobian_cache[i]
+        end
+        # @views jacobians[indices[t]] .= con.jacobian_cache
+        # fill!(con.jacobian_cache, 0.0) # TODO: confirm this is necessary
     end
 end
 
-function hessian_lagrangian!(hessians, indices, constraints::Vector{Dynamics{T}}, states, actions, parameters, duals) where T
+function hessian_lagrangian!(hessians, sparsity, constraints::Vector{Dynamics{T}}, states, actions, parameters, duals) where T
     for (t, con) in enumerate(constraints) 
         if !isempty(con.hessian_cache)
             con.hessian(con.hessian_cache, states[t+1], states[t], actions[t], parameters[t], duals[t])
-            @views hessians[indices[t]] .+= con.hessian_cache
-            fill!(con.hessian_cache, 0.0) # TODO: confirm this is necessary
+            for (i, idx) in enumerate(sparsity[t]) 
+                hessians[idx...] += con.hessian_cache[i] 
+            end
+            # @views hessians[indices[t]] .+= con.hessian_cache
+            # fill!(con.hessian_cache, 0.0) # TODO: confirm this is necessary
         end
     end
 end
 
+
 function sparsity_jacobian(constraints::Vector{Dynamics{T}}, num_state::Vector{Int}, num_actions::Vector{Int}; 
     row_shift=0) where T
 
-    row = Int[]
-    col = Int[]
+    sp = Vector{Tuple{Int,Int}}[]
+
     for (t, con) in enumerate(constraints) 
+        row = Int[]
+        col = Int[]
         col_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_actions[1:t-1])) : 0)
         push!(row, (con.jacobian_sparsity[1] .+ row_shift)...) 
         push!(col, (con.jacobian_sparsity[2] .+ col_shift)...) 
+        s = collect(zip(row, col))
+        push!(sp, s)
         row_shift += con.num_next_state
     end
 
-    return collect(zip(row, col))
+    return sp
 end
 
 function sparsity_hessian(constraints::Vector{Dynamics{T}}, num_state::Vector{Int}, num_actions::Vector{Int}) where T
-    row = Int[]
-    col = Int[]
+    sp = Vector{Tuple{Int,Int}}[]
+
     for (t, con) in enumerate(constraints) 
+        row = Int[]
+        col = Int[]
         if !isempty(con.hessian_sparsity[1])
             shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_actions[1:t-1])) : 0)
             push!(row, (con.hessian_sparsity[1] .+ shift)...) 
             push!(col, (con.hessian_sparsity[2] .+ shift)...) 
         end
+        s = collect(zip(row, col))
+        push!(sp, s)
     end
-    return collect(zip(row, col))
+    return sp
 end
 
 num_state_action_next_state(constraints::Vector{Dynamics{T}}) where T = sum([con.num_state + con.num_action for con in constraints]) + constraints[end].num_next_state

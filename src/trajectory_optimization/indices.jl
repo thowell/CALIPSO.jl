@@ -3,39 +3,44 @@ struct TrajectoryOptimizationIndices
     dynamics_constraints::Vector{Vector{Int}} 
     dynamics_jacobians::Vector{Vector{Int}} 
     dynamics_hessians::Vector{Vector{Int}}
-    stage_constraints::Vector{Vector{Int}} 
-    stage_jacobians::Vector{Vector{Int}} 
-    stage_hessians::Vector{Vector{Int}}
-    general_constraint::Vector{Int}
-    general_jacobian::Vector{Int}
-    general_hessian::Vector{Int}
+    equality_constraints::Vector{Vector{Int}} 
+    equality_jacobians::Vector{Vector{Int}} 
+    equality_hessians::Vector{Vector{Int}}
+    inequality_constraints::Vector{Vector{Int}} 
+    inequality_jacobians::Vector{Vector{Int}} 
+    inequality_hessians::Vector{Vector{Int}}
     states::Vector{Vector{Int}}
     actions::Vector{Vector{Int}}
     state_action::Vector{Vector{Int}}
     state_action_next_state::Vector{Vector{Int}}
 end
 
-function indices(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, constraints::Constraints{T}, general::GeneralConstraint{T},
+function indices(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, equality::Constraints{T}, inequality::Constraints{T},
     key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}, num_trajectory::Int) where T 
-    # Jacobians
+    
+    # dynamics
     dynamics_constraints = constraint_indices(dynamics, 
         shift=0)
     dynamics_jacobians = jacobian_indices(dynamics, 
         shift=0)
-    stage_constraints = constraint_indices(constraints, 
+
+    # equality constraints
+    equality_constraints = constraint_indices(equality, 
         shift=num_constraint(dynamics))
-    stage_jacobians = jacobian_indices(constraints, 
-        shift=num_jacobian(dynamics)) 
-    general_constraint = constraint_indices(general, 
-        shift=(num_constraint(dynamics) + num_constraint(constraints)))
-    general_jacobian = jacobian_indices(general, 
-        shift=(num_jacobian(dynamics) + num_jacobian(constraints))) 
+    equality_jacobians = jacobian_indices(equality, 
+        shift=num_jacobian(dynamics))
+    
+    # inequality constraints
+    inequality_constraints = constraint_indices(inequality, 
+        shift=num_constraint(dynamics) + num_constraint(equality))
+    inequality_jacobians = jacobian_indices(inequality, 
+        shift=num_jacobian(dynamics) + num_jacobian(equality)) 
 
     # Hessian of Lagrangian 
     objective_hessians = hessian_indices(objective, key, num_state, num_action)
     dynamics_hessians = hessian_indices(dynamics, key, num_state, num_action)
-    stage_hessians = hessian_indices(constraints, key, num_state, num_action)
-    general_hessian = hessian_indices(general, key, num_trajectory)
+    equality_hessians = hessian_indices(equality, key, num_state, num_action)
+    inequality_hessians = hessian_indices(inequality, key, num_state, num_action)
 
     # indices
     x_idx = state_indices(dynamics)
@@ -48,12 +53,12 @@ function indices(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, constra
         dynamics_constraints, 
         dynamics_jacobians, 
         dynamics_hessians, 
-        stage_constraints, 
-        stage_jacobians, 
-        stage_hessians,
-        general_constraint, 
-        general_jacobian, 
-        general_hessian,
+        equality_constraints, 
+        equality_jacobians, 
+        equality_hessians,
+        inequality_constraints, 
+        inequality_jacobians, 
+        inequality_hessians,
         x_idx, 
         u_idx, 
         xu_idx, 

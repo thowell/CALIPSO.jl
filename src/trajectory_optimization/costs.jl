@@ -63,26 +63,34 @@ function gradient!(gradient, indices, objective::Objective, states, actions, par
     end
 end
 
-function hessian!(hessian, indices, objective::Objective, states, actions, parameters, scaling)
+function hessian!(hessians, sparsity, objective::Objective, states, actions, parameters; 
+    scaling=1.0)
+    
     for (t, cost) in enumerate(objective)
         cost.hessian(cost.hessian_cache, states[t], actions[t], parameters[t])
         cost.hessian_cache .*= scaling
-        @views hessian[indices[t]] .+= cost.hessian_cache
+        for (i, idx) in enumerate(sparsity[t]) 
+            hessians[idx...] += cost.hessian_cache[i] 
+        end
+        # @views hessian[indices[t]] .+= cost.hessian_cache
         # fill!(cost.hessian_cache, 0.0) # TODO: confirm this is necessary
     end
 end
 
 function sparsity_hessian(objective::Objective, num_state::Vector{Int}, num_action::Vector{Int})
-    row = Int[]
-    col = Int[]
+    sp = Vector{Tuple{Int,Int}}[]
     for (t, cost) in enumerate(objective)
+        row = Int[]
+        col = Int[]
         if !isempty(cost.sparsity[1])
             shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
             push!(row, (cost.sparsity[1] .+ shift)...) 
             push!(col, (cost.sparsity[2] .+ shift)...) 
         end
+        s = collect(zip(row, col))
+        push!(sp, s)
     end
-    return collect(zip(row, col))
+    return sp
 end
 
 function hessian_indices(objective::Objective, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int})

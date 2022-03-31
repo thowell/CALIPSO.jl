@@ -2,9 +2,6 @@
 
 # PKG_SETUP
 
-# ## Setup
-eval_hess = true 
-
 # ## horizon 
 T = 51 
 
@@ -93,8 +90,7 @@ end
 
 # ## model
 dt = Dynamics(midpoint_implicit, num_state, num_state, num_action, 
-    num_parameter=num_parameter,
-    evaluate_hessian=eval_hess)
+    num_parameter=num_parameter)
 dyn = [dt for t = 1:T-1] 
 
 # ## initialization
@@ -105,20 +101,13 @@ xT = [0.0; π; 0.0; 0.0]
 ot = (x, u, w) -> 0.1 * dot(x[3:4], x[3:4]) + 0.1 * dot(u, u)
 oT = (x, u, w) -> 0.1 * dot(x[3:4], x[3:4])
 ct = Cost(ot, num_state, num_action, 
-    num_parameter=num_parameter, 
-    evaluate_hessian=eval_hess)
+    num_parameter=num_parameter)
 cT = Cost(oT, num_state, 0, 
-    num_parameter=num_parameter,
-    evaluate_hessian=eval_hess)
-ob = [[ct for t = 1:T-1]..., cT]
+    num_parameter=num_parameter)
+obj = [[ct for t = 1:T-1]..., cT]
 
 # ## constraints
-bnd1 = Bound(num_state, num_action)
-bndt = Bound(num_state, num_action)
-bndT = Bound(num_state, 0)
-bounds = [bnd1, [bndt for t = 2:T-1]..., bndT]
-
-cons = [
+con = [
         Constraint((x, u, w) -> x - x1, num_state, num_action, 
             evaluate_hessian=eval_hess), 
         [Constraint((x, u, w) -> zeros(0), num_state, num_action, 
@@ -128,8 +117,7 @@ cons = [
        ]
 
 # ## problem 
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, ob, cons, bounds, 
-    evaluate_hessian=eval_hess)
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, con)
 
 # ## initialize
 u_guess = [0.01 * ones(num_action) for t = 1:T-1]
@@ -140,21 +128,3 @@ u_guess = [0.01 * ones(num_action) for t = 1:T-1]
 # initialize_states!(solver, x_rollout)
 x_interpolation = linear_interpolation(x1, xT, T)
 
-num_variables = trajopt.num_variables
-num_equality = trajopt.num_constraint
-num_inequality = 0
-
-x0 = zeros(num_variables)
-
-obj(x) = transpose(x) * x
-eq(x) = x[1:30].^2 .- 1.2
-ineq(x) = [x[1] + 10.0; x[2] + 5.0; 20.0 - x[5]]
-
-# solver
-methods = ProblemMethods(num_variables, obj, eq, ineq)
-solver = Solver(methods, num_variables, num_equality, num_inequality)
-initialize!(solver, x0)
-
-# solve 
-solve!(solver)
-@test norm(solver.data.residual, Inf) < 1.0e-5

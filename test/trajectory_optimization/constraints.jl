@@ -22,7 +22,9 @@
     idx_c = CALIPSO.constraint_indices(constraints)
     idx_j = CALIPSO.jacobian_indices(constraints)
     c = zeros(nc) 
-    j = zeros(nj)
+    j = zeros(CALIPSO.num_constraint(constraints), T * num_state + (T - 1) * num_action)
+    sp = CALIPSO.sparsity_jacobian(constraints, [num_state for t = 1:T], [[num_action for t = 1:T-1]..., 0], row_shift=0)
+
     cont.evaluate(c[idx_c[1]], x[1], u[1], w[1])
     conT.evaluate(c[idx_c[T]], x[T], u[T], w[T])
 
@@ -30,16 +32,13 @@
     # info = @benchmark CALIPSO.constraints!($c, $idx_c, $constraints, $x, $u, $w)
 
     @test norm(c - vcat([ct(x[t], u[t], w[t]) for t = 1:T-1]..., cT(x[T], u[T], w[T]))) < 1.0e-8
-    CALIPSO.jacobian!(j, idx_j, constraints, x, u, w)
+
+    CALIPSO.jacobian!(j, sp, constraints, x, u, w)
     # info = @benchmark CALIPSO.jacobian!($j, $idx_j, $constraints, $x, $u, $w)
 
     dct = [-I zeros(num_state, num_action); I zeros(num_state, num_action)]
     dcT = Diagonal(ones(num_state))
     dc = cat([dct for t = 1:T-1]..., dcT, dims=(1,2))
-    sp = CALIPSO.sparsity_jacobian(constraints, dim_x, dim_u) 
-    j_dense = zeros(nc, sum(dim_x) + sum(dim_u)) 
-    for (i, v) in enumerate(sp)
-        j_dense[v[1], v[2]] = j[i]
-    end
-    @test norm(j_dense - dc) < 1.0e-8
+
+    @test norm(j - dc) < 1.0e-8
 end

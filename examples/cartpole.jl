@@ -5,8 +5,6 @@
 # ## Setup
 using LinearAlgebra
 
-eval_hess = true
-
 # ## horizon 
 T = 51
 
@@ -64,9 +62,7 @@ end
 # end
 
 # ## model
-dt = Dynamics(midpoint_implicit, num_state, num_state, num_action, 
-    num_parameter=num_parameter,
-    evaluate_hessian=false)
+dt = Dynamics(midpoint_implicit, num_state, num_state, num_action)
 dyn = [dt for t = 1:T-1] 
 
 # ## initialization
@@ -80,27 +76,12 @@ Qf = 1.0e2
 
 ot = (x, u, w) -> 0.5 * Q * dot(x - xT, x - xT) + 0.5 * R * dot(u, u)
 oT = (x, u, w) -> 0.5 * Qf * dot(x - xT, x - xT)
-ct = Cost(ot, num_state, num_action, 
-    num_parameter=num_parameter,
-    evaluate_hessian=eval_hess)
-cT = Cost(oT, num_state, 0, 
-    num_parameter=num_parameter,
-    evaluate_hessian=eval_hess)
-
+ct = Cost(ot, num_state, num_action)
+cT = Cost(oT, num_state, 0)
 obj = [[ct for t = 1:T-1]..., cT]
 
 # ## constraints
-u_bnd = 3.0
-bnd1 = Bound(num_state, num_action)
-    # action_lower=[-u_bnd], 
-    # action_upper=[u_bnd])
-bndt = Bound(num_state, num_action)
-    # action_lower=[-u_bnd], 
-    # action_upper=[u_bnd])
-bndT = Bound(num_state, 0)
-bounds = [bnd1, [bndt for t = 2:T-1]..., bndT]
-
-cons = [
+con = [
             Constraint((x, u, w) -> x - x1, num_state, num_action,
                 evaluate_hessian=true), 
             [Constraint() for t = 2:T-1]..., 
@@ -109,11 +90,8 @@ cons = [
        ]
 
 # ## problem 
-solver = Solver(dyn, obj, cons, bounds,
-    evaluate_hessian=eval_hess,
-    options=Options{Float64}())
+solver = Solver(dyn, obj, con)
 
-solver.nlp.trajopt.objective[end-1].sparsity
 # ## initialize
 u_guess = [0.01 * ones(num_action) for t = 1:T-1]
 initialize_controls!(solver, u_guess)

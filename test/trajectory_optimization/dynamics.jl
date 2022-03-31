@@ -32,7 +32,9 @@
     idx_jac = CALIPSO.jacobian_indices(dynamics)
 
     d = zeros(CALIPSO.num_constraint(dynamics))
-    j = zeros(CALIPSO.num_jacobian(dynamics))
+    j = zeros(CALIPSO.num_constraint(dynamics), CALIPSO.num_state_action_next_state(dynamics))
+
+    sp = CALIPSO.sparsity_jacobian(dynamics, [num_state for t = 1:T], [num_action for t = 1:T-1], row_shift=0)
 
     dt.evaluate(dt.evaluate_cache, x1, x1, u1, w1) 
     # @benchmark $dt.evaluate($dt.evaluate_cache, $x1, $x1, $u1, $w1) 
@@ -49,14 +51,8 @@
     @test norm(vcat(d...) - vcat([euler_implicit(X[t+1], X[t], U[t], W[t]) for t = 1:T-1]...)) < 1.0e-8
     # info = @benchmark CALIPSO.constraints!($d, $idx_dyn, $dynamics, $X, $U, $W) 
 
-    CALIPSO.jacobian!(j, idx_jac, dynamics, X, U, W) 
-    s = CALIPSO.sparsity_jacobian(dynamics, CALIPSO.dimensions(dynamics)[1:2]...)
-    jac_dense = zeros(CALIPSO.num_constraint(dynamics), CALIPSO.num_state_action_next_state(dynamics))
-    for (i, ji) in enumerate(j)
-        jac_dense[s[i][1], s[i][2]] = ji
-    end
-
-    @test norm(jac_dense - [jac_fd zeros(dynamics[2].num_state, dynamics[2].num_action + dynamics[2].num_next_state); zeros(dynamics[2].num_next_state, dynamics[1].num_state + dynamics[1].num_action) jac_fd]) < 1.0e-8
+    CALIPSO.jacobian!(j, sp, dynamics, X, U, W) 
+    @test norm(j - [jac_fd zeros(dynamics[2].num_state, dynamics[2].num_action + dynamics[2].num_next_state); zeros(dynamics[2].num_next_state, dynamics[1].num_state + dynamics[1].num_action) jac_fd]) < 1.0e-8
     # info = @benchmark CALIPSO.jacobian!($j, $idx_jac, $dynamics, $X, $U, $W) 
 
     x_idx = CALIPSO.state_indices(dynamics)
