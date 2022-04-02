@@ -30,7 +30,7 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
         end
         res[ii] += cz
     end
-
+    
     # λ + ρr - y 
     for (i, ii) in enumerate(idx.equality_slack) 
         res[ii] = λ[i] + ρ[1] * r[i] - y[i]

@@ -127,8 +127,8 @@
     # solver
     methods = ProblemMethods(trajopt)
     solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_inequality, 
-        options=Options(residual_norm=Inf, verbose=false))
-    initialize_states!(solver, trajopt, x_rollout)
+        options=Options())
+    initialize_states!(solver, trajopt, x_interpolation)
     initialize_controls!(solver, trajopt, u_guess) 
 
     # solve 

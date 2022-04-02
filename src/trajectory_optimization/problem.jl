@@ -52,7 +52,7 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
     sparsity_equality_jacobian = sparsity_jacobian(data.equality, data.state_dimensions, data.action_dimensions, 
         row_shift=num_dynamics)
     sparsity_inequality_jacobian = sparsity_jacobian(data.inequality, data.state_dimensions, data.action_dimensions, 
-        row_shift=(num_dynamics + num_equality))
+        row_shift=0)
 
     # Hessian of Lagrangian sparsity 
     sparsity_objective_hessian = sparsity_hessian(data.objective, data.state_dimensions, data.action_dimensions)

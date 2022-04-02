@@ -1,14 +1,33 @@
-function initialize_primals!(variables, guess, idx::Indices)
-    variables[idx.variables] = guess 
-    variables[idx.equality_slack] .= 0.0
-    variables[idx.inequality_slack] .= 1.0 
+# solver 
+function initialize!(solver::Solver, guess)
+    # variables 
+    solver.variables[solver.indices.variables] = guess 
+    return
+end
+
+function initialize_slacks!(solver)
+    # set slacks to constraints
+    problem!(solver.problem, solver.methods, solver.indices, solver.variables,
+        gradient=false,
+        constraint=true,
+        jacobian=false,
+        hessian=false)
+
+    for (i, idx) in enumerate(solver.indices.equality_slack)
+        solver.variables[idx] = solver.problem.equality[i]
+    end
+
+    for (i, idx) in enumerate(solver.indices.inequality_slack)
+        solver.variables[idx] = max(1.0, solver.problem.inequality[i]) 
+    end
+
     return 
 end
 
-function initialize_duals!(variables, idx::Indices)
-    variables[idx.equality_dual] .= 0.0
-    variables[idx.inequality_dual] .= 0.0
-    variables[idx.inequality_slack_dual] .= 1.0 
+function initialize_duals!(solver)
+    solver.variables[solver.indices.equality_dual] .= 0.0
+    solver.variables[solver.indices.inequality_dual] .= 0.0
+    solver.variables[solver.indices.inequality_slack_dual] .= 1.0 
     return 
 end
 
@@ -21,10 +40,4 @@ function initialize_augmented_lagrangian!(penalty, dual, options::Options)
     penalty[1] = options.penalty_initial 
     dual .= options.dual_initial
     return 
-end
-
-# solver 
-function initialize!(solver::Solver, x)
-    # variables 
-    initialize_primals!(solver.variables, x, solver.indices)
 end

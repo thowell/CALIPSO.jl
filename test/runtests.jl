@@ -8,14 +8,14 @@ using BenchmarkTools
 using CALIPSO
 
 # Solver
-# include("solver/problem.jl")
-# include("solver/test1.jl")
-# include("solver/test2.jl")
-# include("solver/test3.jl")
-# include("solver/test4.jl")
-# include("solver/maratos.jl")
-# include("solver/knitro.jl")
-# include("solver/wachter.jl")
+include("solver/problem.jl")
+include("solver/test1.jl")
+include("solver/test2.jl")
+include("solver/test3.jl")
+include("solver/test4.jl")
+include("solver/maratos.jl")
+include("solver/knitro.jl")
+include("solver/wachter.jl")
 
 # # Trajectory Optimization 
 # include("trajectory_optimization/objective.jl")

@@ -1,6 +1,7 @@
 function solve!(solver::Solver)
     # initialize 
-    initialize_duals!(solver.variables, solver.indices)
+    initialize_slacks!(solver)
+    initialize_duals!(solver)
     initialize_interior_point!(solver.central_path, solver.options)
     initialize_augmented_lagrangian!(solver.penalty, solver.dual, solver.options)
 
@@ -18,16 +19,26 @@ function solve!(solver::Solver)
         residual_norm = norm(solver.data.residual, solver.options.residual_norm)
 
         for j = 1:solver.options.max_residual_iterations
-            solver.options.verbose && println("outer iteration: $i, residual iteration: $j, residual norm: $residual_norm")
+            if solver.options.verbose 
+                println("outer iteration: $i, residual iteration: $j, residual norm: $residual_norm")
+                println("
+                    lagrangian norm: $(norm(solver.data.residual[vcat(solver.indices.variables..., solver.indices.equality_slack..., solver.indices.inequality_slack...)], Inf)), 
+                    equality - r norm: $(norm(solver.data.residual[solver.indices.equality_dual], Inf)),
+                    inequality - s norm: $(norm(solver.data.residual[solver.indices.inequality_dual], Inf)),
+                    s ∘ t - κe norm: $(norm(solver.data.residual[solver.indices.inequality_slack_dual], Inf))
+                    ")
+            end
+
+    
             
             # check convergence 
-            residual_norm <= solver.options.residual_tolerance && (print("solve!"); break)
+            residual_norm <= solver.options.residual_tolerance && break
 
             # compute step 
             problem!(solver.problem, solver.methods, solver.indices, solver.variables,
-                gradient=false,
-                constraint=false,
-                jacobian=false,
+                gradient=true,
+                constraint=true,
+                jacobian=true,
                 hessian=true)
 
             inertia_correction!(solver)
@@ -65,7 +76,7 @@ function solve!(solver::Solver)
                     gradient=true,
                     constraint=true,
                     jacobian=true,
-                    hessian=false)
+                    hessian=true)
 
                 # compute residual
                 residual!(solver.data, solver.problem, solver.indices, solver.candidate, 

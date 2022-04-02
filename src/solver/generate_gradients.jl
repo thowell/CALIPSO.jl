@@ -2,7 +2,9 @@
 # using ECOS, SCS 
 # using MathOptInterface
 
-function generate_gradients(func::Function, num_variables::Int, mode::Symbol)
+function generate_gradients(func::Function, num_variables::Int, mode::Symbol; 
+    output=:inplace)
+
     @variables x[1:num_variables]
 
     if mode == :scalar 
@@ -11,8 +13,8 @@ function generate_gradients(func::Function, num_variables::Int, mode::Symbol)
         fxx = Symbolics.jacobian(fx, x) 
 
         f_func = eval(Symbolics.build_function(f, x))
-        fx_func = eval(Symbolics.build_function(fx, x)[2])
-        fxx_func = eval(Symbolics.build_function(fxx, x)[2])
+        fx_func = eval(Symbolics.build_function(fx, x)[output == :inplace ? 2 : 1])
+        fxx_func = eval(Symbolics.build_function(fxx, x)[output == :inplace ? 2 : 1])
 
         return f_func, fx_func, fxx_func
     elseif mode == :vector 
@@ -22,9 +24,9 @@ function generate_gradients(func::Function, num_variables::Int, mode::Symbol)
         @variables y[1:dim]
         fyxx = Symbolics.hessian(dot(f, y), x) 
 
-        f_func = eval(Symbolics.build_function(f, x)[2])
-        fx_func = eval(Symbolics.build_function(fx, x)[2])
-        fyxx_func = eval(Symbolics.build_function(fyxx, x, y)[2])
+        f_func = eval(Symbolics.build_function(f, x)[output == :inplace ? 2 : 1])
+        fx_func = eval(Symbolics.build_function(fx, x)[output == :inplace ? 2 : 1])
+        fyxx_func = eval(Symbolics.build_function(fyxx, x, y)[output == :inplace ? 2 : 1])
 
         return f_func, fx_func, fyxx_func
     end

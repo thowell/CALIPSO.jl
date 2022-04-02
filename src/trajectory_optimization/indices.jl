@@ -35,9 +35,9 @@ function indices(objective::Objective{T}, dynamics::Vector{Dynamics{T}}, equalit
     
     # inequality constraints
     inequality_constraints = constraint_indices(inequality, 
-        shift=num_constraint(dynamics) + num_constraint(equality))
+        shift=0)
     inequality_jacobians = jacobian_indices(inequality, 
-        shift=num_jacobian(dynamics) + num_jacobian(equality)) 
+        shift=0) 
 
     # equality duals 
     dynamics_duals = constraint_indices(dynamics)
