@@ -10,7 +10,7 @@ function generate_gradients(func::Function, num_variables::Int, mode::Symbol;
     if mode == :scalar 
         f = func(x)
         fx = Symbolics.gradient(f, x) 
-        fxx = Symbolics.jacobian(fx, x) 
+        fxx = Symbolics.hessian(f, x) 
 
         f_func = eval(Symbolics.build_function(f, x))
         fx_func = eval(Symbolics.build_function(fx, x)[output == :inplace ? 2 : 1])
