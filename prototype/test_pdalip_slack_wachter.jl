@@ -10,41 +10,25 @@ include("wachter.jl")
 # merit 
 function merit(x, r, s, y, z, t, κ, λ, ρ)
     M = 0.0
+    
     # objective
     M += f(x)
-    
-    # # equality
-    # M += dot(y, g(x) - r) 
-    # # inequality 
-    # M += dot(z, h(x) - s) 
-
-    # complementarity
-    # M -= dot(s, t)
 
     # augmented lagrangian 
     M += dot(λ, r) + 0.5 * ρ * dot(r, r)
 
     # barrier  
-    M += κ * sum(log.(s))
-
-    # # complementarity penalty
-    # M += ρ * dot(s, t)
-
-    # # log barrier penalty
-    # M -= ρ * κ * sum(log.(s .* t)) 
+    M -= κ * sum(log.(s))
 
     return M
 end
 
 function merit_gradient(x, r, s, y, z, t, κ, λ, ρ)
     Mx = fx(x) + gx(x)' * y + hx(x)' * z 
-    Mr = λ + ρ * r - y 
-    Ms = -z - t + ρ .* t - ρ * κ ./ s
-    My = g(x) - r 
-    Mz = h(x) - s 
-    Mt = -s + ρ .* t - ρ * κ ./ t
+    Mr = λ + ρ * r 
+    Ms = - κ ./ s
 
-    return Mx, Mr, Ms, My, Mz, Mt
+    return Mx, Mr, Ms
 end
 
 function residual(x, r, s, y, z, t, κ, λ, ρ)
@@ -141,7 +125,6 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
     return M
    
 end 
-
 x = x0 
 r = g(x)
 s = ones(p)#max.(h(x), 1.0e-1)
@@ -215,7 +198,7 @@ for j = 1:10
         θ̂ = norm([g(x̂) - r̂; h(x̂) - ŝ], 1)
         θ = norm([g(x) - r; h(x) - s], 1)
 
-        while merit(x̂, r̂, ŝ, y, z, t, κ, λ, ρ) > M && θ̂ > θ#|| -dot(Δ[1:(n + m + p + m + p)], vcat(merit_grad(x̂, r̂, ŝ, y, z, t, κ, λ, ρ)...)) > -c2 * dot(Δ[1:(n + m + p + m + p)], res_barrier)
+        while merit(x̂, r̂, ŝ, y, z, t, κ, λ, ρ) > M + c1 * α * dot(Δ[1:(n+m+p)], merit_grad) && θ̂ > θ#|| -dot(Δ[1:(n + m + p + m + p)], vcat(merit_grad(x̂, r̂, ŝ, y, z, t, κ, λ, ρ)...)) > -c2 * dot(Δ[1:(n + m + p + m + p)], res_barrier)
             α = 0.5 * α
             x̂ = x - α * Δ[1:n] 
             r̂ = r - α * Δ[n .+ (1:m)]
@@ -241,11 +224,6 @@ for j = 1:10
         println("con: $(norm(g(x), Inf))")
         println("")
     end
-# gradients 
-f, fx, fxx = CALIPSO.generate_gradients(obj, n, :scalar, output=:out)
-g, gx, gyxx = CALIPSO.generate_gradients(eq, n, :vector, output=:out)
-h, hx, hyxx = CALIPSO.generate_gradients(ineq, n, :vector, output=:out)
-
 
     if norm(g(x), Inf) < 1.0e-3 && norm(s .* t, Inf) < 1.0e-3 # norm(fx(x) + transpose(gx(x)) * y, Inf) < 1.0e-3
         println("solve success!")

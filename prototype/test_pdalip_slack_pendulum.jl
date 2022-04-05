@@ -138,9 +138,10 @@ for j = 1:10
         println("iter: ($j, $i, $total_iter)")
 
         M = merit(x, r, s, y, z, t, κ, λ, ρ)
-        res = vcat(merit_gradient(x, r, s, y, z, t, κ, λ, ρ)...)
-        res_barrier = vcat(merit_gradient_alt(x, r, s, y, z, t, κ, λ, ρ)...)
-        jac = merit_hessian(x, r, s, y, z, t, κ, λ, ρ)
+        merit_grad = vcat(merit_gradient(x, r, s, y, z, t, κ, λ, ρ)...)
+
+        res = vcat(residual(x, r, s, y, z, t, κ, λ, ρ)...)
+        jac = residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
         res_norm = norm(res, Inf)
 
         println("res: $(res_norm)")
@@ -179,19 +180,23 @@ for j = 1:10
 
         x̂ = x - α * Δ[1:n] 
         r̂ = r - α * Δ[n .+ (1:m)]
-        # ŝ = s - α * Δ[n + m .+ (1:p)]
+        ŝ = s - α * Δ[n + m .+ (1:p)]
         ŷ = y - α * Δ[n + m + p .+ (1:m)]
         ẑ = z - α * Δ[n + m + p + m .+ (1:p)] 
-        # t̂ = t - α * Δ[n + m + p + m + p .+ (1:p)]
+        t̂ = t - αt * Δ[n + m + p + m + p .+ (1:p)]
 
-        while merit(x̂, r̂, ŝ, y, z, t, κ, λ, ρ) > M + c1 * α * dot(Δ[1:(n + m + p + m + p)], res_barrier) #|| -dot(Δ[1:(n + m + p + m + p)], vcat(merit_gradient_alt(x̂, r̂, ŝ, y, z, t, κ, λ, ρ)...)) > -c2 * dot(Δ[1:(n + m + p + m + p)], res_barrier)
+        θ̂ = norm([g(x̂) - r̂; h(x̂) - ŝ], 1)
+        θ = norm([g(x) - r; h(x) - s], 1)
+
+        while merit(x̂, r̂, ŝ, y, z, t, κ, λ, ρ) > M + c1 * α * dot(Δ[1:(n+m+p)], merit_grad) && θ̂ > θ#|| -dot(Δ[1:(n + m + p + m + p)], vcat(merit_grad(x̂, r̂, ŝ, y, z, t, κ, λ, ρ)...)) > -c2 * dot(Δ[1:(n + m + p + m + p)], res_barrier)
             α = 0.5 * α
             x̂ = x - α * Δ[1:n] 
             r̂ = r - α * Δ[n .+ (1:m)]
             ŝ = s - α * Δ[n + m .+ (1:p)]
             ŷ = y - α * Δ[n + m + p .+ (1:m)]
             ẑ = z - α * Δ[n + m + p + m .+ (1:p)] 
-            # t̂ = t - αt * Δ[n + m + p + m + p .+ (1:p)] 
+            t̂ = t - αt * Δ[n + m + p + m + p .+ (1:p)] 
+            θ̂ = norm([g(x̂) - r̂; h(x̂) - ŝ], 1)
             ls_iter += 1 
             ls_iter > 25 && error("line search failure")
         end
@@ -201,8 +206,8 @@ for j = 1:10
         x = x̂
         r = r̂
         s = ŝ 
-        y = y - α * Δ[n + m + p .+ (1:m)]
-        z = z - α * Δ[n + m + p + m .+ (1:p)]
+        y = ŷ
+        z = ẑ
         t = t̂
         
         total_iter += 1
@@ -214,10 +219,11 @@ for j = 1:10
         println("solve success!")
         break 
     end
+
     # update
-    κ = 0.1 * κ
+    κ = max(1.0e-8, 0.1 * κ)
     λ = λ + ρ * r
-    ρ = 10 * ρ 
+    ρ = min(1.0e8, 10 * ρ) 
 end
 
 using Plots
