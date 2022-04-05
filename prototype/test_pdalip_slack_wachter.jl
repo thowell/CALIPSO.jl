@@ -4,7 +4,8 @@ Pkg.instantiate()
 using CALIPSO 
 using LinearAlgebra
 
-include("qp.jl")
+include("wachter.jl")
+ 
 
 # merit 
 function merit(x, r, s, y, z, t, κ, λ, ρ)
@@ -141,7 +142,7 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
    
 end 
 
-x = randn(n) 
+x = x0 
 r = g(x)
 s = ones(p)#max.(h(x), 1.0e-1)
 y = zeros(m) 
@@ -240,6 +241,11 @@ for j = 1:10
         println("con: $(norm(g(x), Inf))")
         println("")
     end
+# gradients 
+f, fx, fxx = CALIPSO.generate_gradients(obj, n, :scalar, output=:out)
+g, gx, gyxx = CALIPSO.generate_gradients(eq, n, :vector, output=:out)
+h, hx, hyxx = CALIPSO.generate_gradients(ineq, n, :vector, output=:out)
+
 
     if norm(g(x), Inf) < 1.0e-3 && norm(s .* t, Inf) < 1.0e-3 # norm(fx(x) + transpose(gx(x)) * y, Inf) < 1.0e-3
         println("solve success!")

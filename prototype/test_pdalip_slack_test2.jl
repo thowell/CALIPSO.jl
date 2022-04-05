@@ -4,7 +4,7 @@ Pkg.instantiate()
 using CALIPSO 
 using LinearAlgebra
 
-include("qp.jl")
+include("test2.jl")
 
 # merit 
 function merit(x, r, s, y, z, t, κ, λ, ρ)

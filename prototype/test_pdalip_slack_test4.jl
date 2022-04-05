@@ -4,7 +4,7 @@ Pkg.instantiate()
 using CALIPSO 
 using LinearAlgebra
 
-include("qp.jl")
+include("test4.jl")
 
 # merit 
 function merit(x, r, s, y, z, t, κ, λ, ρ)
@@ -141,7 +141,7 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
    
 end 
 
-x = randn(n) 
+x = rand(n) 
 r = g(x)
 s = ones(p)#max.(h(x), 1.0e-1)
 y = zeros(m) 
@@ -150,6 +150,9 @@ t = ones(p)
 κ = 1.0
 λ = zeros(m) 
 ρ = 1.0
+
+ϵ = 1.0e-5
+reg = [ϵ * ones(n); ϵ * ones(m); ϵ * ones(p); - 0.0 * ϵ * ones(m); - 0.0 * ϵ * ones(p); - 0.0 * ϵ * ones(p)]
 
 M = merit(x, r, s, y, z, t, κ, λ, ρ)
 M_grad = vcat(merit_gradient(x, r, s, y, z, t, κ, λ, ρ)...)
@@ -179,7 +182,7 @@ for j = 1:10
         end
 
         # search direction 
-        Δ = jac \ res 
+        Δ = (jac + Diagonal(reg)) \ res 
 
         # line search
         ls_iter = 0

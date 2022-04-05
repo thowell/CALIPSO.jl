@@ -4,7 +4,7 @@ Pkg.instantiate()
 using CALIPSO 
 using LinearAlgebra
 
-include("qp.jl")
+include("knitro.jl")
 
 # merit 
 function merit(x, r, s, y, z, t, κ, λ, ρ)
@@ -141,7 +141,7 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
    
 end 
 
-x = randn(n) 
+x = zeros(n)
 r = g(x)
 s = ones(p)#max.(h(x), 1.0e-1)
 y = zeros(m) 
@@ -251,3 +251,12 @@ for j = 1:10
     λ = λ + ρ * r
     ρ = min(1.0e8, 10 * ρ) 
 end
+
+x[3]
+x[6]
+
+x[4]
+x[7]
+
+x[5]
+x[8]
