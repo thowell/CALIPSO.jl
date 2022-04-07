@@ -22,13 +22,17 @@
     # solve 
     solve!(solver)
     x = solver.variables[1:8]
-    @test norm(solver.data.residual, Inf) < 1.0e-5
-    # x[3]
-    # x[6]
+    @test norm(solver.data.residual, Inf) < 1.0e-3
+    @test abs(x[3]) < 1.0e-4
+    @test abs(x[7]) < 1.0e-4
+    @test abs(x[8]) < 1.0e-4
 
-    # x[4]
-    # x[7]
+    # @show x[3]
+    # @show x[6]
 
-    # x[5]
-    # x[8]
+    # @show x[4]
+    # @show x[7]
+
+    # @show x[5]
+    # @show x[8]
 end

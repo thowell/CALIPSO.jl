@@ -92,6 +92,7 @@
     initialize_states!(solver, trajopt, x_interpolation)
     initialize_controls!(solver, trajopt, u_guess)
 
+
     # solve 
     solve!(solver)
     @test norm(solver.data.residual, Inf) < 1.0e-5

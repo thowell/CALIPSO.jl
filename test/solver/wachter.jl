@@ -16,6 +16,6 @@
     # solve 
     solve!(solver)
 
-    @test norm(solver.data.residual, Inf) < 1.0e-5
-    @test norm(solver.variables[1:3] - [1.0; 0.0; 0.5], Inf) < 1.0e-5
+    @test norm(solver.data.residual, Inf) < 1.0e-3
+    @test norm(solver.variables[1:3] - [1.0; 0.0; 0.5], Inf) < 1.0e-3
 end
