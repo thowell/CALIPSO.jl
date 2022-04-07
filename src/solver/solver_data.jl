@@ -7,6 +7,9 @@ struct SolverData{T}
     step::Vector{T}
     step_correction::Vector{T}
     step_symmetric::Vector{T}
+    merit::Vector{T} 
+    merit_gradient::Vector{T} 
+    constraint_violation::Vector{T}
 end
 
 function SolverData(num_variables, num_equality, num_inequality)
@@ -24,6 +27,11 @@ function SolverData(num_variables, num_equality, num_inequality)
     step_correction = zeros(num_total) 
     step_symmetric = zeros(num_symmetric)
 
+    merit = zeros(1) 
+    merit_gradient = zeros(num_variables + num_equality + num_inequality)
+
+    constraint_violation = zeros(num_equality + num_inequality) 
+
     SolverData(
         residual, 
         residual_error,
@@ -33,5 +41,8 @@ function SolverData(num_variables, num_equality, num_inequality)
         step,
         step_correction,
         step_symmetric,
+        merit, 
+        merit_gradient, 
+        constraint_violation,
     )
 end

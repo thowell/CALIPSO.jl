@@ -125,7 +125,7 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
    
 end 
 
-x = randn(n) 
+x = ones(n) 
 r = g(x)
 s = ones(p)#max.(h(x), 1.0e-1)
 y = zeros(m) 

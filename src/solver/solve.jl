@@ -29,8 +29,6 @@ function solve!(solver::Solver)
                     ")
             end
 
-    
-            
             # check convergence 
             residual_norm <= solver.options.residual_tolerance && break
 

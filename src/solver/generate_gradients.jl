@@ -32,8 +32,6 @@ function generate_gradients(func::Function, num_variables::Int, mode::Symbol;
     end
 end
 
-using Symbolics
-
 function generate_random_qp(num_variables, num_equality, num_inequality;
     # check_feasible=true,
     # optimizer=ECOS.Optimizer,

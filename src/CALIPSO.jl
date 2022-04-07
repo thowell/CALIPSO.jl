@@ -7,6 +7,7 @@ using Scratch
 using QDLDL
 
 # Solver
+include("solver/generate_gradients.jl")
 include("solver/indices.jl")
 include("solver/methods.jl")
 include("solver/problem_data.jl")
@@ -20,10 +21,12 @@ include("solver/residual.jl")
 include("solver/residual_matrix.jl")
 include("solver/search_direction.jl")
 include("solver/solver.jl")
+include("solver/merit.jl")
+include("solver/constraint_violation.jl")
 include("solver/initialize.jl")
 include("solver/solve.jl")
+include("solver/solve_v2.jl")
 include("solver/iterative_refinement.jl")
-include("solver/generate_gradients.jl")
 
 export 
     ProblemMethods, Solver, solve!, initialize!, Options

@@ -1,5 +1,6 @@
 Base.@kwdef mutable struct Options{T}
     residual_norm::T=1.0
+    constraint_norm::T=1.0
     residual_tolerance::T=1.0e-6
     max_outer_iterations::Int=15
     max_residual_iterations::Int=100
@@ -16,7 +17,8 @@ Base.@kwdef mutable struct Options{T}
     penalty_initial::T=1.0 
     scaling_penalty::T=10.0
     dual_initial::T=0.0
-    dual_tolerance::T=1.0e-5
+    equality_tolerance::T=1.0e-3
+    complementarity_tolerance::T=1.0e-3
     min_regularization::T = 1.0e-20
     primal_regularization_initial::T = 1.0e-4
     max_regularization::T = 1.0e40
@@ -24,5 +26,8 @@ Base.@kwdef mutable struct Options{T}
     scaling_regularization_initial::T = 100.0
     scaling_regularization::T = 8.0
     scaling_regularization_last::T = 1.0 / 3.0
+    min_central_path::T=1.0e-8 
+    max_penalty::T=1.0e8
+    armijo_tolerance::T=1.0e-4
     verbose::Bool=true
 end
