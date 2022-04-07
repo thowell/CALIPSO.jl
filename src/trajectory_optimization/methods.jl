@@ -24,3 +24,9 @@ function initialize_controls!(solver::Solver, trajopt::TrajectoryOptimizationPro
         solver.variables[solver.indices.variables[idx]] = actions[t]
     end
 end
+
+function get_trajectory(solver::Solver, trajopt::TrajectoryOptimizationProblem) 
+    states = [solver.variables[solver.indices.variables[idx]] for (t, idx) in enumerate(trajopt.indices.states)]
+    actions = [solver.variables[solver.indices.variables[idx]] for (t, idx) in enumerate(trajopt.indices.actions)] 
+    return states, actions
+end

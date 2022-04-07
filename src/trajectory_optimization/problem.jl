@@ -129,10 +129,6 @@ function initialize_controls!(trajopt::TrajectoryOptimizationProblem, actions)
     end
 end
 
-function get_trajectory(trajopt::TrajectoryOptimizationProblem) 
-    return trajopt.data.states, trajopt.data.actions[1:end-1]
-end
-
 function trajectory!(states::Vector{Vector{T}}, actions::Vector{Vector{T}}, 
     trajectory, 
     state_indices::Vector{Vector{Int}}, action_indices::Vector{Vector{Int}}) where T

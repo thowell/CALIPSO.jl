@@ -25,7 +25,6 @@ include("solver/merit.jl")
 include("solver/constraint_violation.jl")
 include("solver/initialize.jl")
 include("solver/solve.jl")
-include("solver/solve_v2.jl")
 include("solver/iterative_refinement.jl")
 
 export 

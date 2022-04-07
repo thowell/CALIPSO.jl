@@ -1,4 +1,4 @@
-@testset "Trajectory optimization: Acrobot" begin 
+@testset "Examples: Acrobot" begin 
     # ## horizon
     T = 51 
 

@@ -1,4 +1,4 @@
-@testset "Trajectory optimization: Pendulum" begin 
+@testset "Examples: Pendulum" begin 
     # ## horizon 
     T = 11 
 

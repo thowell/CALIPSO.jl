@@ -1,4 +1,4 @@
-@testset "Trajectory optimization: Cart-pole" begin 
+@testset "Examples: Cart-pole" begin 
     # ## horizon 
     T = 51
 
