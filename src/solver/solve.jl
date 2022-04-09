@@ -93,7 +93,6 @@ function solve!(solver)
             end
 
             # search direction
-            
             inertia_correction!(solver)
 
             search_direction_symmetric!(step, data.residual, data.matrix, 
@@ -101,8 +100,6 @@ function solve!(solver)
                 indices, solver.linear_solver)
 
             options.iterative_refinement && iterative_refinement!(step, solver)
-
-            # step .= jac \ res 
 
             # line search
             α = 1.0  

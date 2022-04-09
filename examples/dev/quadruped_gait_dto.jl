@@ -1,3 +1,9 @@
+using LinearAlgebra 
+using DirectTrajectoryOptimization
+const DTO = DirectTrajectoryOptimization
+using RoboDojo 
+const RD = RoboDojo 
+
 function quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w) 
     model = RoboDojo.quadruped
 
@@ -242,12 +248,6 @@ function mirror_gait(q, T)
 	end
 	return qm
 end
-
-using LinearAlgebra 
-using DirectTrajectoryOptimization
-const DTO = DirectTrajectoryOptimization
-using RoboDojo 
-const RD = RoboDojo 
 
 # ## quadruped 
 nc = 4

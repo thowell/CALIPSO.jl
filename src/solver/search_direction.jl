@@ -12,6 +12,7 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
     # solve symmetric system
     residual_symmetric!(residual_symmetric, residual, matrix, idx) 
     matrix_symmetric!(matrix_symmetric, matrix, idx) 
+    
     linear_solve!(solver, step_symmetric, matrix_symmetric, residual_symmetric)
     
     # set Δx, Δy, Δz

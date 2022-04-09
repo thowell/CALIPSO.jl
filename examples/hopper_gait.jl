@@ -47,8 +47,8 @@ function hopper_dyn1(mass_matrix, dynamics_bias, h, y, x, u, w)
     nx = 8 
     [
      hopper_dyn(mass_matrix, dynamics_bias, h, y, x, u, w);
-     y[nx .+ (1:5)] - [u[2 .+ (1:4)]; u[end]];
-     y[nx + 5 .+ (1:nx)] - x
+     y[nx .+ (1:4)] - u[2 .+ (1:4)];
+     y[nx + 4 .+ (1:nx)] - x
     ]
 end
 
@@ -56,8 +56,8 @@ function hopper_dynt(mass_matrix, dynamics_bias, h, y, x, u, w)
     nx = 8
     [
      hopper_dyn(mass_matrix, dynamics_bias, h, y, x, u, w);
-     y[nx .+ (1:5)] - [u[2 .+ (1:4)]; u[end]];
-     y[nx + 5 .+ (1:nx)] - x[nx + 5 .+ (1:nx)]
+     y[nx .+ (1:4)] - u[2 .+ (1:4)];
+     y[nx + 4 .+ (1:nx)] - x[nx + 4 .+ (1:nx)]
     ]
 end
 
@@ -228,12 +228,12 @@ h = 0.05
 
 # ## hopper 
 nx = 2 * RoboDojo.hopper.nq
-nu = RoboDojo.hopper.nu + 4 + 4 + 2 + 4 #+ 1
+nu = RoboDojo.hopper.nu + 4 + 4 + 2 + 4
 
 # ## model
 mass_matrix, dynamics_bias = RoboDojo.codegen_dynamics(RoboDojo.hopper)
-d1 = CALIPSO.Dynamics((y, x, u, w) -> hopper_dyn1(mass_matrix, dynamics_bias, [h], y, x, u, w), 2 * nx + 5, nx, nu)
-dt = CALIPSO.Dynamics((y, x, u, w) -> hopper_dynt(mass_matrix, dynamics_bias, [h], y, x, u, w), 2 * nx + 5, 2 * nx + 5, nu)
+d1 = CALIPSO.Dynamics((y, x, u, w) -> hopper_dyn1(mass_matrix, dynamics_bias, [h], y, x, u, w), 2 * nx + 4, nx, nu)
+dt = CALIPSO.Dynamics((y, x, u, w) -> hopper_dynt(mass_matrix, dynamics_bias, [h], y, x, u, w), 2 * nx + 4, 2 * nx + 4, nu)
 
 dyn = [d1, [dt for t = 2:T-1]...];
 
@@ -286,8 +286,8 @@ function objT(x, u, w)
 end
 
 c1 = CALIPSO.Cost(obj1, nx, nu)
-ct = CALIPSO.Cost(objt, 2 * nx + 5, nu)
-cT = CALIPSO.Cost(objT, 2 * nx + 5, 0)
+ct = CALIPSO.Cost(objt, 2 * nx + 4, nu)
+cT = CALIPSO.Cost(objT, 2 * nx + 4, 0)
 obj = [c1, [ct for t = 2:T-1]..., cT];
 
 # ## constraints
@@ -311,7 +311,7 @@ end
 
 function equality_T(x, u, w) 
     x_travel = 0.5
-    θ = x[nx + 5 .+ (1:nx)]
+    θ = x[nx + 4 .+ (1:nx)]
     [
      contact_constraints_equality_T(h, x, u, w); 
      # equality (6)
@@ -321,8 +321,8 @@ function equality_T(x, u, w)
 end
 
 eq1 = CALIPSO.Constraint(equality_1, nx, nu)
-eqt = CALIPSO.Constraint(equality_t, 2nx + 5, nu)
-eqT = CALIPSO.Constraint(equality_T, 2nx + 5, nu)
+eqt = CALIPSO.Constraint(equality_t, 2nx + 4, nu)
+eqT = CALIPSO.Constraint(equality_T, 2nx + 4, nu)
 eq = [eq1, [eqt for t = 2:T-1]..., eqT];
 
 function inequality_1(x, u, w) 
@@ -364,7 +364,7 @@ end
 
 function inequality_T(x, u, w) 
     x_travel = 0.5
-    θ = x[nx + 5 .+ (1:nx)]
+    θ = x[nx + 4 .+ (1:nx)]
     [
     #  # equality (6)
      (x[1] - θ[1]) - x_travel;
@@ -381,12 +381,12 @@ function inequality_T(x, u, w)
 end
 
 ineq1 = CALIPSO.Constraint(inequality_1, nx, nu)
-ineqt = CALIPSO.Constraint(inequality_t, 2nx + 5, nu) 
-ineqT = CALIPSO.Constraint(inequality_T, 2nx + 5, nu)
+ineqt = CALIPSO.Constraint(inequality_t, 2nx + 4, nu) 
+ineqT = CALIPSO.Constraint(inequality_T, 2nx + 4, nu)
 ineq = [ineq1, [ineqt for t = 2:T-1]..., ineqT];
 
 # ## initialize
-x_interpolation = [x1, [[x1; zeros(5); x1] for t = 2:T]...]
+x_interpolation = [x1, [[x1; zeros(4); x1] for t = 2:T]...]
 u_guess = [[0.0; RoboDojo.hopper.gravity * RoboDojo.hopper.mass_body * 0.5 * h[1]; 1.0e-1 * ones(nu - 2)] for t = 1:T-1] # may need to run more than once to get good trajectory
 
 # ## problem 
