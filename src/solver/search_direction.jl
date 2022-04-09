@@ -18,18 +18,18 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
     # set Δx, Δy, Δz
     Δx = @views step_symmetric[idx.variables]
     Δy = @views step_symmetric[idx.symmetric_equality]
-    Δz = @views step_symmetric[idx.symmetric_inequality]
+    Δz = @views step_symmetric[idx.symmetric_cone]
     step[idx.variables] = Δx
     step[idx.equality_dual] = Δy
-    step[idx.inequality_dual] = Δz
+    step[idx.cone_dual] = Δz
 
     # recover Δr, Δs, Δt
     Δr = @views step[idx.equality_slack]
-    Δs = @views step[idx.inequality_slack]
-    Δt = @views step[idx.inequality_slack_dual]
+    Δs = @views step[idx.cone_slack]
+    Δt = @views step[idx.cone_slack_dual]
     rr = @views residual[idx.equality_slack] 
-    rs = @views residual[idx.inequality_slack] 
-    rt = @views residual[idx.inequality_slack_dual]
+    rs = @views residual[idx.cone_slack] 
+    rt = @views residual[idx.cone_slack_dual]
 
     # Δr 
     for (i, ii) in enumerate(idx.equality_slack)
@@ -37,11 +37,11 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
     end
    
     # Δs, Δt
-    for (i, ii) in enumerate(idx.inequality_slack)
-        S̄i = matrix[idx.inequality_slack_dual[i], idx.inequality_slack_dual[i]] 
-        Ti = matrix[idx.inequality_slack_dual[i], idx.inequality_slack[i]]
-        Pi = matrix[idx.inequality_slack[i], idx.inequality_slack[i]]  
-        Di = matrix[idx.inequality_dual[i], idx.inequality_dual[i]]
+    for (i, ii) in enumerate(idx.cone_slack)
+        S̄i = matrix[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] 
+        Ti = matrix[idx.cone_slack_dual[i], idx.cone_slack[i]]
+        Pi = matrix[idx.cone_slack[i], idx.cone_slack[i]]  
+        Di = matrix[idx.cone_dual[i], idx.cone_dual[i]]
         
         Δs[i] = (rt[i] + S̄i * (rs[i] + Δz[i])) ./ (Ti + S̄i * Pi)
         Δt[i] = (rt[i] - Ti * Δs[i]) / S̄i

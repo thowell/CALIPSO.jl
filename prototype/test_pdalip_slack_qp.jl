@@ -17,7 +17,7 @@ function merit(x, r, s, y, z, t, κ, λ, ρ)
     M += dot(λ, r) + 0.5 * ρ * dot(r, r)
 
     # barrier  
-    M -= κ * sum(log.(s))
+    M -= κ * cone_barrier(s, idx_ineq, idx_soc)
 
     return M
 end
@@ -25,7 +25,7 @@ end
 function merit_gradient(x, r, s, y, z, t, κ, λ, ρ)
     Mx = fx(x) + gx(x)' * y + hx(x)' * z 
     Mr = λ + ρ * r 
-    Ms = - κ ./ s
+    Ms = - κ .* cone_barrier_gradient(s, idx_ineq, idx_soc)
 
     return Mx, Mr, Ms
 end
@@ -36,7 +36,7 @@ function residual(x, r, s, y, z, t, κ, λ, ρ)
     Ms = -z - t 
     My = g(x) - r 
     Mz = h(x) - s 
-    Mt = s .* t .- κ 
+    Mt = cone_product(s, t, idx_ineq, idx_soc) - κ .* cone_target(idx_ineq, idx_soc)
 
     return Mx, Mr, Ms, My, Mz, Mt
 end
@@ -115,25 +115,31 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
     # Mtx = zeros(p, n)
     # Mtr = zeros(p, m)
     # Mts = Diagonal(t)
-    M[t_idx, s_idx] = Diagonal(t)
+    M[t_idx, s_idx] = cone_product_jacobian(s, t, idx_ineq, idx_soc)
     # Mty = zeros(p, m)
     # Mtz = zeros(p, p)
     # Mtt = Diagonal(s)
-    M[t_idx, t_idx] = Diagonal(s)
+    M[t_idx, t_idx] = cone_product_jacobian(t, s, idx_ineq, idx_soc)
 
     return M
    
 end 
 
-x = ones(n) 
-r = g(x)
-s = ones(p)#max.(h(x), 1.0e-1)
+x = randn(n) 
+r = zeros(m)
+s = zeros(p)#max.(h(x), 1.0e-1)
 y = zeros(m) 
 z = zeros(p) 
-t = ones(p)
+t = zeros(p)
 κ = 1.0
 λ = zeros(m) 
 ρ = 1.0
+
+initialize_cone!(s, idx_ineq, idx_soc)
+initialize_cone!(t, idx_ineq, idx_soc)
+
+ϵ = 0.0 * 1.0e-5
+reg = [ϵ * ones(n); ϵ * ones(m); ϵ * ones(p); - 0.0 * ϵ * ones(m); - 0.0 * ϵ * ones(p); - 0.0 * ϵ * ones(p)]
 
 M = merit(x, r, s, y, z, t, κ, λ, ρ)
 M_grad = vcat(merit_gradient(x, r, s, y, z, t, κ, λ, ρ)...)
@@ -142,6 +148,8 @@ res = vcat(residual(x, r, s, y, z, t, κ, λ, ρ)...)
 jac = residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
 
 total_iter = 1
+
+merit_grad = vcat(merit_gradient(x, r, s, y, z, t, κ, λ, ρ)...)
 
 for j = 1:10
     for i = 1:100
@@ -163,7 +171,7 @@ for j = 1:10
         end
 
         # search direction 
-        Δ = jac \ res 
+        Δ = (jac + Diagonal(reg)) \ res 
 
         # line search
         ls_iter = 0
@@ -178,12 +186,12 @@ for j = 1:10
         ẑ = z - α * Δ[n + m + p + m .+ (1:p)] 
         t̂ = t - αt * Δ[n + m + p + m + p .+ (1:p)] 
 
-        while any(ŝ .<= 0)
+        while cone_violation(ŝ, idx_ineq, idx_soc)
             α = 0.5 * α 
             ŝ = s - α * Δ[n + m .+ (1:p)]
         end
 
-        while any(t̂ .<= 0.0) 
+        while cone_violation(t̂, idx_ineq, idx_soc)
             αt = 0.5 * αt
             t̂ = t - αt * Δ[n + m + p + m + p .+ (1:p)]
         end
@@ -225,7 +233,7 @@ for j = 1:10
         println("")
     end
 
-    if norm(g(x), Inf) < 1.0e-3 && norm(s .* t, Inf) < 1.0e-3 # norm(fx(x) + transpose(gx(x)) * y, Inf) < 1.0e-3
+    if norm(g(x), Inf) < 1.0e-3 && norm(cone_product(s, t, idx_ineq, idx_soc), Inf) < 1.0e-3 # norm(fx(x) + transpose(gx(x)) * y, Inf) < 1.0e-3
         println("solve success!")
         break 
     end

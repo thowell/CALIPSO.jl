@@ -5,12 +5,12 @@ struct ProblemData{T}
     equality::Vector{T} 
     equality_jacobian::Matrix{T}
     equality_hessian::Matrix{T} 
-    inequality::Vector{T} 
-    inequality_jacobian::Matrix{T}
-    inequality_hessian::Matrix{T}
+    cone::Vector{T} 
+    cone_jacobian::Matrix{T}
+    cone_hessian::Matrix{T}
 end
 
-function ProblemData(num_variables, num_equality, num_inequality)
+function ProblemData(num_variables, num_equality, num_cone)
     objective_gradient = zeros(num_variables)
     objective_hessian = zeros(num_variables, num_variables)
     
@@ -18,9 +18,9 @@ function ProblemData(num_variables, num_equality, num_inequality)
     equality_jacobian = zeros(num_equality, num_variables)
     equality_hessian = zeros(num_variables, num_variables)
 
-    inequality = zeros(num_inequality)
-    inequality_jacobian = zeros(num_inequality, num_variables)
-    inequality_hessian = zeros(num_variables, num_variables)
+    cone = zeros(num_cone)
+    cone_jacobian = zeros(num_cone, num_variables)
+    cone_hessian = zeros(num_variables, num_variables)
 
     ProblemData(
         objective_gradient,
@@ -28,9 +28,9 @@ function ProblemData(num_variables, num_equality, num_inequality)
         equality,
         equality_jacobian,
         equality_hessian,
-        inequality,
-        inequality_jacobian, 
-        inequality_hessian,
+        cone,
+        cone_jacobian, 
+        cone_hessian,
     )
 end
 
@@ -42,7 +42,7 @@ function problem!(data::ProblemData{T}, methods::ProblemMethods, idx::Indices, v
 
     x = @views variables[idx.variables]
     y = @views variables[idx.equality_dual]
-    z = @views variables[idx.inequality_dual]
+    z = @views variables[idx.cone_dual]
 
     # TODO: remove final allocations
     gradient && methods.objective_gradient(data.objective_gradient, x)
@@ -52,9 +52,9 @@ function problem!(data::ProblemData{T}, methods::ProblemMethods, idx::Indices, v
     jacobian && methods.equality_jacobian(data.equality_jacobian, x)
     hessian && methods.equality_hessian(data.equality_hessian, x, y)
 
-    constraint && methods.inequality(data.inequality, x)
-    jacobian && methods.inequality_jacobian(data.inequality_jacobian, x)
-    hessian && methods.inequality_hessian(data.inequality_hessian, x, z)
+    constraint && methods.cone(data.cone, x)
+    jacobian && methods.cone_jacobian(data.cone_jacobian, x)
+    hessian && methods.cone_hessian(data.cone_hessian, x, z)
 
     return
 end

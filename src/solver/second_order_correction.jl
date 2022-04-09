@@ -8,7 +8,7 @@
 #         hessian=false)
 
 #     solver.data.residual[solver.indices.equality] .+= solver.problem.equality + 1.0 / solver.penalty[1] * (solver.dual - solver.candidate[solver.indices.equality])
-#     solver.data.residual[solver.indices.inequality] .+= (solver.problem.inequality - solver.candidate[solver.indices.slack_primal])
+#     solver.data.residual[solver.indices.cone] .+= (solver.problem.cone - solver.candidate[solver.indices.slack_primal])
                     
 #     search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
 #         solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 

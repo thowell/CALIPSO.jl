@@ -12,19 +12,19 @@ function solve!(solver)
     variables = solver.variables 
     x = @views variables[indices.variables] 
     r = @views variables[indices.equality_slack] 
-    s = @views variables[indices.inequality_slack] 
+    s = @views variables[indices.cone_slack] 
     y = @views variables[indices.equality_dual] 
-    z = @views variables[indices.inequality_dual] 
-    t = @views variables[indices.inequality_slack_dual] 
+    z = @views variables[indices.cone_dual] 
+    t = @views variables[indices.cone_slack_dual] 
 
     # candidate
     candidate = solver.candidate
     x̂ = @views candidate[indices.variables] 
     r̂ = @views candidate[indices.equality_slack] 
-    ŝ = @views candidate[indices.inequality_slack] 
+    ŝ = @views candidate[indices.cone_slack] 
     ŷ = @views candidate[indices.equality_dual] 
-    ẑ = @views candidate[indices.inequality_dual] 
-    t̂ = @views candidate[indices.inequality_slack_dual] 
+    ẑ = @views candidate[indices.cone_dual] 
+    t̂ = @views candidate[indices.cone_slack_dual] 
 
     # solver data 
     data = solver.data
@@ -33,10 +33,10 @@ function solve!(solver)
     step = data.step
     Δx = @views step[indices.variables] 
     Δr = @views step[indices.equality_slack]
-    Δs = @views step[indices.inequality_slack]
+    Δs = @views step[indices.cone_slack]
     Δy = @views step[indices.equality_dual]
-    Δz = @views step[indices.inequality_dual] 
-    Δt = @views step[indices.inequality_slack_dual] 
+    Δz = @views step[indices.cone_dual] 
+    Δt = @views step[indices.cone_slack_dual] 
     Δp = @views step[indices.primals]
 
     # constraints 
@@ -82,7 +82,7 @@ function solve!(solver)
             options.verbose && println("res: $(res_norm)")
 
             θ = constraint_violation!(constraint_violation, 
-                problem.equality, r, problem.inequality, s, indices,
+                problem.equality, r, problem.cone, s, indices,
                 norm_type=options.constraint_norm)
             
             options.verbose && println("con: $(θ)")
@@ -138,7 +138,7 @@ function solve!(solver)
 
             M̂ = merit(methods.objective(x̂), x̂, r̂, ŝ, κ[1], λ, ρ[1])
             θ̂  = constraint_violation!(constraint_violation, 
-                problem.equality, r̂, problem.inequality, ŝ, indices,
+                problem.equality, r̂, problem.cone, ŝ, indices,
                 norm_type=options.constraint_norm)
             d = options.armijo_tolerance * dot(Δp, merit_grad)
 
@@ -162,7 +162,7 @@ function solve!(solver)
 
                 M̂ = merit(methods.objective(x̂), x̂, r̂, ŝ, κ[1], λ, ρ[1])
                 θ̂  = constraint_violation!(constraint_violation, 
-                    problem.equality, r̂, problem.inequality, ŝ, indices,
+                    problem.equality, r̂, problem.cone, ŝ, indices,
                     norm_type=options.constraint_norm)
 
                 residual_iteration += 1 

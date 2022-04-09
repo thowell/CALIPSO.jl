@@ -260,7 +260,7 @@ solve!(solver)
 x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 @test norm(solver.data.residual, Inf) < 1.0e-3
 @test norm(solver.problem.equality, Inf) < 1.0e-3
-@test norm(solver.variables[solver.indices.inequality_slack] .* solver.variables[solver.indices.inequality_slack_dual], Inf) < 1.0e-3
+@test norm(solver.variables[solver.indices.cone_slack] .* solver.variables[solver.indices.cone_slack_dual], Inf) < 1.0e-3
 
 # ## visualize
 vis = Visualizer()

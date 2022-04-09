@@ -12,9 +12,9 @@ struct SolverData{T}
     constraint_violation::Vector{T}
 end
 
-function SolverData(num_variables, num_equality, num_inequality)
-    num_total = num_variables + num_equality + num_inequality + num_equality + 2 * num_inequality
-    num_symmetric = num_variables + num_inequality + num_equality
+function SolverData(num_variables, num_equality, num_cone)
+    num_total = num_variables + num_equality + num_cone + num_equality + 2 * num_cone
+    num_symmetric = num_variables + num_cone + num_equality
 
     residual = zeros(num_total)
     residual_error = zeros(num_total)
@@ -28,9 +28,9 @@ function SolverData(num_variables, num_equality, num_inequality)
     step_symmetric = zeros(num_symmetric)
 
     merit = zeros(1) 
-    merit_gradient = zeros(num_variables + num_equality + num_inequality)
+    merit_gradient = zeros(num_variables + num_equality + num_cone)
 
-    constraint_violation = zeros(num_equality + num_inequality) 
+    constraint_violation = zeros(num_equality + num_cone) 
 
     SolverData(
         residual, 

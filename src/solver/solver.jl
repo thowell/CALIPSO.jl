@@ -19,20 +19,20 @@ mutable struct Solver{T}
     options::Options{T}
 end
 
-function Solver(methods, num_variables, num_equality, num_inequality; 
+function Solver(methods, num_variables, num_equality, num_cone; 
     options=Options())
 
     # problem data
-    p_data = ProblemData(num_variables, num_equality, num_inequality)
+    p_data = ProblemData(num_variables, num_equality, num_cone)
 
     # solver data
-    s_data = SolverData(num_variables, num_equality, num_inequality)
+    s_data = SolverData(num_variables, num_equality, num_cone)
 
     # indices
-    idx = Indices(num_variables, num_equality, num_inequality)
+    idx = Indices(num_variables, num_equality, num_cone)
 
     # dimensions 
-    dim = Dimensions(num_variables, num_equality, num_inequality)
+    dim = Dimensions(num_variables, num_equality, num_cone)
 
     # variables 
     variables = zeros(dim.total) 

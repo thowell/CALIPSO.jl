@@ -1,5 +1,5 @@
-# indices
-idx_soc = [collect(num_nonnegative + sum(num_soc[1:(i-1)]) .+ (1:num_soc[i])) for i = 1:length(num_soc)]
+# # indices
+# idx_soc = [collect(num_nonnegative + sum(num_soc[1:(i-1)]) .+ (1:num_soc[i])) for i = 1:length(num_soc)]
 
 # initialize
 function initialize_second_order!(x, idx_soc; 

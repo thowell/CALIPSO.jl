@@ -6,7 +6,7 @@ end
 
 function inertia(s)
     (s.linear_solver.inertia.positive == s.dimensions.variables
-  && s.linear_solver.inertia.negative == s.dimensions.equality_dual + s.dimensions.inequality_dual
+  && s.linear_solver.inertia.negative == s.dimensions.equality_dual + s.dimensions.cone_dual
   && s.linear_solver.inertia.zero     == 0)
 end
 

@@ -17,8 +17,8 @@ function initialize_slacks!(solver)
         solver.variables[idx] = solver.problem.equality[i]
     end
 
-    for (i, idx) in enumerate(solver.indices.inequality_slack)
-        solver.variables[idx] = max(1.0, solver.problem.inequality[i]) 
+    for (i, idx) in enumerate(solver.indices.cone_slack)
+        solver.variables[idx] = max(1.0, solver.problem.cone[i]) 
     end
 
     return 
@@ -26,8 +26,8 @@ end
 
 function initialize_duals!(solver)
     solver.variables[solver.indices.equality_dual] .= 0.0
-    solver.variables[solver.indices.inequality_dual] .= 0.0
-    solver.variables[solver.indices.inequality_slack_dual] .= 1.0 
+    solver.variables[solver.indices.cone_dual] .= 0.0
+    solver.variables[solver.indices.cone_slack_dual] .= 1.0 
     return 
 end
 

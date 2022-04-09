@@ -1,5 +1,5 @@
-# indices
-idx_ineq = collect(1:num_nonnegative) 
+# # indices
+# idx_ineq = collect(1:num_nonnegative) 
 
 # initialize
 function initialize_nonnegative!(x, idx_ineq; 

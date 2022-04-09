@@ -32,14 +32,14 @@ function generate_gradients(func::Function, num_variables::Int, mode::Symbol;
     end
 end
 
-function generate_random_qp(num_variables, num_equality, num_inequality;
+function generate_random_qp(num_variables, num_equality, num_cone;
     # check_feasible=true,
     # optimizer=ECOS.Optimizer,
     # silent_solver=true
     )
 
     n = num_variables
-    m = num_inequality
+    m = num_cone
     p = num_equality
 
     P = randn(n, n)
@@ -53,7 +53,7 @@ function generate_random_qp(num_variables, num_equality, num_inequality;
 
     objective(z) = transpose(z) * P * z + transpose(q) * z 
     constraint_equality(z) = A * z - b 
-    constraint_inequality(z) = h - G * z
+    constraint_cone(z) = h - G * z
     
     flag = true
 
@@ -76,6 +76,6 @@ function generate_random_qp(num_variables, num_equality, num_inequality;
     #     flag = problem.status == MathOptInterface.OPTIMAL
     # end
 
-    return objective, constraint_equality, constraint_inequality, flag
+    return objective, constraint_equality, constraint_cone, flag
 end
 

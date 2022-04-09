@@ -17,7 +17,7 @@ p = p_nn + sum(p_soc)
 idx_ineq = collect(1:0)
 idx_soc = [collect(1:3)]
 
-v = [0.0; 100.0; 100.0] 
+v = [0.0; 0.0; 0.0] 
 μ = 1.0 
 γ = 0.0 
 
@@ -147,7 +147,9 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
 
     return M
    
-end 
+end
+
+cone_product_jacobian(s, t, idx_ineq, idx_soc)
 
 x = randn(n) 
 r = zeros(m)
@@ -255,7 +257,7 @@ for j = 1:10
         println("")
     end
 
-    if norm(g(x), Inf) < 1.0e-3# && norm(cone_product(s, t), Inf) < 1.0e-3 # norm(fx(x) + transpose(gx(x)) * y, Inf) < 1.0e-3
+    if norm(g(x), Inf) < 1.0e-3 && norm(cone_product(s, t, idx_ineq, idx_soc), Inf) < 1.0e-3 # norm(fx(x) + transpose(gx(x)) * y, Inf) < 1.0e-3
         println("solve success!")
         break 
     end

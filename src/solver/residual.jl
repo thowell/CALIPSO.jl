@@ -1,14 +1,14 @@
 function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, ρ, λ)
     # duals 
     y = @views w[idx.equality_dual]
-    z = @views w[idx.inequality_dual]
+    z = @views w[idx.cone_dual]
     num_equality = length(y) 
-    num_inequality = length(z)
+    num_cone = length(z)
 
     # slacks 
     r = @views w[idx.equality_slack]
-    s = @views w[idx.inequality_slack]
-    t = @views w[idx.inequality_slack_dual]
+    s = @views w[idx.cone_slack]
+    t = @views w[idx.cone_slack_dual]
 
     # reset
     res = s_data.residual 
@@ -25,8 +25,8 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
         res[ii] += cy 
 
         cz = 0.0
-        for k = 1:num_inequality 
-            cz += p_data.inequality_jacobian[k, i] * z[k]
+        for k = 1:num_cone 
+            cz += p_data.cone_jacobian[k, i] * z[k]
         end
         res[ii] += cz
     end
@@ -37,7 +37,7 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
     end
 
     # -z - t
-    for (i, ii) in enumerate(idx.inequality_slack)
+    for (i, ii) in enumerate(idx.cone_slack)
         res[ii] = -z[i] - t[i]
     end
 
@@ -47,14 +47,14 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
         res[ii] -= r[i]
     end
 
-    # inequality 
-    res[idx.inequality_dual] = p_data.inequality 
-    for (i, ii) in enumerate(idx.inequality_dual) 
+    # cone 
+    res[idx.cone_dual] = p_data.cone 
+    for (i, ii) in enumerate(idx.cone_dual) 
         res[ii] -= s[i]
     end
 
     # s ∘ t 
-    for (i, ii) in enumerate(idx.inequality_slack_dual) 
+    for (i, ii) in enumerate(idx.cone_slack_dual) 
         res[ii] = s[i] * t[i] - κ[1]
     end
 
@@ -67,25 +67,25 @@ function residual_symmetric!(residual_symmetric, residual, matrix, idx::Indices)
 
     rx = @views residual[idx.variables]
     rr = @views residual[idx.equality_slack]
-    rs = @views residual[idx.inequality_slack]
+    rs = @views residual[idx.cone_slack]
     ry = @views residual[idx.equality_dual]
-    rz = @views residual[idx.inequality_dual]
-    rt = @views residual[idx.inequality_slack_dual]
+    rz = @views residual[idx.cone_dual]
+    rt = @views residual[idx.cone_slack_dual]
 
     residual_symmetric[idx.variables] = rx
     residual_symmetric[idx.symmetric_equality] = ry
-    residual_symmetric[idx.symmetric_inequality] = rz
+    residual_symmetric[idx.symmetric_cone] = rz
 
     # equality correction 
     for (i, ii) in enumerate(idx.symmetric_equality)
         residual_symmetric[ii] += rr[i] / matrix[idx.equality_slack[i], idx.equality_slack[i]]
     end
  
-    # inequality correction
-    for (i, ii) in enumerate(idx.symmetric_inequality) 
-        S̄i = matrix[idx.inequality_slack_dual[i], idx.inequality_slack_dual[i]] 
-        Ti = matrix[idx.inequality_slack_dual[i], idx.inequality_slack[i]]
-        Pi = matrix[idx.inequality_slack[i], idx.inequality_slack[i]] 
+    # cone correction
+    for (i, ii) in enumerate(idx.symmetric_cone) 
+        S̄i = matrix[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] 
+        Ti = matrix[idx.cone_slack_dual[i], idx.cone_slack[i]]
+        Pi = matrix[idx.cone_slack[i], idx.cone_slack[i]] 
         residual_symmetric[ii] += (rt[i] + S̄i * rs[i]) / (Ti + S̄i * Pi)
     end
 
