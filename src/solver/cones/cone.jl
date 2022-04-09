@@ -10,14 +10,14 @@ function cone_barrier(x, idx_ineq, idx_soc)
     # non-negative orthant
     if length(idx_ineq) > 0
         x_ineq = @views x[idx_ineq]
-        Φ -= nonnegative_barrier(x_ineq) 
+        Φ += nonnegative_barrier(x_ineq) 
     end
 
     # soc 
     for idx in idx_soc 
         if length(idx) > 0
             x_soc = @views x[idx] 
-            Φ -= second_order_barrier(x_soc) 
+            Φ += second_order_barrier(x_soc) 
         end
     end
 

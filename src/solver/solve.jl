@@ -71,11 +71,13 @@ function solve!(solver)
 
             M = merit(
                 methods.objective(x), 
-                x, r, s, κ[1], λ, ρ[1])
+                x, r, s, κ[1], λ, ρ[1],
+                indices)
 
             merit_grad = vcat(merit_gradient(
                 problem.objective_gradient,  
-                x, r, s, κ[1], λ, ρ[1])...)
+                x, r, s, κ[1], λ, ρ[1],
+                indices)...)
 
             residual!(data, problem, indices, variables, κ, ρ, λ)
             res_norm = norm(data.residual, options.residual_norm) / solver.dimensions.total
@@ -110,7 +112,7 @@ function solve!(solver)
             t̂ .= t - αt * Δt 
 
             cone_iteration = 0
-            while any(ŝ .<= 0)
+            while cone_violation(ŝ, indices.cone_nonnegative, indices.cone_second_order)
                 α = 0.5 * α 
                 ŝ .= s - α * Δs
                 cone_iteration += 1 
@@ -118,7 +120,7 @@ function solve!(solver)
             end
 
             cone_iteration = 0
-            while any(t̂ .<= 0.0) 
+            while cone_violation(t̂, indices.cone_nonnegative, indices.cone_second_order)
                 αt = 0.5 * αt
                 t̂ .= t - αt * Δt
                 cone_iteration += 1 
@@ -136,7 +138,9 @@ function solve!(solver)
                 jacobian=false,
                 hessian=false)
 
-            M̂ = merit(methods.objective(x̂), x̂, r̂, ŝ, κ[1], λ, ρ[1])
+            M̂ = merit(methods.objective(x̂), 
+                x̂, r̂, ŝ, κ[1], λ, ρ[1], 
+                indices)
             θ̂  = constraint_violation!(constraint_violation, 
                 problem.equality, r̂, problem.cone, ŝ, indices,
                 norm_type=options.constraint_norm)
@@ -160,7 +164,9 @@ function solve!(solver)
                     jacobian=false,
                     hessian=false)
 
-                M̂ = merit(methods.objective(x̂), x̂, r̂, ŝ, κ[1], λ, ρ[1])
+                M̂ = merit(methods.objective(x̂), 
+                    x̂, r̂, ŝ, κ[1], λ, ρ[1],
+                    indices)
                 θ̂  = constraint_violation!(constraint_violation, 
                     problem.equality, r̂, problem.cone, ŝ, indices,
                     norm_type=options.constraint_norm)

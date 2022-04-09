@@ -12,6 +12,8 @@ struct Indices
     symmetric_cone::Vector{Int}
     violation_equality::Vector{Int} 
     violation_cone::Vector{Int}
+    cone_nonnegative::Vector{Int} 
+    cone_second_order::Vector{Vector{Int}}
 end 
 
 function Indices(num_variables, num_equality, num_cone)
@@ -34,6 +36,9 @@ function Indices(num_variables, num_equality, num_cone)
     violation_equality = collect(1:num_equality) 
     violation_cone = collect(num_equality .+ (1:num_cone))
 
+    cone_nonnegative = collect(1:num_cone) 
+    cone_second_order = [collect(1:0)]
+
     return Indices(
         variables, 
         equality_slack, 
@@ -48,5 +53,7 @@ function Indices(num_variables, num_equality, num_cone)
         symmetric_cone,
         violation_equality, 
         violation_cone,
+        cone_nonnegative, 
+        cone_second_order,
     )
 end
