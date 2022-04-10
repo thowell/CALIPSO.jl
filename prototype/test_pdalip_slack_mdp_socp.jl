@@ -17,9 +17,9 @@ p = p_nn + sum(p_soc)
 idx_ineq = collect(1:0)
 idx_soc = [collect(1:3)]
 
-v = [0.0; 0.0; 0.0] 
+v = [0.0; 1.0; 1.0] 
 μ = 1.0 
-γ = 0.0 
+γ = 1.0 
 
 obj(x) = transpose(v) * x #+ 1.0e-5 * dot(x, x)
 eq(x) = [x[1] - μ * γ]
@@ -149,8 +149,6 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
    
 end
 
-cone_product_jacobian(s, t, idx_ineq, idx_soc)
-
 x = randn(n) 
 r = zeros(m)
 s = zeros(p)#max.(h(x), 1.0e-1)
@@ -163,8 +161,9 @@ t = zeros(p)
 
 initialize_cone!(s, idx_ineq, idx_soc)
 initialize_cone!(t, idx_ineq, idx_soc)
-
-ϵ = 0.0 * 1.0e-5
+s
+t
+ϵ = 1.0 * 1.0e-5
 reg = [ϵ * ones(n); ϵ * ones(m); ϵ * ones(p); - 0.0 * ϵ * ones(m); - 0.0 * ϵ * ones(p); - 0.0 * ϵ * ones(p)]
 
 M = merit(x, r, s, y, z, t, κ, λ, ρ)
@@ -230,7 +229,7 @@ for j = 1:10
         θ̂ = norm([g(x̂) - r̂; h(x̂) - ŝ], 1)
         θ = norm([g(x) - r; h(x) - s], 1)
 
-        while merit(x̂, r̂, ŝ, y, z, t, κ, λ, ρ) > M + c1 * α * dot(Δ[1:(n+m+p)], merit_grad) && θ̂ > θ#|| -dot(Δ[1:(n + m + p + m + p)], vcat(merit_grad(x̂, r̂, ŝ, y, z, t, κ, λ, ρ)...)) > -c2 * dot(Δ[1:(n + m + p + m + p)], res_barrier)
+        while merit(x̂, r̂, ŝ, y, z, t, κ, λ, ρ) > M + 0.0 * c1 * α * dot(Δ[1:(n+m+p)], merit_grad) && θ̂ > θ#|| -dot(Δ[1:(n + m + p + m + p)], vcat(merit_grad(x̂, r̂, ŝ, y, z, t, κ, λ, ρ)...)) > -c2 * dot(Δ[1:(n + m + p + m + p)], res_barrier)
             α = 0.5 * α
             x̂ = x - α * Δ[1:n] 
             r̂ = r - α * Δ[n .+ (1:m)]

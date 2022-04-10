@@ -48,9 +48,9 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
 
     # Δs, Δt (second-order)
     for idx_soc in idx.cone_second_order
-        C̄t = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
-        Cs = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
-        P  = @views matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
+        C̄t = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
+        Cs = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
+        P  = matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
         rs_soc = @views rs[idx_soc] 
         rt_soc = @views rt[idx_soc] 
         Δz_soc = @views Δz[idx_soc] 
