@@ -9,9 +9,13 @@ struct Dimensions
     dual::Int 
     symmetric::Int
     total::Int
+    cone_nonnegative::Int 
+    cone_second_order::Vector{Int}
 end
 
-function Dimensions(num_variables, num_equality, num_cone) 
+function Dimensions(num_variables, num_equality, num_cone;
+    nonnegative=num_cone,
+    second_order=[0,]) 
     num_total = num_variables + num_equality + num_cone # primal 
     num_total += num_equality + 2 * num_cone
 
@@ -26,5 +30,7 @@ function Dimensions(num_variables, num_equality, num_cone)
         num_equality + 2 * num_cone, 
         num_variables + num_equality + num_cone,
         num_total,
+        nonnegative,
+        second_order,
     )
 end

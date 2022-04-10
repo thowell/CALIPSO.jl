@@ -13,7 +13,8 @@ end
 function factorize_regularized_matrix!(s)
     matrix!(s.data, s.problem, s.indices, s.variables, 
         s.central_path, s.penalty, s.dual,
-        s.primal_regularization, s.dual_regularization)
+        s.primal_regularization, s.dual_regularization,
+        constraint_hessian=s.options.constraint_hessian)
 
     matrix_symmetric!(s.data.matrix_symmetric, s.data.matrix, s.indices) 
 

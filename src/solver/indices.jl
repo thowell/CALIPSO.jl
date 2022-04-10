@@ -16,7 +16,10 @@ struct Indices
     cone_second_order::Vector{Vector{Int}}
 end 
 
-function Indices(num_variables, num_equality, num_cone)
+function Indices(num_variables, num_equality, num_cone;
+    nonnegative=collect(1:num_cone),
+    second_order=[collect(1:0)])
+
     # variables, equality_slack, cone_slack, equality_dual, cone_dual, cone_slack_dual
     variables = collect(1:num_variables)
     equality_slack = collect(num_variables .+ (1:num_equality))
@@ -36,9 +39,6 @@ function Indices(num_variables, num_equality, num_cone)
     violation_equality = collect(1:num_equality) 
     violation_cone = collect(num_equality .+ (1:num_cone))
 
-    cone_nonnegative = collect(1:num_cone) 
-    cone_second_order = [collect(1:0)]
-
     return Indices(
         variables, 
         equality_slack, 
@@ -53,7 +53,7 @@ function Indices(num_variables, num_equality, num_cone)
         symmetric_cone,
         violation_equality, 
         violation_cone,
-        cone_nonnegative, 
-        cone_second_order,
+        nonnegative, 
+        second_order,
     )
 end

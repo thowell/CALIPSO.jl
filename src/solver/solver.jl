@@ -20,6 +20,8 @@ mutable struct Solver{T}
 end
 
 function Solver(methods, num_variables, num_equality, num_cone; 
+    nonnegative_indices=collect(1:num_cone),
+    second_order_indices=[collect(1:0)],
     options=Options())
 
     # problem data
@@ -29,10 +31,14 @@ function Solver(methods, num_variables, num_equality, num_cone;
     s_data = SolverData(num_variables, num_equality, num_cone)
 
     # indices
-    idx = Indices(num_variables, num_equality, num_cone)
+    idx = Indices(num_variables, num_equality, num_cone;
+        nonnegative=nonnegative_indices,
+        second_order=second_order_indices)
 
     # dimensions 
-    dim = Dimensions(num_variables, num_equality, num_cone)
+    dim = Dimensions(num_variables, num_equality, num_cone;
+        nonnegative=length(nonnegative_indices),
+        second_order=[length(idx_soc) for idx_soc in second_order_indices])
 
     # variables 
     variables = zeros(dim.total) 
@@ -56,7 +62,8 @@ function Solver(methods, num_variables, num_equality, num_cone;
         product=true, 
         jacobian=true,
         target=true)
-    matrix!(s_data, p_data, idx, random_variables, rand(1), rand(1), randn(num_equality), 1.0e-5, 1.0e-5)
+    matrix!(s_data, p_data, idx, random_variables, rand(1), rand(1), randn(num_equality), 1.0e-5, 1.0e-5,
+        constraint_hessian=options.constraint_hessian)
     matrix_symmetric!(s_data.matrix_symmetric, s_data.matrix, idx)
 
     linear_solver = ldl_solver(s_data.matrix_symmetric)

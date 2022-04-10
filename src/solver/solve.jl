@@ -161,7 +161,7 @@ function solve!(solver)
 
             residual_iteration = 0
 
-            while M̂ > M + α * d && θ̂ > θ
+            while M̂ > M + α * d && θ̂  > θ
                 # decrease step size 
                 α = 0.5 * α
 

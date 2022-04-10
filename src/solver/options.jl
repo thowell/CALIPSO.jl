@@ -19,15 +19,16 @@ Base.@kwdef mutable struct Options{T}
     dual_initial::T=0.0
     equality_tolerance::T=1.0e-3
     complementarity_tolerance::T=1.0e-3
-    min_regularization::T = 1.0e-20
-    primal_regularization_initial::T = 1.0e-4
-    max_regularization::T = 1.0e40
-    dual_regularization::T = 1.0e-8
-    scaling_regularization_initial::T = 100.0
-    scaling_regularization::T = 8.0
-    scaling_regularization_last::T = 1.0 / 3.0
+    min_regularization::T=1.0e-20
+    primal_regularization_initial::T=1.0e-4
+    max_regularization::T=1.0e40
+    dual_regularization::T=1.0e-8
+    scaling_regularization_initial::T=100.0
+    scaling_regularization::T=8.0
+    scaling_regularization_last::T=(1.0 / 3.0)
     min_central_path::T=1.0e-8 
     max_penalty::T=1.0e8
     armijo_tolerance::T=1.0e-4
+    constraint_hessian::Bool=true
     verbose::Bool=true
 end
