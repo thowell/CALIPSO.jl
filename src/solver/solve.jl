@@ -64,6 +64,7 @@ function solve!(solver)
 
             # compute residual 
             problem!(problem, methods, indices, variables,
+                objective=true,
                 gradient=true,
                 constraint=true,
                 jacobian=true,
@@ -75,7 +76,7 @@ function solve!(solver)
                 target=true)
 
             M = merit(
-                methods.objective(x), 
+                problem.objective[1], 
                 x, r, s, κ[1], λ, ρ[1],
                 indices)
 
@@ -138,6 +139,7 @@ function solve!(solver)
 
             # compute residual 
             problem!(problem, methods, indices, candidate,
+                objective=true,
                 gradient=false,
                 constraint=true,
                 jacobian=false,
@@ -148,7 +150,8 @@ function solve!(solver)
                 jacobian=true,
                 target=true)
 
-            M̂ = merit(methods.objective(x̂), 
+            M̂ = merit(
+                problem.objective[1], 
                 x̂, r̂, ŝ, κ[1], λ, ρ[1], 
                 indices)
             θ̂  = constraint_violation!(constraint_violation, 
@@ -169,6 +172,7 @@ function solve!(solver)
 
                 # compute residual 
                 problem!(problem, methods, indices, candidate,
+                    objective=true,
                     gradient=false,
                     constraint=true,
                     jacobian=false,
@@ -179,7 +183,8 @@ function solve!(solver)
                     jacobian=true,
                     target=true)
 
-                M̂ = merit(methods.objective(x̂), 
+                M̂ = merit(
+                    problem.objective[1], 
                     x̂, r̂, ŝ, κ[1], λ, ρ[1],
                     indices)
                 θ̂  = constraint_violation!(constraint_violation, 
@@ -206,7 +211,7 @@ function solve!(solver)
         end
 
         # convergence
-        if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(s .* t, Inf) <= options.complementarity_tolerance
+        if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance
             options.verbose && println("solve success!")
             return true 
         # update

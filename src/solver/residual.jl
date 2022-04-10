@@ -55,7 +55,7 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
 
     # s ∘ t - κ e
     for (i, ii) in enumerate(idx.cone_slack_dual) 
-        res[ii] = s[i] * t[i] - κ[1]
+        res[ii] = p_data.cone_product[i] - κ[1] * p_data.cone_target[i]
     end
 
     return 
@@ -81,12 +81,20 @@ function residual_symmetric!(residual_symmetric, residual, matrix, idx::Indices)
         residual_symmetric[ii] += rr[i] / matrix[idx.equality_slack[i], idx.equality_slack[i]]
     end
  
-    # cone correction
-    for (i, ii) in enumerate(idx.symmetric_cone) 
+    # cone correction (non-negative)
+    for i in idx.cone_nonnegative
         S̄i = matrix[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] 
         Ti = matrix[idx.cone_slack_dual[i], idx.cone_slack[i]]
         Pi = matrix[idx.cone_slack[i], idx.cone_slack[i]] 
-        residual_symmetric[ii] += (rt[i] + S̄i * rs[i]) / (Ti + S̄i * Pi)
+        residual_symmetric[idx.symmetric_cone[i]] += (rt[i] + S̄i * rs[i]) / (Ti + S̄i * Pi)
+    end
+
+    # cone correction (second-order)
+    for idx_soc in idx.cone_second_order 
+        C̄t = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
+        Cs = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
+        P  = @views matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
+        residual_symmetric[idx.symmetric_cone[idx_soc]] += (Cs + C̄t * P) \ (C̄t * rt[idx_soc] + rt[idx_soc])
     end
 
     return 

@@ -36,15 +36,28 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
         Δr[i] = (rr[i] + Δy[i]) / matrix[idx.equality_slack[i], idx.equality_slack[i]]
     end
    
-    # Δs, Δt
-    for (i, ii) in enumerate(idx.cone_slack)
+    # Δs, Δt (non-negative)
+    for i in idx.cone_nonnegative
         S̄i = matrix[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] 
         Ti = matrix[idx.cone_slack_dual[i], idx.cone_slack[i]]
         Pi = matrix[idx.cone_slack[i], idx.cone_slack[i]]  
-        Di = matrix[idx.cone_dual[i], idx.cone_dual[i]]
         
         Δs[i] = (rt[i] + S̄i * (rs[i] + Δz[i])) ./ (Ti + S̄i * Pi)
         Δt[i] = (rt[i] - Ti * Δs[i]) / S̄i
+    end
+
+    # Δs, Δt (second-order)
+    for idx_soc in idx.cone_second_order
+        C̄t = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
+        Cs = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
+        P  = @views matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
+        rs_soc = @views rs[idx_soc] 
+        rt_soc = @views rt[idx_soc] 
+        Δz_soc = @views Δz[idx_soc] 
+        Δs_soc = @views Δs[idx_soc]
+
+        Δs[idx_soc] = (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
+        Δt[idx_soc] = C̄t \ (rt_soc - Cs * Δs_soc)
     end
     
     return 

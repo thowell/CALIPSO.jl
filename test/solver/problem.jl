@@ -36,6 +36,7 @@
     solver = Solver(methods, num_variables, num_equality, num_inequality)
 
     CALIPSO.problem!(solver.problem, solver.methods, solver.indices, w)
+    CALIPSO.cone!(solver.problem, solver.methods, solver.indices, w)
 
     CALIPSO.matrix!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ, ϵp, ϵd)
 

@@ -78,8 +78,8 @@ function cone!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, v
     t = @views variables[idx.cone_slack_dual]
 
     product && (problem.cone_product .= cone_product(s, t, idx.cone_nonnegative, idx.cone_second_order))
-    jacobian && (problem.cone_product_jacobian_primal .= cone_product(s, t, idx.cone_nonnegative, idx.cone_second_order))
-    jacobian && (problem.cone_product_jacobian_dual .= cone_product(t, s, idx.cone_nonnegative, idx.cone_second_order))
+    jacobian && (problem.cone_product_jacobian_primal .= cone_product_jacobian(s, t, idx.cone_nonnegative, idx.cone_second_order))
+    jacobian && (problem.cone_product_jacobian_dual .= cone_product_jacobian(t, s, idx.cone_nonnegative, idx.cone_second_order))
     target && (problem.cone_target .= cone_target(idx.cone_nonnegative, idx.cone_second_order))
 
     return

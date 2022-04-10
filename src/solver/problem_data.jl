@@ -51,6 +51,7 @@ function ProblemData(num_variables, num_equality, num_cone)
 end
 
 function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
+    objective=true,
     gradient=true,
     constraint=true,
     jacobian=true,
@@ -62,6 +63,7 @@ function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices
     z = @views variables[idx.cone_dual]
 
     # TODO: remove final allocations
+    objective && (problem.objective[1] = methods.objective(x))
     gradient && methods.objective_gradient(problem.objective_gradient, x)
     hessian && methods.objective_hessian(problem.objective_hessian, x)
 
