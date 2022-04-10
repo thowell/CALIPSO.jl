@@ -17,9 +17,8 @@ function initialize_slacks!(solver)
         solver.variables[idx] = solver.problem.equality_constraint[i]
     end
 
-    for (i, idx) in enumerate(solver.indices.cone_slack)
-        solver.variables[idx] = max(1.0, solver.problem.cone_constraint[i]) 
-    end
+    s = @view solver.variables[solver.indices.cone_slack]
+    initialize_cone!(s, solver.indices.cone_nonnegative, solver.indices.cone_second_order) 
 
     return 
 end
@@ -27,7 +26,9 @@ end
 function initialize_duals!(solver)
     solver.variables[solver.indices.equality_dual] .= 0.0
     solver.variables[solver.indices.cone_dual] .= 0.0
-    solver.variables[solver.indices.cone_slack_dual] .= 1.0 
+    # solver.variables[solver.indices.cone_slack_dual] .= 1.0 
+    t = @view solver.variables[solver.indices.cone_slack_dual]
+    initialize_cone!(t, solver.indices.cone_nonnegative, solver.indices.cone_second_order) 
     return 
 end
 

@@ -1,10 +1,9 @@
-# # indices
-# idx_ineq = collect(1:num_nonnegative) 
-
 # initialize
 function initialize_nonnegative!(x, idx_ineq; 
     initial=1.0) 
-    x[idx_ineq] .= initial
+    for i in idx_ineq
+        x[i] = initial
+    end
     return 
 end
 
