@@ -105,10 +105,10 @@ residual_symmetric!(solver.data.residual_symmetric, solver.data.residual, solver
 - (-w[solver.indices.cone_dual] - w[solver.indices.cone_slack_dual])) < 1.0e-6
 
 @test norm(solver.data.residual[solver.indices.equality_dual] 
-    - (solver.problem.equality - w[solver.indices.equality_slack])) < 1.0e-6
+    - (solver.problem.equality_constraint - w[solver.indices.equality_slack])) < 1.0e-6
 
 @test norm(solver.data.residual[solver.indices.cone_dual] 
-    - (solver.problem.cone - w[solver.indices.cone_slack])) < 1.0e-6
+    - (solver.problem.cone_constraint - w[solver.indices.cone_slack])) < 1.0e-6
 
 @test norm(solver.data.residual[solver.indices.cone_slack_dual] 
     - (w[solver.indices.cone_slack] .* w[solver.indices.cone_slack_dual] .- κ[1])) < 1.0e-6
@@ -120,9 +120,9 @@ rt = solver.data.residual[solver.indices.cone_slack_dual]
 @test norm(solver.data.residual_symmetric[solver.indices.variables] 
     - (solver.problem.objective_gradient + solver.problem.equality_jacobian' * w[solver.indices.equality_dual] + solver.problem.cone_jacobian' * w[solver.indices.cone_dual])) < 1.0e-6
 @test norm(solver.data.residual_symmetric[solver.indices.symmetric_equality] 
-    - (solver.problem.equality - w[solver.indices.equality_slack] + solver.data.residual[solver.indices.equality_slack] ./ (ρ[1] + ϵp))) < 1.0e-6
+    - (solver.problem.equality_constraint - w[solver.indices.equality_slack] + solver.data.residual[solver.indices.equality_slack] ./ (ρ[1] + ϵp))) < 1.0e-6
 @test norm(solver.data.residual_symmetric[solver.indices.symmetric_cone] 
-    - (solver.problem.cone - w[solver.indices.cone_slack] + (rt + (s .- ϵd) .* rs) ./ (t + (s .- ϵd) * ϵp))) < 1.0e-6
+    - (solver.problem.cone_constraint - w[solver.indices.cone_slack] + (rt + (s .- ϵd) .* rs) ./ (t + (s .- ϵd) * ϵp))) < 1.0e-6
 
 # step
 fill!(solver.data.residual, 0.0)
@@ -152,8 +152,8 @@ problem!(solver.problem, solver.methods, solver.indices, solver.candidate,
     jacobian=false,
     hessian=false)
 
-solver.data.residual[solver.indices.equality_dual] .+= solver.problem.equality + 1.0 / solver.penalty[1] * (solver.dual - solver.candidate[solver.indices.equality_dual])
-solver.data.residual[solver.indices.cone_dual] .+= (solver.problem.cone - solver.candidate[solver.indices.cone_slack])
+solver.data.residual[solver.indices.equality_dual] .+= solver.problem.equality_constraint + 1.0 / solver.penalty[1] * (solver.dual - solver.candidate[solver.indices.equality_dual])
+solver.data.residual[solver.indices.cone_dual] .+= (solver.problem.cone_constraint - solver.candidate[solver.indices.cone_slack])
 
 search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
     solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 

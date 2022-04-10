@@ -42,18 +42,18 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
     end
 
     # equality 
-    res[idx.equality_dual] = p_data.equality
+    res[idx.equality_dual] = p_data.equality_constraint
     for (i, ii) in enumerate(idx.equality_dual)
         res[ii] -= r[i]
     end
 
     # cone 
-    res[idx.cone_dual] = p_data.cone 
+    res[idx.cone_dual] = p_data.cone_constraint 
     for (i, ii) in enumerate(idx.cone_dual) 
         res[ii] -= s[i]
     end
 
-    # s ∘ t 
+    # s ∘ t - κ e
     for (i, ii) in enumerate(idx.cone_slack_dual) 
         res[ii] = s[i] * t[i] - κ[1]
     end

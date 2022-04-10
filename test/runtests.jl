@@ -18,13 +18,13 @@ include("solver/maratos.jl")
 include("solver/knitro.jl")
 include("solver/wachter.jl")
 
-# # Trajectory Optimization 
+# Trajectory Optimization 
 include("trajectory_optimization/objective.jl")
 include("trajectory_optimization/dynamics.jl")
 include("trajectory_optimization/constraints.jl")
 include("trajectory_optimization/hessian_lagrangian.jl")
 
-# # Examples
+# Examples
 include("examples/pendulum.jl")
 include("examples/cartpole.jl")
 include("examples/acrobot.jl")

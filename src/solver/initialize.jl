@@ -14,11 +14,11 @@ function initialize_slacks!(solver)
         hessian=false)
 
     for (i, idx) in enumerate(solver.indices.equality_slack)
-        solver.variables[idx] = solver.problem.equality[i]
+        solver.variables[idx] = solver.problem.equality_constraint[i]
     end
 
     for (i, idx) in enumerate(solver.indices.cone_slack)
-        solver.variables[idx] = max(1.0, solver.problem.cone[i]) 
+        solver.variables[idx] = max(1.0, solver.problem.cone_constraint[i]) 
     end
 
     return 

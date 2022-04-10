@@ -407,7 +407,7 @@ x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 
 norm(solver.data.residual, Inf) < 1.0e-3
 norm((x_sol[1] - x_sol[T][1:nx])[[2; 3; 4; 6; 7; 8]], Inf) < 1.0e-3
-norm(solver.problem.equality, Inf) < 1.0e-3 
+norm(solver.problem.equality_constraint, Inf) < 1.0e-3 
 norm(solver.variables[solver.indices.inequality_slack] .* solver.variables[solver.indices.inequality_slack_dual], Inf) < 1.0e-3 
 
 # ## visualize 

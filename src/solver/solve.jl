@@ -84,7 +84,7 @@ function solve!(solver)
             options.verbose && println("res: $(res_norm)")
 
             θ = constraint_violation!(constraint_violation, 
-                problem.equality, r, problem.cone, s, indices,
+                problem.equality_constraint, r, problem.cone_constraint, s, indices,
                 norm_type=options.constraint_norm)
             
             options.verbose && println("con: $(θ)")
@@ -142,7 +142,7 @@ function solve!(solver)
                 x̂, r̂, ŝ, κ[1], λ, ρ[1], 
                 indices)
             θ̂  = constraint_violation!(constraint_violation, 
-                problem.equality, r̂, problem.cone, ŝ, indices,
+                problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
                 norm_type=options.constraint_norm)
             d = options.armijo_tolerance * dot(Δp, merit_grad)
 
@@ -168,7 +168,7 @@ function solve!(solver)
                     x̂, r̂, ŝ, κ[1], λ, ρ[1],
                     indices)
                 θ̂  = constraint_violation!(constraint_violation, 
-                    problem.equality, r̂, problem.cone, ŝ, indices,
+                    problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
                     norm_type=options.constraint_norm)
 
                 residual_iteration += 1 
@@ -186,12 +186,12 @@ function solve!(solver)
             t .= t̂
             
             total_iterations += 1
-            options.verbose && println("con: $(norm(solver.problem.equality, Inf))")
+            options.verbose && println("con: $(norm(solver.problem.equality_constraint, Inf))")
             options.verbose && println("")
         end
 
         # convergence
-        if norm(problem.equality, Inf) <= options.equality_tolerance && norm(s .* t, Inf) <= options.complementarity_tolerance
+        if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(s .* t, Inf) <= options.complementarity_tolerance
             options.verbose && println("solve success!")
             return true 
         # update
