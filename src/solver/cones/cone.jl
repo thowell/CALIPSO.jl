@@ -66,3 +66,21 @@ function cone_violation(x, idx_ineq, idx_soc)
     end
     return false
 end
+
+# evalute
+function cone!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
+    product=true,
+    jacobian=true,
+    target=true
+    ) where T
+
+    s = @views variables[idx.cone_slack]
+    t = @views variables[idx.cone_slack_dual]
+
+    product && (problem.cone_product .= cone_product(s, t, idx.cone_nonnegative, idx.cone_second_order))
+    jacobian && (problem.cone_product_jacobian_primal .= cone_product(s, t, idx.cone_nonnegative, idx.cone_second_order))
+    jacobian && (problem.cone_product_jacobian_dual .= cone_product(t, s, idx.cone_nonnegative, idx.cone_second_order))
+    target && (problem.cone_target .= cone_target(idx.cone_nonnegative, idx.cone_second_order))
+
+    return
+end

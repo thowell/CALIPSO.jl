@@ -10,7 +10,7 @@ struct ProblemMethods
     cone_hessian::Any
 end
 
-function ProblemMethods(num_variables::Int, objective::Function, equality::Function, cone::Function )
+function ProblemMethods(num_variables::Int, objective::Function, equality::Function, cone::Function)
     # generate methods
     obj, obj_grad!, obj_hess! = generate_gradients(objective, num_variables, :scalar)
     eq_con!, eq_jac!, eq_hess! = generate_gradients(equality, num_variables, :vector)

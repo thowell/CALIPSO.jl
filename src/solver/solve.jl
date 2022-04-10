@@ -69,6 +69,11 @@ function solve!(solver)
                 jacobian=true,
                 hessian=true)
 
+            cone!(problem, methods, indices, variables,
+                product=true, 
+                jacobian=true,
+                target=true)
+
             M = merit(
                 methods.objective(x), 
                 x, r, s, κ[1], λ, ρ[1],
@@ -138,6 +143,11 @@ function solve!(solver)
                 jacobian=false,
                 hessian=false)
 
+            cone!(problem, methods, indices, candidate,
+                product=true, 
+                jacobian=true,
+                target=true)
+
             M̂ = merit(methods.objective(x̂), 
                 x̂, r̂, ŝ, κ[1], λ, ρ[1], 
                 indices)
@@ -163,6 +173,11 @@ function solve!(solver)
                     constraint=true,
                     jacobian=false,
                     hessian=false)
+
+                cone!(problem, methods, indices, candidate,
+                    product=true, 
+                    jacobian=true,
+                    target=true)
 
                 M̂ = merit(methods.objective(x̂), 
                     x̂, r̂, ŝ, κ[1], λ, ρ[1],

@@ -50,7 +50,7 @@ function ProblemData(num_variables, num_equality, num_cone)
     )
 end
 
-function problem!(data::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
+function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
     gradient=true,
     constraint=true,
     jacobian=true,
@@ -62,20 +62,16 @@ function problem!(data::ProblemData{T}, methods::ProblemMethods, idx::Indices, v
     z = @views variables[idx.cone_dual]
 
     # TODO: remove final allocations
-    gradient && methods.objective_gradient(data.objective_gradient, x)
-    hessian && methods.objective_hessian(data.objective_hessian, x)
+    gradient && methods.objective_gradient(problem.objective_gradient, x)
+    hessian && methods.objective_hessian(problem.objective_hessian, x)
 
-    constraint && methods.equality_constraint(data.equality_constraint, x)
-    jacobian && methods.equality_jacobian(data.equality_jacobian, x)
-    hessian && methods.equality_hessian(data.equality_hessian, x, y)
+    constraint && methods.equality_constraint(problem.equality_constraint, x)
+    jacobian && methods.equality_jacobian(problem.equality_jacobian, x)
+    hessian && methods.equality_hessian(problem.equality_hessian, x, y)
 
-    constraint && methods.cone_constraint(data.cone_constraint, x)
-    jacobian && methods.cone_jacobian(data.cone_jacobian, x)
-    hessian && methods.cone_hessian(data.cone_hessian, x, z)
-
-    if cone 
-        nothing
-    end
+    constraint && methods.cone_constraint(problem.cone_constraint, x)
+    jacobian && methods.cone_jacobian(problem.cone_jacobian, x)
+    hessian && methods.cone_hessian(problem.cone_hessian, x, z)
 
     return
 end
