@@ -18,6 +18,7 @@ include("solver/maratos.jl")
 include("solver/knitro.jl")
 include("solver/wachter.jl")
 include("solver/friction_cone.jl")
+include("solver/minimum_variance_portfolio.jl")
 
 # Trajectory Optimization 
 include("trajectory_optimization/objective.jl")

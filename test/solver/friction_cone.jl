@@ -41,11 +41,11 @@
                 @test norm(solver.data.residual, Inf) < 1.0e-3 
                 @test !CALIPSO.cone_violation(solver.variables, 
                     solver.indices.cone_nonnegative, solver.indices.cone_second_order)
-
                 if norm(v[2:3]) > 0.0 && γ > 0.0 && μ > 0.0
                     v_dir = v[2:3] ./ norm(v[2:3]) 
                     b_dir = solver.variables[2:3] ./ norm(solver.variables[2:3])
                     @test norm(v_dir + b_dir, Inf) < 1.0e-3
+                    @test norm(solver.variables[2:3]) <= μ * γ 
                 end
             end
         end
