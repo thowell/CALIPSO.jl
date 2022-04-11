@@ -13,7 +13,7 @@ function initialize_second_order!(x, idx_soc;
 end
 
 # barrier 
-second_order_barrier(x) = log(x[1]^2 - dot(x[2:end], x[2:end]))
+second_order_barrier(x) = 0.5 * log(x[1]^2 - dot(x[2:end], x[2:end]))
 second_order_barrier_gradient(x) = 1.0 / (x[1]^2 - dot(x[2:end], x[2:end])) * [x[1]; -x[2:end]]
 
 # product 

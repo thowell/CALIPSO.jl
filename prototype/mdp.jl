@@ -9,19 +9,17 @@ using LinearAlgebra
     subject to ||b|| <= μn
 """
 
-n = 3 
-m = 1 
-p_nn = 0
-p_soc = [3] 
-p = p_nn + sum(p_soc)
-idx_ineq = collect(1:p_nn)
-idx_soc = [collect(p_nn + sum(p_soc[1:(i-1)]) .+ (1:d)) for (i, d) in enumerate(p_soc)]
+num_variables = 3 
+num_equality = 1 
+num_cone = 3
+idx_ineq = Int[]
+idx_soc = [collect(1:3)]
 
-v = [0.0; 1.0; 1.0] 
-μ = 1.0 
-γ = 1.0 
+v = [0.0; 0.0; 0.0] 
+μ = 0.0 
+γ = 0.0 
 
-obj(x) = transpose(v) * x #+ 1.0e-5 * dot(x, x)
+obj(x) = transpose(v) * x
 eq(x) = [x[1] - μ * γ]
 cone(x) = x
 
@@ -29,11 +27,10 @@ cone(x) = x
 methods = ProblemMethods(n, obj, eq, cone)
 solver = Solver(methods, n, m, p;
     nonnegative_indices=idx_ineq,
-    second_order_indices=idx_soc)
+    second_order_indices=idx_soc,)
 
 x0 = ones(n)
 initialize!(solver, x0)
 
 # solve 
 solve!(solver)
-@test norm(solver.data.residual, Inf) < 1.0e-5

@@ -2,8 +2,8 @@ function solve!(solver)
     # initialize
     initialize_slacks!(solver)
     initialize_duals!(solver)
-    initialize_interior_point!(solver.central_path, solver.options)
-    initialize_augmented_lagrangian!(solver.penalty, solver.dual, solver.options)
+    initialize_interior_point!(solver)
+    initialize_augmented_lagrangian!(solver)
 
     # indices 
     indices = solver.indices 

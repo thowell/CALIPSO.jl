@@ -149,7 +149,7 @@ function residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
    
 end
 
-x = randn(n) 
+x = ones(n) 
 r = zeros(m)
 s = zeros(p)#max.(h(x), 1.0e-1)
 y = zeros(m) 
@@ -163,16 +163,16 @@ initialize_cone!(s, idx_ineq, idx_soc)
 initialize_cone!(t, idx_ineq, idx_soc)
 s
 t
-ϵ = 1.0 * 1.0e-5
-reg = [ϵ * ones(n); ϵ * ones(m); ϵ * ones(p); - 0.0 * ϵ * ones(m); - 0.0 * ϵ * ones(p); - 0.0 * ϵ * ones(p)]
+ϵ = 1.0 * 1.0e-7
+reg = [ϵ * ones(n); ϵ * ones(m); ϵ * ones(p); - ϵ * ones(m); - ϵ * ones(p); - ϵ * ones(p)]
 
 M = merit(x, r, s, y, z, t, κ, λ, ρ)
 M_grad = vcat(merit_gradient(x, r, s, y, z, t, κ, λ, ρ)...)
 
 res = vcat(residual(x, r, s, y, z, t, κ, λ, ρ)...)
-jac = residual_jacobian(x, r, s, y, z, t, κ, λ, ρ)
-
+jac = sparse(residual_jacobian(x, r, s, y, z, t, κ, λ, ρ) + Diagonal(reg))
 total_iter = 1
+jac \ res
 
 for j = 1:10
     for i = 1:100
@@ -186,6 +186,7 @@ for j = 1:10
         res_norm = norm(res, Inf)
 
         println("res: $(res_norm)")
+ 
         println("cond: $(cond(jac))")
 
         # check convergence
@@ -229,7 +230,7 @@ for j = 1:10
         θ̂ = norm([g(x̂) - r̂; h(x̂) - ŝ], 1)
         θ = norm([g(x) - r; h(x) - s], 1)
 
-        while merit(x̂, r̂, ŝ, y, z, t, κ, λ, ρ) > M + 0.0 * c1 * α * dot(Δ[1:(n+m+p)], merit_grad) && θ̂ > θ#|| -dot(Δ[1:(n + m + p + m + p)], vcat(merit_grad(x̂, r̂, ŝ, y, z, t, κ, λ, ρ)...)) > -c2 * dot(Δ[1:(n + m + p + m + p)], res_barrier)
+        while merit(x̂, r̂, ŝ, y, z, t, κ, λ, ρ) > M + 1.0 * c1 * α * dot(Δ[1:(n+m+p)], merit_grad) && θ̂ > θ#|| -dot(Δ[1:(n + m + p + m + p)], vcat(merit_grad(x̂, r̂, ŝ, y, z, t, κ, λ, ρ)...)) > -c2 * dot(Δ[1:(n + m + p + m + p)], res_barrier)
             α = 0.5 * α
             x̂ = x - α * Δ[1:n] 
             r̂ = r - α * Δ[n .+ (1:m)]
@@ -254,6 +255,9 @@ for j = 1:10
         total_iter += 1
         println("con: $(norm(g(x), Inf))")
         println("")
+
+        @show [x; r; s; y; z; t]
+
     end
 
     if norm(g(x), Inf) < 1.0e-3 && norm(cone_product(s, t, idx_ineq, idx_soc), Inf) < 1.0e-3 # norm(fx(x) + transpose(gx(x)) * y, Inf) < 1.0e-3

@@ -8,8 +8,9 @@ Base.@kwdef mutable struct Options{T}
     max_residual_line_search::Int=25
     max_cone_line_search::Int=25
     max_second_order_correction::Int=5
-    iterative_refinement::Bool=false
+    iterative_refinement::Bool=true
     max_iterative_refinement::Int=10
+    min_iterative_refinement::Int=1
     iterative_refinement_tolerance=1.0e-8
     central_path_initial::T=1.0
     scaling_central_path::T=0.1 
