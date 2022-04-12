@@ -1,3 +1,5 @@
+[![CI](https://github.com/thowell/CALIPSO.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/thowell/CALIPSO.jl/actions/workflows/CI.yml)
+
 # CALIPSO.jl
 Conic Augmented Lagrangian Interior-Point SOlver: A solver for contact-implicit trajectory optimization
 
