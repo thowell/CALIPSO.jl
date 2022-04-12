@@ -112,7 +112,7 @@
 
     ineq = [Constraint() for t = 1:T]
 
-    soc = [Constraint() for t = 1:T]
+    soc = [[Constraint()] for t = 1:T]
 
     # ## problem 
     trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, soc)
@@ -128,7 +128,10 @@
 
     # solver
     methods = ProblemMethods(trajopt)
+    idx_nn, idx_soc = cone_indices(trajopt)
     solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone, 
+        nonnegative_indices=idx_nn, 
+        second_order_indices=idx_soc,
         options=Options())
     initialize_states!(solver, trajopt, x_interpolation)
     initialize_controls!(solver, trajopt, u_guess) 

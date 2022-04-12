@@ -198,3 +198,4 @@ function hessian_indices(constraints::Constraints{T}, key::Vector{Tuple{Int,Int}
     end
     return indices
 end
+

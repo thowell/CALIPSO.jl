@@ -5,22 +5,27 @@ struct TrajectoryOptimizationProblem{T}
     num_equality::Int 
     num_equality_dynamics::Int 
     num_equality_constraints::Int
-    num_inequality::Int
+    num_cone::Int
+    num_cone_nonnegative::Int
+    num_cone_second_order::Int
     num_jacobian_equality::Int 
-    num_jacobian_inequality::Int
+    num_jacobian_cone::Int
     num_hessian_lagrangian::Int  
 
     indices::TrajectoryOptimizationIndices
+
     # TODO sparsity struct
     sparsity_dynamics_jacobian
     sparsity_equality_jacobian
-    sparsity_inequality_jacobian
+    sparsity_nonnegative_jacobian
+    sparsity_second_order_jacobian
 
     hessian_sparsity_key
     sparsity_objective_hessian
     sparsity_dynamics_hessian
     sparsity_equality_hessian
-    sparsity_inequality_hessian
+    sparsity_nonnegative_hessian
+    sparsity_second_order_hessian
 
     hessian_lagrangian::Bool 
     parameters::Vector{T}
@@ -35,34 +40,44 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
     # number of constraints
     num_dynamics = num_constraint(data.dynamics)
     num_equality = num_constraint(data.equality) 
-    num_inequality = num_constraint(data.inequality) 
+    num_nonnegative = num_constraint(data.nonnegative)
+    num_second_order = sum(num_constraint(data.second_order))
     total_equality = num_dynamics + num_equality 
-    total_inequality = num_inequality
+    total_cone = num_nonnegative + num_second_order
 
     # number of nonzeros in constraint Jacobian
     num_dynamics_jacobian = num_jacobian(data.dynamics)
     num_equality_jacobian = num_jacobian(data.equality)  
-    num_inequality_jacobian = num_jacobian(data.inequality)
+    num_nonnegative_jacobian = num_jacobian(data.nonnegative)
+    num_second_order_jacobian = sum(num_jacobian(data.second_order))
+
     total_equality_jacobians = num_dynamics_jacobian + num_equality_jacobian 
-    total_inequality_jacobians = num_inequality_jacobian
+    total_cone_jacobians = num_nonnegative_jacobian + num_second_order_jacobian
 
     # constraint Jacobian sparsity
     sparsity_dynamics_jacobian = sparsity_jacobian(data.dynamics, data.state_dimensions, data.action_dimensions, 
         row_shift=0)
     sparsity_equality_jacobian = sparsity_jacobian(data.equality, data.state_dimensions, data.action_dimensions, 
         row_shift=num_dynamics)
-    sparsity_inequality_jacobian = sparsity_jacobian(data.inequality, data.state_dimensions, data.action_dimensions, 
+    sparsity_nonnegative_jacobian = sparsity_jacobian(data.nonnegative, data.state_dimensions, data.action_dimensions, 
         row_shift=0)
+    sparsity_second_order_jacobian = sparsity_jacobian(data.second_order, data.state_dimensions, data.action_dimensions, 
+        row_shift=num_nonnegative)
 
     # Hessian of Lagrangian sparsity 
     sparsity_objective_hessian = sparsity_hessian(data.objective, data.state_dimensions, data.action_dimensions)
     sparsity_dynamics_hessian = sparsity_hessian(data.dynamics, data.state_dimensions, data.action_dimensions)
     sparsity_equality_hessian = sparsity_hessian(data.equality, data.state_dimensions, data.action_dimensions)
-    sparsity_inequality_hessian = sparsity_hessian(data.inequality, data.state_dimensions, data.action_dimensions)
+    sparsity_nonnegative_hessian = sparsity_hessian(data.nonnegative, data.state_dimensions, data.action_dimensions)
+    sparsity_second_order_hessian = sparsity_hessian(data.second_order, data.state_dimensions, data.action_dimensions)
+
     hessian_lagrangian_sparsity = [(sparsity_objective_hessian...)..., 
         (sparsity_dynamics_hessian...)..., 
         (sparsity_equality_hessian...)..., 
-        (sparsity_inequality_hessian...)...]
+        (sparsity_nonnegative_hessian...)...,
+        ((sparsity_second_order_hessian...)...)...,
+    ]
+    
     hessian_lagrangian_sparsity = !isempty(hessian_lagrangian_sparsity) ? hessian_lagrangian_sparsity : Tuple{Int,Int}[]
     hessian_sparsity_key = sort(unique(hessian_lagrangian_sparsity))
 
@@ -74,7 +89,8 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
         data.objective, 
         data.dynamics, 
         data.equality, 
-        data.inequality,
+        data.nonnegative,
+        data.second_order,
         hessian_sparsity_key, 
         data.state_dimensions, 
         data.action_dimensions, 
@@ -86,29 +102,38 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
         total_equality,
         num_dynamics, 
         num_equality,
-        total_inequality, 
+        total_cone,
+        num_nonnegative, 
+        num_second_order, 
         total_equality_jacobians, 
-        total_inequality_jacobians,
+        total_cone_jacobians,
         num_hessian_lagrangian, 
         idx, 
         sparsity_dynamics_jacobian,
         sparsity_equality_jacobian,
-        sparsity_inequality_jacobian,
+        sparsity_nonnegative_jacobian,
+        sparsity_second_order_jacobian,
         hessian_sparsity_key,
         sparsity_objective_hessian,
         sparsity_dynamics_hessian,
         sparsity_equality_hessian,
-        sparsity_inequality_hessian,
+        sparsity_nonnegative_hessian,
+        sparsity_second_order_hessian,
         evaluate_hessian, 
         vcat(data.parameters...),
         )
 end
 
-function TrajectoryOptimizationProblem(dynamics::Vector{Dynamics{T}}, objective::Objective{T}, equality::Constraints{T}, inequality::Constraints{T}; 
+function TrajectoryOptimizationProblem(
+    dynamics::Vector{Dynamics{T}}, 
+    objective::Objective{T}, 
+    equality::Constraints{T}, 
+    nonnegative::Constraints{T},
+    second_order::Vector{Constraints{T}}; 
     evaluate_hessian=true, 
     parameters=[[zeros(num_parameter) for num_parameter in dimensions(dynamics)[3]]..., zeros(0)]) where T
 
-    data = TrajectoryOptimizationData(dynamics, objective, equality, inequality,
+    data = TrajectoryOptimizationData(dynamics, objective, equality, nonnegative, second_order,
         parameters=parameters)
 
     trajopt = TrajectoryOptimizationProblem(data, 
@@ -154,11 +179,17 @@ function equality_duals!(duals_dynamics::Vector{Vector{T}}, duals_equality::Vect
     return 
 end
 
-function inequality_duals!(duals_inequality::Vector{Vector{T}}, duals, 
-    inequality_indices::Vector{Vector{Int}}) where T
+function cone_duals!(duals_nonnegative::Vector{Vector{T}}, duals_second_order::Vector{Vector{Vector{T}}},
+    duals, 
+    nonnegative_indices::Vector{Vector{Int}}, second_order_indices::Vector{Vector{Vector{Int}}}) where T
     
-    for (t, idx) in enumerate(inequality_indices)
-        duals_inequality[t] .= @views duals[idx]
+    for (t, idx) in enumerate(nonnegative_indices)
+        duals_nonnegative[t] .= @views duals[idx]
+    end
+    for (t, idx_soc) in enumerate(second_order_indices)
+        for (i, idx) in enumerate(idx_soc)
+            duals_second_order[t][i] .= @views duals[idx]
+        end
     end
     return 
 end

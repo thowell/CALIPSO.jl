@@ -35,6 +35,7 @@ export
 # Trajectory Optimization 
 include("trajectory_optimization/costs.jl")
 include("trajectory_optimization/constraints.jl")
+include("trajectory_optimization/constraints_vector.jl")
 include("trajectory_optimization/dynamics.jl")
 include("trajectory_optimization/data.jl")
 include("trajectory_optimization/indices.jl")

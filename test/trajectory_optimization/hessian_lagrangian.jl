@@ -124,10 +124,12 @@
     ineq = [[ineqt for t = 1:T-1]..., ineqT]
 
     # non-negative constraints
-    st = (x, u, w) -> tan.(x) .- sqrt(sum(u.^2))
-    sT = (x, u, w) -> tan.(x) .+ cos(sum(u))
-    sot = Constraint(st, num_state, num_action, num_parameter=num_parameter, evaluate_hessian=true)
-    soT = Constraint(sT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
+    st = (x, u, w, e) -> e .* tan.(x) .- sqrt(sum(u.^2) + e^2)
+    sT = (x, u, w, e) -> e .* tan.(x) .+ cos(sum(u) + e^2)
+    nsi = 2
+    rr = [randn(1)[1] for i = 1:nsi]
+    sot = [Constraint((x, u, w) -> st(x, u, w, rr[i]), num_state, num_action, num_parameter=num_parameter, evaluate_hessian=true) for i = 1:nsi]
+    soT = [Constraint((x, u, w) -> sT(x, u, w, rr[i]), num_state, 0, num_parameter=num_parameter, evaluate_hessian=true) for i = 1:nsi]
     so = [[sot for t = 1:T-1]..., soT]
 
     # data 
@@ -137,7 +139,7 @@
     np = num_state + num_action + num_state + num_action + num_state
     nde = num_state + num_state + num_action + num_state + num_action + num_state + num_state
     ndi = T * num_state
-    nds = T * num_state
+    nds = T * sum([num_state for i = 1:nsi])
     ndc = ndi + nds
     nd = nde + ndc
     nz = np + nd
@@ -161,9 +163,9 @@
         λ2_ineq = z[np + nde + num_state .+ (1:num_state)]
         λ3_ineq = z[np + nde + num_state + num_state .+ (1:num_state)]
 
-        λ1_soc = z[np + nde + ndi .+ (1:num_state)]
-        λ2_soc = z[np + nde + ndi + num_state .+ (1:num_state)]
-        λ3_soc = z[np + nde + ndi + num_state + num_state .+ (1:num_state)]
+        λ1_soc = [z[np + nde + ndi + (i - 1) * num_state .+ (1:num_state)] for i = 1:nsi]
+        λ2_soc = [z[np + nde + ndi + nsi * num_state + (i - 1) * num_state .+ (1:num_state)] for i = 1:nsi]
+        λ3_soc = [z[np + nde + ndi + nsi * num_state + nsi * num_state + (i - 1) * num_state .+ (1:num_state)] for i = 1:nsi]
 
         L = 0.0 
 
@@ -182,9 +184,9 @@
         L += dot(λ2_ineq, it(x2, u2, zeros(num_parameter)))
         L += dot(λ3_ineq, iT(x3, zeros(0), zeros(num_parameter)))
 
-        L += dot(λ1_soc, st(x1, u1, zeros(num_parameter)))
-        L += dot(λ2_soc, st(x2, u2, zeros(num_parameter)))
-        L += dot(λ3_soc, sT(x3, zeros(0), zeros(num_parameter)))
+        L += sum([dot(λ1_soc[i], st(x1, u1, zeros(num_parameter), rr[i])) for i = 1:nsi])
+        L += sum([dot(λ2_soc[i], st(x2, u2, zeros(num_parameter), rr[i])) for i = 1:nsi])
+        L += sum([dot(λ3_soc[i], sT(x3, zeros(0), zeros(num_parameter), rr[i])) for i = 1:nsi])
 
         return L
     end
@@ -207,7 +209,7 @@
         (sparsity_dynamics_hessians...)..., 
         (sparsity_equality_hessian...)...,
         (sparsity_nonnegative_hessian...)...,
-        (sparsity_second_order_hessian...)...,
+        ((sparsity_second_order_hessian...)...)...,
         ]) 
     sp_key = sort(unique(hessian_sparsity))
 
@@ -222,13 +224,16 @@
     @test sp_key[vcat(idx_dynamics_hessians...)] == [(sparsity_dynamics_hessians...)...]
     @test sp_key[vcat(idx_eq_hess...)] == [(sparsity_equality_hessian...)...]
     @test sp_key[vcat(idx_nn_hess...)] == [(sparsity_nonnegative_hessian...)...]
-    @test sp_key[vcat(idx_so_hess...)] == [(sparsity_second_order_hessian...)...]
+    @test sp_key[vcat(idx_so_hess[1]...)] == [(sparsity_second_order_hessian[1]...)...]
+    @test sp_key[vcat(idx_so_hess[2]...)] == [(sparsity_second_order_hessian[2]...)...]
+    @test sp_key[vcat(idx_so_hess[3]...)] == [(sparsity_second_order_hessian[3]...)...]
 
     z0 = rand(nz)
     σ = 1.0
     ho = zeros(trajopt.num_variables, trajopt.num_variables)
     he = zeros(trajopt.num_variables, trajopt.num_variables)
     hc = zeros(trajopt.num_variables, trajopt.num_variables)
+
 
     CALIPSO.objective_hessian!(ho, trajopt, z0[1:np])
     CALIPSO.equality_hessian!(he, trajopt, z0[1:np], z0[np .+ (1:nde)])

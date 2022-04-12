@@ -7,10 +7,16 @@ function ProblemMethods(trajopt::TrajectoryOptimizationProblem)
         (c, z) -> equality!(c, trajopt, z), 
         (j, z) -> equality_jacobian!(j, trajopt, z),
         (h, z, y) -> equality_hessian!(h, trajopt, z, y),
-        (c, z) -> inequality!(c, trajopt, z),
-        (j, z) -> inequality_jacobian!(j, trajopt, z),
-        (h, z, y) -> inequality_hessian!(h, trajopt, z, y),
+        (c, z) -> cone!(c, trajopt, z),
+        (j, z) -> cone_jacobian!(j, trajopt, z),
+        (h, z, y) -> cone_hessian!(h, trajopt, z, y),
     )
+end
+
+function cone_indices(trajopt::TrajectoryOptimizationProblem) 
+    idx_nonnegative = vcat(trajopt.indices.nonnegative_duals...)
+    idx_second_order = [(trajopt.indices.second_order_duals...)...]
+    return idx_nonnegative, idx_second_order
 end
 
 function initialize_states!(solver::Solver, trajopt::TrajectoryOptimizationProblem, states) 
