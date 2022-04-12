@@ -239,17 +239,19 @@ ineqt = CALIPSO.Constraint(inequality_t, 2nx + 4, nu)
 ineqT = CALIPSO.Constraint(inequality_T, 2nx + 4, nu)
 ineq = [ineq1, [ineqt for t = 2:T-1]..., ineqT];
 
+soc = [Constraint() for t = 1:T] 
+
 # ## initialize
 x_interpolation = linear_interpolation(x1, xT, T)
 x_guess = [x_interpolation[1], [[x_interpolation[t]; zeros(4); x_interpolation[t]] for t = 2:T]...]
 u_guess = [[0.01 * randn(RoboDojo.box.nu); 1.0e-1 * ones(nu - RoboDojo.box.nu)] for t = 1:T-1] # may need to run more than once to get good trajectory
 
 # ## problem
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq);
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, soc);
 methods = ProblemMethods(trajopt);
 
 # ## solver
-solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_inequality,
+solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone,
     options=Options(verbose=true));
 initialize_states!(solver, trajopt, x_guess);
 initialize_controls!(solver, trajopt, u_guess);

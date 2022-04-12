@@ -116,15 +116,31 @@
     eqT = Constraint(eT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
     eq = [[eqt for t = 1:T-1]..., eqT]
 
-    # inequality constraints
+    # non-negative constraints
     it = (x, u, w) -> sin.(x) .- sum(u)
     iT = (x, u, w) -> cos.(x) .+ sum(u)
     ineqt = Constraint(it, num_state, num_action, num_parameter=num_parameter, evaluate_hessian=true)
     ineqT = Constraint(iT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
     ineq = [[ineqt for t = 1:T-1]..., ineqT]
 
+    # non-negative constraints
+    st = (x, u, w) -> tan.(x) .- sqrt(sum(u.^2))
+    sT = (x, u, w) -> tan.(x) .+ cos(sum(u))
+    sot = Constraint(st, num_state, num_action, num_parameter=num_parameter, evaluate_hessian=true)
+    soT = Constraint(sT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
+    so = [[sot for t = 1:T-1]..., soT]
+
     # data 
-    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, evaluate_hessian=true)
+    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so, evaluate_hessian=true)
+
+    # dimensions 
+    np = num_state + num_action + num_state + num_action + num_state
+    nde = num_state + num_state + num_action + num_state + num_action + num_state + num_state
+    ndi = T * num_state
+    nds = T * num_state
+    ndc = ndi + nds
+    nd = nde + ndc
+    nz = np + nd
 
     # Lagrangian
     function lagrangian(z) 
@@ -133,38 +149,46 @@
         x2 = z[num_state + num_action .+ (1:num_state)] 
         u2 = z[num_state + num_action + num_state .+ (1:num_action)] 
         x3 = z[num_state + num_action + num_state + num_action .+ (1:num_state)]
-        λ1_dyn = z[num_state + num_action + num_state + num_action + num_state .+ (1:num_state)] 
-        λ2_dyn = z[num_state + num_action + num_state + num_action + num_state + num_state .+ (1:num_state)] 
 
-        λ1_eq = z[num_state + num_action + num_state + num_action + num_state + num_state + num_state .+ (1:(num_action + num_state))] 
-        λ2_eq = z[num_state + num_action + num_state + num_action + num_state + num_state + num_state + num_action + num_state .+ (1:(num_action + num_state))] 
-        λ3_eq = z[num_state + num_action + num_state + num_action + num_state + num_state + num_state + num_action + num_state + num_action + num_state .+ (1:num_state)]
+        λ1_dyn = z[np .+ (1:num_state)] 
+        λ2_dyn = z[np + num_state .+ (1:num_state)] 
 
-        λ1_ineq = z[num_state + num_action + num_state + num_action + num_state + num_state + num_state + num_action + num_state + num_action + num_state + num_state .+ (1:num_state)]
-        λ2_ineq = z[num_state + num_action + num_state + num_action + num_state + num_state + num_state + num_action + num_state + num_action + num_state + num_state + num_state .+ (1:num_state)]
-        λ3_ineq = z[num_state + num_action + num_state + num_action + num_state + num_state + num_state + num_action + num_state + num_action + num_state + num_state + num_state + num_state .+ (1:num_state)]
+        λ1_eq = z[np + num_state + num_state .+ (1:(num_action + num_state))] 
+        λ2_eq = z[np + num_state + num_state + num_action + num_state .+ (1:(num_action + num_state))] 
+        λ3_eq = z[np + num_state + num_state + 2 * (num_action + num_state) .+ (1:num_state)]
+
+        λ1_ineq = z[np + nde .+ (1:num_state)]
+        λ2_ineq = z[np + nde + num_state .+ (1:num_state)]
+        λ3_ineq = z[np + nde + num_state + num_state .+ (1:num_state)]
+
+        λ1_soc = z[np + nde + ndi .+ (1:num_state)]
+        λ2_soc = z[np + nde + ndi + num_state .+ (1:num_state)]
+        λ3_soc = z[np + nde + ndi + num_state + num_state .+ (1:num_state)]
 
         L = 0.0 
+
         L += ot(x1, u1, zeros(num_parameter)) 
         L += ot(x2, u2, zeros(num_parameter)) 
         L += oT(x3, zeros(0), zeros(num_parameter))
+
         L += dot(λ1_dyn, midpoint_implicit(x2, x1, u1, zeros(num_parameter))) 
         L += dot(λ2_dyn, midpoint_implicit(x3, x2, u2, zeros(num_parameter))) 
+
         L += dot(λ1_eq, et(x1, u1, zeros(num_parameter)))
         L += dot(λ2_eq, et(x2, u2, zeros(num_parameter)))
         L += dot(λ3_eq, eT(x3, zeros(0), zeros(num_parameter)))
+
         L += dot(λ1_ineq, it(x1, u1, zeros(num_parameter)))
         L += dot(λ2_ineq, it(x2, u2, zeros(num_parameter)))
         L += dot(λ3_ineq, iT(x3, zeros(0), zeros(num_parameter)))
+
+        L += dot(λ1_soc, st(x1, u1, zeros(num_parameter)))
+        L += dot(λ2_soc, st(x2, u2, zeros(num_parameter)))
+        L += dot(λ3_soc, sT(x3, zeros(0), zeros(num_parameter)))
+
         return L
     end
 
-    nz = num_state + num_action + num_state + num_action + num_state + num_state + num_state + num_action + num_state + num_action + num_state + num_state + T * num_state
-    np = num_state + num_action + num_state + num_action + num_state
-
-    nde = num_state + num_state + num_action + num_state + num_action + num_state + num_state
-    ndi = T * num_state
-    nd = nde + ndi
     @variables z[1:nz]
     L = lagrangian(z)
     Lxx = Symbolics.hessian(L, z[1:np])
@@ -176,34 +200,39 @@
     sparsity_objective_hessians = CALIPSO.sparsity_hessian(obj, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
     sparsity_dynamics_hessians = CALIPSO.sparsity_hessian(dyn, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
     sparsity_equality_hessian = CALIPSO.sparsity_hessian(eq, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    sparsity_inequality_hessian = CALIPSO.sparsity_hessian(ineq, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    sparsity_nonnegative_hessian = CALIPSO.sparsity_hessian(ineq, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    sparsity_second_order_hessian = CALIPSO.sparsity_hessian(so, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
 
     hessian_sparsity = collect([(sparsity_objective_hessians...)..., 
         (sparsity_dynamics_hessians...)..., 
         (sparsity_equality_hessian...)...,
-        (sparsity_inequality_hessian...)...]) 
+        (sparsity_nonnegative_hessian...)...,
+        (sparsity_second_order_hessian...)...,
+        ]) 
     sp_key = sort(unique(hessian_sparsity))
 
     idx_objective_hessians = CALIPSO.hessian_indices(obj, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    idx_dynamics_hessians = CALIPSO.hessian_indices(obj, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    idx_dynamics_hessians = CALIPSO.hessian_indices(dyn, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
     idx_eq_hess = CALIPSO.hessian_indices(eq, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    idx_ineq_hess = CALIPSO.hessian_indices(ineq, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    idx_nn_hess = CALIPSO.hessian_indices(ineq, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    idx_so_hess = CALIPSO.hessian_indices(so, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
 
     # indices
     @test sp_key[vcat(idx_objective_hessians...)] == [(sparsity_objective_hessians...)...]
-    @test sp_key[vcat(idx_dynamics_hessians...)] == sp_key[vcat(idx_dynamics_hessians...)]
+    @test sp_key[vcat(idx_dynamics_hessians...)] == [(sparsity_dynamics_hessians...)...]
     @test sp_key[vcat(idx_eq_hess...)] == [(sparsity_equality_hessian...)...]
-    @test sp_key[vcat(idx_ineq_hess...)] == [(sparsity_inequality_hessian...)...]
+    @test sp_key[vcat(idx_nn_hess...)] == [(sparsity_nonnegative_hessian...)...]
+    @test sp_key[vcat(idx_so_hess...)] == [(sparsity_second_order_hessian...)...]
 
     z0 = rand(nz)
     σ = 1.0
     ho = zeros(trajopt.num_variables, trajopt.num_variables)
     he = zeros(trajopt.num_variables, trajopt.num_variables)
-    hi = zeros(trajopt.num_variables, trajopt.num_variables)
+    hc = zeros(trajopt.num_variables, trajopt.num_variables)
 
     CALIPSO.objective_hessian!(ho, trajopt, z0[1:np])
     CALIPSO.equality_hessian!(he, trajopt, z0[1:np], z0[np .+ (1:nde)])
-    CALIPSO.inequality_hessian!(hi, trajopt, z0[1:np], z0[np + nde .+ (1:ndi)])
+    CALIPSO.cone_hessian!(hc, trajopt, z0[1:np], z0[np + nde .+ (1:ndc)])
 
-    @test norm(norm((ho + he + hi) - Lxx_func(z0))) < 1.0e-8
+    @test norm(norm((ho + he + hc) - Lxx_func(z0))) < 1.0e-8
 end
