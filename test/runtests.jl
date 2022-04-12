@@ -5,7 +5,7 @@ using Symbolics
 using LinearAlgebra
 using Random
 using BenchmarkTools
-using RoboDojo
+# using RoboDojo
 using CALIPSO
 
 # Solver

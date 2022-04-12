@@ -385,12 +385,14 @@ ineqt = CALIPSO.Constraint(inequality_t, 2nx + 4, nu)
 ineqT = CALIPSO.Constraint(inequality_T, 2nx + 4, nu)
 ineq = [ineq1, [ineqt for t = 2:T-1]..., ineqT];
 
+so = [[Constraint()] for t = 1:T]
+
 # ## initialize
 x_interpolation = [x1, [[x1; zeros(4); x1] for t = 2:T]...]
 u_guess = [[0.0; RoboDojo.hopper.gravity * RoboDojo.hopper.mass_body * 0.5 * h[1]; 1.0e-1 * ones(nu - 2)] for t = 1:T-1] # may need to run more than once to get good trajectory
 
 # ## problem 
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq)
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
 methods = ProblemMethods(trajopt)
 
 # solver

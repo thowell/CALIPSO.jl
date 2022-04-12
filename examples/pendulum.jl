@@ -62,9 +62,10 @@ eqT = Constraint((x, u, w) -> x - xT, num_state, 0)
 eq = [eq1, [Constraint() for t = 2:T-1]..., eqT]
 
 ineq = [Constraint() for t = 1:T]
+so = [[Constraint()] for t = 1:T]
 
 # ## problem 
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq)
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
 
 # ## initialize
 x_interpolation = linear_interpolation(x1, xT, T)

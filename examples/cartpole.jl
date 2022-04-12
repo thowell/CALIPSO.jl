@@ -81,6 +81,8 @@ eq = [
 
 ineq = [Constraint() for t = 1:T]
 
+so = [[Constraint()] for t = 1:T]
+
 # ## initialize
 u_guess = [0.01 * ones(num_action) for t = 1:T-1]
 
@@ -93,7 +95,7 @@ u_guess = [0.01 * ones(num_action) for t = 1:T-1]
 x_interpolation = linear_interpolation(x1, xT, T)
 
 # ## problem 
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq)
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
 methods = ProblemMethods(trajopt)
 
 # solver

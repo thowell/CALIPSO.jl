@@ -121,9 +121,10 @@ eq = [
     ]
 
 ineq = [Constraint() for t = 1:T]
+so = [[Constraint()] for t = 1:T]
 
 # ## problem 
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq)
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
 
 # ## initialize
 u_guess = [0.01 * ones(num_action) for t = 1:T-1]
