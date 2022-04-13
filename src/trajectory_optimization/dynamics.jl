@@ -22,6 +22,7 @@ function Dynamics(f::Function, num_next_state::Int, num_state::Int, num_action::
     #TODO: option to load/save methods
     @variables y[1:num_next_state], x[1:num_state], u[1:num_action], w[1:num_parameter] 
     evaluate = f(y, x, u, w) 
+
     jac = Symbolics.sparsejacobian(evaluate, [x; u; y]);
     evaluate_func = eval(Symbolics.build_function(evaluate, y, x, u, w)[2]);
     jacobian_func = eval(Symbolics.build_function(jac.nzval, y, x, u, w)[2]);

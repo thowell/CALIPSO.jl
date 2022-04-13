@@ -2,21 +2,17 @@
     function hopper_dyn(mass_matrix, dynamics_bias, h, y, x, u, w) 
         model = RoboDojo.hopper
 
-        # dimensions
-        nq = model.nq
-        nu = model.nu 
-
         # configurations
         
-        q1⁻ = x[1:nq] 
-        q2⁻ = x[nq .+ (1:nq)]
-        q2⁺ = y[1:nq]
-        q3⁺ = y[nq .+ (1:nq)]
+        q1⁻ = x[1:4] 
+        q2⁻ = x[4 .+ (1:4)]
+        q2⁺ = y[1:4]
+        q3⁺ = y[4 .+ (1:4)]
 
         # control 
-        u_control = u[1:nu] 
-        γ = u[nu .+ (1:4)] 
-        β = u[nu + 4 .+ (1:4)] 
+        u_control = u[1:2] 
+        γ = u[2 .+ (1:4)] 
+        β = u[2 + 4 .+ (1:4)] 
         
         E = [1.0 -1.0] # friction mapping 
         J = RoboDojo.contact_jacobian(model, q2⁺)
@@ -33,38 +29,32 @@
     end
 
     function hopper_dyn1(mass_matrix, dynamics_bias, h, y, x, u, w)
-        nx = 8 
         [
             hopper_dyn(mass_matrix, dynamics_bias, h, y, x, u, w);
-            y[nx .+ (1:4)] - u[2 .+ (1:4)];
-            y[nx + 4 .+ (1:nx)] - x
+            y[8 .+ (1:4)] - u[2 .+ (1:4)];
+            y[8 + 4 .+ (1:8)] - x
         ]
     end
 
     function hopper_dynt(mass_matrix, dynamics_bias, h, y, x, u, w)
-        nx = 8
         [
             hopper_dyn(mass_matrix, dynamics_bias, h, y, x, u, w);
-            y[nx .+ (1:4)] - u[2 .+ (1:4)];
-            y[nx + 4 .+ (1:nx)] - x[nx + 4 .+ (1:nx)]
+            y[8 .+ (1:4)] - u[2 .+ (1:4)];
+            y[8 + 4 .+ (1:8)] - x[8 + 4 .+ (1:8)]
         ]
     end
 
     function contact_constraints_inequality_1(h, x, u, w) 
         model = RoboDojo.hopper
 
-        nq = model.nq
-        nu = model.nu 
-        nx = 2nq
+        q2 = x[1:4] 
+        q3 = x[4 .+ (1:4)] 
 
-        q2 = x[1:nq] 
-        q3 = x[nq .+ (1:nq)] 
-
-        u_control = u[1:nu] 
-        γ = u[nu .+ (1:4)] 
-        β = u[nu + 4 .+ (1:4)] 
-        ψ = u[nu + 4 + 4 .+ (1:2)] 
-        η = u[nu + 4 + 4 + 2 .+ (1:4)] 
+        u_control = u[1:2] 
+        γ = u[2 .+ (1:4)] 
+        β = u[2 + 4 .+ (1:4)] 
+        ψ = u[2 + 4 + 4 .+ (1:2)] 
+        η = u[2 + 4 + 4 + 2 .+ (1:4)] 
 
         ϕ = RoboDojo.signed_distance(model, q3) 
         
@@ -80,20 +70,16 @@
     function contact_constraints_inequality_t(h, x, u, w) 
         model = RoboDojo.hopper
 
-        nq = model.nq
-        nu = model.nu 
-        nx = 2nq
+        q2 = x[1:4] 
+        q3 = x[4 .+ (1:4)] 
 
-        q2 = x[1:nq] 
-        q3 = x[nq .+ (1:nq)] 
-
-        γ = u[nu .+ (1:4)] 
-        β = u[nu + 4 .+ (1:4)] 
-        ψ = u[nu + 4 + 4 .+ (1:2)] 
-        η = u[nu + 4 + 4 + 2 .+ (1:4)] 
+        γ = u[2 .+ (1:4)] 
+        β = u[2 + 4 .+ (1:4)] 
+        ψ = u[2 + 4 + 4 .+ (1:2)] 
+        η = u[2 + 4 + 4 + 2 .+ (1:4)] 
 
         ϕ = RoboDojo.signed_distance(model, q3) 
-        γ⁻ = x[nx .+ (1:4)] 
+        γ⁻ = x[8 .+ (1:4)] 
         
         μ = [model.friction_body_world; model.friction_foot_world]
         fc = μ .* γ[1:2] - [sum(β[1:2]); sum(β[3:4])]
@@ -107,14 +93,11 @@
     function contact_constraints_inequality_T(h, x, u, w) 
         model = RoboDojo.hopper
 
-        nq = model.nq
-        nx = 2nq
-
-        q2 = x[1:nq] 
-        q3 = x[nq .+ (1:nq)] 
+        q2 = x[1:4] 
+        q3 = x[4 .+ (1:4)] 
 
         ϕ = RoboDojo.signed_distance(model, q3) 
-        γ⁻ = x[nx .+ (1:4)] 
+        γ⁻ = x[8 .+ (1:4)] 
         
         [
             ϕ; 
@@ -125,18 +108,14 @@
     function contact_constraints_equality_1(h, x, u, w) 
         model = RoboDojo.hopper
 
-        nq = model.nq
-        nu = model.nu 
-        nx = 2nq
+        q2 = x[1:4] 
+        q3 = x[4 .+ (1:4)] 
 
-        q2 = x[1:nq] 
-        q3 = x[nq .+ (1:nq)] 
-
-        u_control = u[1:nu] 
-        γ = u[nu .+ (1:4)] 
-        β = u[nu + 4 .+ (1:4)] 
-        ψ = u[nu + 4 + 4 .+ (1:2)] 
-        η = u[nu + 4 + 4 + 2 .+ (1:4)] 
+        u_control = u[1:2] 
+        γ = u[2 .+ (1:4)] 
+        β = u[2 + 4 .+ (1:4)] 
+        ψ = u[2 + 4 + 4 .+ (1:2)] 
+        η = u[2 + 4 + 4 + 2 .+ (1:4)] 
         
         μ = [model.friction_body_world; model.friction_foot_world]
         fc = μ .* γ[1:2] - [sum(β[1:2]); sum(β[3:4])]
@@ -157,24 +136,20 @@
     function contact_constraints_equality_t(h, x, u, w) 
         model = RoboDojo.hopper
 
-        nq = model.nq
-        nu = model.nu 
-        nx = 2nq
+        q2 = x[1:4] 
+        q3 = x[4 .+ (1:4)] 
 
-        q2 = x[1:nq] 
-        q3 = x[nq .+ (1:nq)] 
-
-        γ = u[nu .+ (1:4)] 
-        β = u[nu + 4 .+ (1:4)] 
-        ψ = u[nu + 4 + 4 .+ (1:2)] 
-        η = u[nu + 4 + 4 + 2 .+ (1:4)] 
+        γ = u[2 .+ (1:4)] 
+        β = u[2 + 4 .+ (1:4)] 
+        ψ = u[2 + 4 + 4 .+ (1:2)] 
+        η = u[2 + 4 + 4 + 2 .+ (1:4)] 
 
         ϕ = RoboDojo.signed_distance(model, q3) 
-        γ⁻ = x[nx .+ (1:4)] 
-        γ = u[nu .+ (1:4)] 
-        β = u[nu + 4 .+ (1:4)] 
-        ψ = u[nu + 4 + 4 .+ (1:2)] 
-        η = u[nu + 4 + 4 + 2 .+ (1:4)] 
+        γ⁻ = x[8 .+ (1:4)] 
+        γ = u[2 .+ (1:4)] 
+        β = u[2 + 4 .+ (1:4)] 
+        ψ = u[2 + 4 + 4 .+ (1:2)] 
+        η = u[2 + 4 + 4 + 2 .+ (1:4)] 
 
         μ = [model.friction_body_world; model.friction_foot_world]
         fc = μ .* γ[1:2] - [sum(β[1:2]); sum(β[3:4])]
@@ -187,7 +162,7 @@
         ψ_stack = [ψ[1] * ones(2); ψ[2] * ones(2)]
         
         [
-        η - vT - ψ_stack;
+            η - vT - ψ_stack;
             γ⁻ .* ϕ;
             β .* η; 
             ψ .* fc; 
@@ -197,14 +172,11 @@
     function contact_constraints_equality_T(h, x, u, w) 
         model = RoboDojo.hopper
 
-        nq = model.nq
-        nx = 2nq
-
-        q2 = x[1:nq] 
-        q3 = x[nq .+ (1:nq)] 
+        q2 = x[1:4] 
+        q3 = x[4 .+ (1:4)] 
 
         ϕ = RoboDojo.signed_distance(model, q3) 
-        γ⁻ = x[nx .+ (1:4)] 
+        γ⁻ = x[8 .+ (1:4)] 
 
         [
             γ⁻ .* ϕ;
@@ -299,8 +271,7 @@
     end
 
     function equality_T(x, u, w) 
-        x_travel = 0.5
-        θ = x[nx + 4 .+ (1:nx)]
+        θ = x[8 + 4 .+ (1:8)]
         [
             contact_constraints_equality_T(h, x, u, w); 
             # equality (6)
@@ -316,9 +287,6 @@
 
     function inequality_1(x, u, w) 
         [
-            # equality (8)
-            # initial condition 4 
-        #  x[1:4] - q1;
             # inequality (12)
             contact_constraints_inequality_1(h, x, u, w);
             # + 17 + 2 inequality 
@@ -338,9 +306,9 @@
         [
         # equality (4)
             contact_constraints_inequality_t(h, x, u, w);
-        # + 17 + 2 inequality 
-        u - [-10.0; -10.0; zeros(nu - 2)]; 
-        [10.0; 10.0] - u[1:2];
+            # + 17 + 2 inequality 
+            u - [-10.0; -10.0; zeros(nu - 2)]; 
+            [10.0; 10.0] - u[1:2];
             # + 6 state bounds 
             x[2];
             x[4];
@@ -353,9 +321,8 @@
 
     function inequality_T(x, u, w) 
         x_travel = 0.5
-        θ = x[nx + 4 .+ (1:nx)]
+        θ = x[8 + 4 .+ (1:8)]
         [
-        #  # equality (6)
             (x[1] - θ[1]) - x_travel;
             (x[RoboDojo.hopper.nq + 1] - θ[RoboDojo.hopper.nq + 1]) - x_travel; 
             contact_constraints_inequality_T(h, x, u, w);
