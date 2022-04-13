@@ -54,10 +54,16 @@ function Solver(methods, num_variables, num_equality, num_cone;
     # linear solver TODO: constructor
     random_variables = randn(dim.total)
     problem!(p_data, methods, idx, random_variables,
-        gradient=true,
-        constraint=true,
-        jacobian=true,
-        hessian=true)
+        objective=true,
+        objective_gradient=true,
+        objective_hessian=true,
+        equality_constraint=true,
+        equality_jacobian=true,
+        equality_hessian=true,
+        cone_constraint=true,
+        cone_jacobian=true,
+        cone_hessian=true,
+    )
     cone!(p_data, methods, idx, random_variables,
         product=true, 
         jacobian=true,

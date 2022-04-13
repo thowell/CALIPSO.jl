@@ -65,10 +65,15 @@ function solve!(solver)
             # compute residual 
             problem!(problem, methods, indices, variables,
                 objective=true,
-                gradient=true,
-                constraint=true,
-                jacobian=true,
-                hessian=true)
+                objective_gradient=true,
+                objective_hessian=true,
+                equality_constraint=true,
+                equality_jacobian=true,
+                equality_hessian=true,
+                cone_constraint=true,
+                cone_jacobian=true,
+                cone_hessian=true,
+            )
 
             cone!(problem, methods, indices, variables,
                 product=true, 
@@ -101,13 +106,6 @@ function solve!(solver)
             end
 
             # search direction
-            # inertia_correction!(solver)
-
-            # search_direction_symmetric!(step, data.residual, data.matrix, 
-            #     data.step_symmetric, data.residual_symmetric, data.matrix_symmetric, 
-            #     indices, solver.linear_solver)
-
-            # options.iterative_refinement && iterative_refinement!(step, solver)
             search_direction!(solver)
 
             # line search
@@ -141,10 +139,15 @@ function solve!(solver)
             # compute residual 
             problem!(problem, methods, indices, candidate,
                 objective=true,
-                gradient=false,
-                constraint=true,
-                jacobian=false,
-                hessian=false)
+                objective_gradient=false,
+                objective_hessian=false,
+                equality_constraint=true,
+                equality_jacobian=false,
+                equality_hessian=false,
+                cone_constraint=true,
+                cone_jacobian=false,
+                cone_hessian=false,
+            )
 
             cone!(problem, methods, indices, candidate,
                 product=true, 
@@ -174,10 +177,15 @@ function solve!(solver)
                 # compute residual 
                 problem!(problem, methods, indices, candidate,
                     objective=true,
-                    gradient=false,
-                    constraint=true,
-                    jacobian=false,
-                    hessian=false)
+                    objective_gradient=false,
+                    objective_hessian=false,
+                    equality_constraint=true,
+                    equality_jacobian=false,
+                    equality_hessian=false,
+                    cone_constraint=true,
+                    cone_jacobian=false,
+                    cone_hessian=false,
+                )
 
                 cone!(problem, methods, indices, candidate,
                     product=true, 

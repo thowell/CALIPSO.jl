@@ -52,11 +52,15 @@ end
 
 function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
     objective=true,
-    gradient=true,
-    constraint=true,
-    jacobian=true,
-    hessian=true,
-    cone=true) where T
+    objective_gradient=true,
+    objective_hessian=true,
+    equality_constraint=true,
+    equality_jacobian=true,
+    equality_hessian=true,
+    cone_constraint=true,
+    cone_jacobian=true,
+    cone_hessian=true,
+    ) where T
 
     x = @views variables[idx.variables]
     y = @views variables[idx.equality_dual]
@@ -64,16 +68,16 @@ function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices
 
     # TODO: remove final allocations
     objective && (problem.objective[1] = methods.objective(x))
-    gradient && methods.objective_gradient(problem.objective_gradient, x)
-    hessian && methods.objective_hessian(problem.objective_hessian, x)
+    objective_gradient && methods.objective_gradient(problem.objective_gradient, x)
+    objective_hessian && methods.objective_hessian(problem.objective_hessian, x)
 
-    constraint && methods.equality_constraint(problem.equality_constraint, x)
-    jacobian && methods.equality_jacobian(problem.equality_jacobian, x)
-    hessian && methods.equality_hessian(problem.equality_hessian, x, y)
+    equality_constraint && methods.equality_constraint(problem.equality_constraint, x)
+    equality_jacobian && methods.equality_jacobian(problem.equality_jacobian, x)
+    equality_hessian && methods.equality_hessian(problem.equality_hessian, x, y)
 
-    constraint && methods.cone_constraint(problem.cone_constraint, x)
-    jacobian && methods.cone_jacobian(problem.cone_jacobian, x)
-    hessian && methods.cone_hessian(problem.cone_hessian, x, z)
+    cone_constraint && methods.cone_constraint(problem.cone_constraint, x)
+    cone_jacobian && methods.cone_jacobian(problem.cone_jacobian, x)
+    cone_hessian && methods.cone_hessian(problem.cone_hessian, x, z)
 
     return
 end
