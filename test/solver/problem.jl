@@ -129,7 +129,7 @@
     # step
     fill!(solver.data.residual, 0.0)
     CALIPSO.residual!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
-    CALIPSO.search_direction!(solver.data.step, solver.data)
+    CALIPSO.search_direction_nonsymmetric!(solver.data.step, solver.data)
     Δ = deepcopy(solver.data.step)
 
     CALIPSO.search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 

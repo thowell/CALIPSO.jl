@@ -1,17 +1,24 @@
-function search_direction!(step, data::SolverData)
-    fill!(step, 0.0)
-    step .= data.matrix \ data.residual
-    return 
+function search_direction!(solver) 
+    # correct inertia
+    inertia_correction!(solver)
+
+    # compute search direction
+    search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
+        solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
+        solver.indices, solver.linear_solver)
+
+    # refine search direction
+    solver.options.iterative_refinement && iterative_refinement!(solver.data.step, solver)
 end
 
 function search_direction_symmetric!(step, residual, matrix, step_symmetric, residual_symmetric, matrix_symmetric, idx::Indices, solver::LinearSolver)
     # reset
-    fill!(step, 0.0) 
-    fill!(step_symmetric, 0.0)
+    # fill!(step, 0.0) 
+    # fill!(step_symmetric, 0.0)
     
     # solve symmetric system
     residual_symmetric!(residual_symmetric, residual, matrix, idx) 
-    matrix_symmetric!(matrix_symmetric, matrix, idx) 
+    # matrix_symmetric!(matrix_symmetric, matrix, idx) 
     
     linear_solve!(solver, step_symmetric, matrix_symmetric, residual_symmetric)
     
@@ -60,5 +67,11 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
         Δt[idx_soc] = C̄t \ (rt_soc - Cs * Δs_soc)
     end
     
+    return 
+end
+
+function search_direction_nonsymmetric!(step, data::SolverData)
+    # fill!(step, 0.0)
+    step .= data.matrix \ data.residual
     return 
 end

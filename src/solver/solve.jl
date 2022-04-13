@@ -101,13 +101,14 @@ function solve!(solver)
             end
 
             # search direction
-            inertia_correction!(solver)
+            # inertia_correction!(solver)
 
-            search_direction_symmetric!(step, data.residual, data.matrix, 
-                data.step_symmetric, data.residual_symmetric, data.matrix_symmetric, 
-                indices, solver.linear_solver)
+            # search_direction_symmetric!(step, data.residual, data.matrix, 
+            #     data.step_symmetric, data.residual_symmetric, data.matrix_symmetric, 
+            #     indices, solver.linear_solver)
 
-            options.iterative_refinement && iterative_refinement!(step, solver)
+            # options.iterative_refinement && iterative_refinement!(step, solver)
+            search_direction!(solver)
 
             # line search
             α = 1.0  
