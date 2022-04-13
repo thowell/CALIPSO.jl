@@ -13,11 +13,10 @@ jobs:
       matrix:
         version:
           - '1.7' # LTS
-          - '1' # Current Stable
         os:
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
+          # - macOS-latest
+          # - windows-latest
         arch:
           - x64
     steps:

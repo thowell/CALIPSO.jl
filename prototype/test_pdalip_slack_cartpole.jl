@@ -7,7 +7,7 @@ using LinearAlgebra
 include("cartpole.jl")
 n = trajopt.num_variables 
 m = trajopt.num_equality
-p = trajopt.num_inequality
+p = trajopt.num_cone
 
 # merit 
 function merit(x, r, s, y, z, t, κ, λ, ρ)

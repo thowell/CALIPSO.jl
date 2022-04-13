@@ -116,12 +116,12 @@ function gyxx(x, y)
 end
 
 function h(x) 
-    con = zeros(trajopt.num_inequality)
+    con = zeros(trajopt.num_cone)
     methods.inequality(con, x) 
     return con 
 end
 function hx(x) 
-    jac = zeros(trajopt.num_inequality, trajopt.num_variables)
+    jac = zeros(trajopt.num_cone, trajopt.num_variables)
     methods.inequality_jacobian(jac, x) 
     return jac
 end
@@ -133,7 +133,7 @@ end
 
 x̄ = rand(trajopt.num_variables)
 ȳ = rand(trajopt.num_equality)
-z̄ = rand(trajopt.num_inequality)
+z̄ = rand(trajopt.num_cone)
 f(x̄)
 fx(x̄)
 fxx(x̄)

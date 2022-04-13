@@ -396,7 +396,7 @@ trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
 methods = ProblemMethods(trajopt)
 
 # solver
-solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_inequality,
+solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone,
     options=Options(verbose=true))
 initialize_states!(solver, trajopt, x_interpolation)
 initialize_controls!(solver, trajopt, u_guess)
