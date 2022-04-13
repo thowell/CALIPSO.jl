@@ -35,8 +35,22 @@
     methods = ProblemMethods(num_variables, objective, equality, inequality)
     solver = Solver(methods, num_variables, num_equality, num_inequality)
 
-    CALIPSO.problem!(solver.problem, solver.methods, solver.indices, w)
-    CALIPSO.cone!(solver.problem, solver.methods, solver.indices, w)
+    CALIPSO.problem!(solver.problem, solver.methods, solver.indices, w,
+        objective=true,
+        objective_gradient=true,
+        objective_hessian=true,
+        equality_constraint=true,
+        equality_jacobian=true,
+        equality_hessian=true,
+        cone_constraint=true,
+        cone_jacobian=true,
+        cone_hessian=true,
+    )
+    CALIPSO.cone!(solver.problem, solver.methods, solver.indices, w,
+        product=true,
+        jacobian=true,
+        target=true,
+    )
 
     CALIPSO.matrix!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ, ϵp, ϵd)
 

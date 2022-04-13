@@ -57,29 +57,33 @@ function solve!(solver)
     # counter
     total_iterations = 1
 
+    # evaluate 
+    problem!(problem, methods, indices, variables,
+        objective=true,
+        equality_constraint=true,
+        equality_jacobian=true,
+        cone_constraint=true,
+        cone_jacobian=true,
+    )
+
+    cone!(problem, methods, indices, variables,
+        product=true, 
+        target=true
+    )
+
     for j = 1:options.max_outer_iterations
         for i = 1:options.max_residual_iterations
-
+            # iterations
             options.verbose && println("iter: ($j, $i, $total_iterations)")
 
-            # compute residual 
+            # evaluate
             problem!(problem, methods, indices, variables,
-                objective=true,
                 objective_gradient=true,
-                objective_hessian=true,
-                equality_constraint=true,
                 equality_jacobian=true,
-                equality_hessian=true,
-                cone_constraint=true,
                 cone_jacobian=true,
-                cone_hessian=true,
             )
 
-            cone!(problem, methods, indices, variables,
-                product=true, 
-                jacobian=true,
-                target=true)
-
+            # merit
             M = merit(
                 problem.objective[1], 
                 x, r, s, κ[1], λ, ρ[1],
@@ -90,10 +94,12 @@ function solve!(solver)
                 x, r, s, κ[1], λ, ρ[1],
                 indices)...)
 
+            # residual
             residual!(data, problem, indices, variables, κ, ρ, λ)
             res_norm = norm(data.residual, options.residual_norm) / solver.dimensions.total
             options.verbose && println("res: $(res_norm)")
 
+            # violation
             θ = constraint_violation!(constraint_violation, 
                 problem.equality_constraint, r, problem.cone_constraint, s, indices,
                 norm_type=options.constraint_norm)
@@ -106,6 +112,16 @@ function solve!(solver)
             end
 
             # search direction
+            problem!(problem, methods, indices, variables,
+                objective_hessian=true,
+                equality_hessian=true,
+                cone_hessian=true,
+            )
+
+            cone!(problem, methods, indices, variables,
+                jacobian=true,
+            )
+
             search_direction!(solver)
 
             # line search
@@ -136,23 +152,11 @@ function solve!(solver)
             x̂ .= x - α * Δx
             r̂ .= r - α * Δr
 
-            # compute residual 
             problem!(problem, methods, indices, candidate,
                 objective=true,
-                objective_gradient=false,
-                objective_hessian=false,
                 equality_constraint=true,
-                equality_jacobian=false,
-                equality_hessian=false,
                 cone_constraint=true,
-                cone_jacobian=false,
-                cone_hessian=false,
             )
-
-            cone!(problem, methods, indices, candidate,
-                product=true, 
-                jacobian=true,
-                target=true)
 
             M̂ = merit(
                 problem.objective[1], 
@@ -174,23 +178,11 @@ function solve!(solver)
                 r̂ .= r - α * Δr
                 ŝ .= s - α * Δs
 
-                # compute residual 
                 problem!(problem, methods, indices, candidate,
                     objective=true,
-                    objective_gradient=false,
-                    objective_hessian=false,
                     equality_constraint=true,
-                    equality_jacobian=false,
-                    equality_hessian=false,
                     cone_constraint=true,
-                    cone_jacobian=false,
-                    cone_hessian=false,
                 )
-
-                cone!(problem, methods, indices, candidate,
-                    product=true, 
-                    jacobian=true,
-                    target=true)
 
                 M̂ = merit(
                     problem.objective[1], 
@@ -213,9 +205,15 @@ function solve!(solver)
             y .= y - α * Δy
             z .= z - α * Δz
             t .= t̂
+
+            cone!(problem, methods, indices, variables,
+                product=true, 
+            )
             
             total_iterations += 1
             options.verbose && println("con: $(norm(solver.problem.equality_constraint, Inf))")
+            options.verbose && println("comp: $(norm(solver.problem.cone_product, Inf))")
+
             options.verbose && println("")
         end
 

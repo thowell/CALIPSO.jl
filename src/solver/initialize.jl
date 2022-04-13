@@ -8,15 +8,15 @@ end
 function initialize_slacks!(solver)
     # set slacks to constraints
     problem!(solver.problem, solver.methods, solver.indices, solver.variables,
-        objective=false,
-        objective_gradient=false,
-        objective_hessian=false,
+        # objective=false,
+        # objective_gradient=false,
+        # objective_hessian=false,
         equality_constraint=true,
-        equality_jacobian=false,
-        equality_hessian=false,
+        # equality_jacobian=false,
+        # equality_hessian=false,
         cone_constraint=true,
-        cone_jacobian=false,
-        cone_hessian=false,
+        # cone_jacobian=false,
+        # cone_hessian=false,
         )
 
     for (i, idx) in enumerate(solver.indices.equality_slack)

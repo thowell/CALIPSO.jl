@@ -67,7 +67,8 @@ function Solver(methods, num_variables, num_equality, num_cone;
     cone!(p_data, methods, idx, random_variables,
         product=true, 
         jacobian=true,
-        target=true)
+        target=true
+    )
     matrix!(s_data, p_data, idx, random_variables, rand(1), rand(1), randn(num_equality), 1.0e-5, 1.0e-5,
         constraint_hessian=options.constraint_hessian)
     matrix_symmetric!(s_data.matrix_symmetric, s_data.matrix, idx)

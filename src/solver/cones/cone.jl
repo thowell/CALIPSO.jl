@@ -69,9 +69,9 @@ end
 
 # evalute
 function cone!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
-    product=true,
-    jacobian=true,
-    target=true
+    product=false,
+    jacobian=false,
+    target=false,
     ) where T
 
     s = @views variables[idx.cone_slack]

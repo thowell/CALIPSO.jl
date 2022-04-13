@@ -51,15 +51,15 @@ function ProblemData(num_variables, num_equality, num_cone)
 end
 
 function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
-    objective=true,
-    objective_gradient=true,
-    objective_hessian=true,
-    equality_constraint=true,
-    equality_jacobian=true,
-    equality_hessian=true,
-    cone_constraint=true,
-    cone_jacobian=true,
-    cone_hessian=true,
+    objective=false,
+    objective_gradient=false,
+    objective_hessian=false,
+    equality_constraint=false,
+    equality_jacobian=false,
+    equality_hessian=false,
+    cone_constraint=false,
+    cone_jacobian=false,
+    cone_hessian=false,
     ) where T
 
     x = @views variables[idx.variables]
