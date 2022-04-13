@@ -26,21 +26,21 @@ end
 
 function factorize!(s::LDLSolver{Tv,Ti}, A::SparseMatrixCSC{Tv,Ti}) where {Tv<:AbstractFloat, Ti<:Integer}
     # Reset the pre-allocated fields
-    # s.Pr .= 0
-    # s.Pc .= 0
-    # s.Pv .= 0.0
-    # s.num_entries .= 0
+    s.Pr .= 0
+    s.Pc .= 0
+    s.Pv .= 0.0
+    s.num_entries .= 0
 
-    # # Triangularize the matrix with the allocation-free method.
-    # A = permute_symmetricAF(A, s.F.iperm, s.Pr, s.Pc, s.Pv, s.num_entries)  #returns an upper triangular matrix
+    # Triangularize the matrix with the allocation-free method.
+    A = permute_symmetricAF(A, s.F.iperm, s.Pr, s.Pc, s.Pv, s.num_entries)  #returns an upper triangular matrix
 
-    # # Update the workspace, triuA is the only field we need to update
-    # s.F.workspace.triuA.nzval .= A.nzval
+    # Update the workspace, triuA is the only field we need to update
+    s.F.workspace.triuA.nzval .= A.nzval
 
-    # # factor the matrix
-    # QDLDL.factor!(s.F.workspace, s.F.logical.x)
+    # factor the matrix
+    QDLDL.factor!(s.F.workspace, s.F.logical.x)
 
-    s.F = QDLDL.qdldl(A)
+    # s.F = QDLDL.qdldl(A)
 
     return nothing
 end

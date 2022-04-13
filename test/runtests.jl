@@ -30,6 +30,7 @@ include("trajectory_optimization/hessian_lagrangian.jl")
 include("examples/pendulum.jl")
 include("examples/cartpole.jl")
 include("examples/acrobot.jl")
+include("examples/rocket_landing.jl")
 # include("examples/hopper_gait.jl")
 
 
