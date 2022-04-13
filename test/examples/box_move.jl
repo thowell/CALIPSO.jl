@@ -249,7 +249,7 @@ u_guess = [[0.01 * randn(RoboDojo.box.nu); 1.0e-1 * ones(nu - RoboDojo.box.nu)] 
 # ## problem
 trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, soc);
 methods = ProblemMethods(trajopt);
-idx_nn, idx_soc = cone_indices(trajopt)
+idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
 
 # ## solver
 solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone,

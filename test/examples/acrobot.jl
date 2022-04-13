@@ -128,7 +128,7 @@
 
     # solver
     methods = ProblemMethods(trajopt)
-    idx_nn, idx_soc = cone_indices(trajopt)
+    idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
     solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone, 
         nonnegative_indices=idx_nn, 
         second_order_indices=idx_soc,

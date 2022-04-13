@@ -383,7 +383,7 @@ u_guess = [[0.0; RoboDojo.hopper.gravity * RoboDojo.hopper.mass_body * 0.5 * h[1
 # ## problem 
 trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, soc)
 methods = ProblemMethods(trajopt)
-idx_nn, idx_soc = cone_indices(trajopt)
+idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
 
 # solver
 solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone,

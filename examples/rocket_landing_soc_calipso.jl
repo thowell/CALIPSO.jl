@@ -105,7 +105,7 @@ idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
 solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone,
     nonnegative_indices=idx_nn, 
     second_order_indices=idx_soc,
-    options=Options(verbose=true))
+    options=Options(verbose=true, penalty_initial=1.0e6))
 initialize_states!(solver, trajopt, x_interpolation) 
 initialize_controls!(solver, trajopt, u_guess)
 
