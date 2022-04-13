@@ -163,7 +163,6 @@ function linear_solve!(s::LDLSolver{T}, x::Matrix{T}, A::Matrix{T},
     x .= b 
     for j = 1:m
         xv = @views x[r_idx, j]
-        # LinearAlgebra.LAPACK.getrs!('N', s.A, s.ipiv, xv)
         QDLDL.solve!(solver.F, xv)
     end
 end

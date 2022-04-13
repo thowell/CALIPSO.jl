@@ -5,7 +5,7 @@ using Symbolics
 using LinearAlgebra
 using Random
 using BenchmarkTools
-# using RoboDojo
+using RoboDojo
 using CALIPSO
 
 # Solver
@@ -31,7 +31,8 @@ include("examples/pendulum.jl")
 include("examples/cartpole.jl")
 include("examples/acrobot.jl")
 include("examples/rocket_landing.jl")
-# include("examples/hopper_gait.jl")
+include("examples/box_move.jl")
+include("examples/hopper_gait.jl")
 
 
 

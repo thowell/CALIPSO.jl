@@ -322,7 +322,7 @@ end
 
 eq1 = CALIPSO.Constraint(equality_1, nx, nu)
 eqt = CALIPSO.Constraint(equality_t, 2nx + 4, nu)
-eqT = CALIPSO.Constraint(equality_T, 2nx + 4, nu)
+eqT = CALIPSO.Constraint(equality_T, 2nx + 4, 0)
 eq = [eq1, [eqt for t = 2:T-1]..., eqT];
 
 function inequality_1(x, u, w) 
@@ -382,7 +382,7 @@ end
 
 ineq1 = CALIPSO.Constraint(inequality_1, nx, nu)
 ineqt = CALIPSO.Constraint(inequality_t, 2nx + 4, nu) 
-ineqT = CALIPSO.Constraint(inequality_T, 2nx + 4, nu)
+ineqT = CALIPSO.Constraint(inequality_T, 2nx + 4, 0)
 ineq = [ineq1, [ineqt for t = 2:T-1]..., ineqT];
 
 so = [[Constraint()] for t = 1:T]
