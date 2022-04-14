@@ -1,4 +1,5 @@
-[![CI](https://github.com/thowell/CALIPSO.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/thowell/CALIPSO.jl/actions/workflows/CI.yml)[![codecov](https://codecov.io/gh/thowell/CALIPSO.jl/branch/main/graph/badge.svg?token=RNX4943S70)](https://codecov.io/gh/thowell/CALIPSO.jl)
+[![CI](https://github.com/thowell/CALIPSO.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/thowell/CALIPSO.jl/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/thowell/CALIPSO.jl/branch/main/graph/badge.svg?token=RNX4943S70)](https://codecov.io/gh/thowell/CALIPSO.jl)
 
 # CALIPSO.jl
 Conic Augmented Lagrangian Interior-Point SOlver: A solver for contact-implicit trajectory optimization
@@ -7,12 +8,12 @@ The CALIPSO algorithm is an infeasible-start, primal-dual augmented-Lagrangian i
 
 Problems of the following form:
 ```
-minimize     f(x)
+minimize     f(x; p)
    x
-subject to   g(x)  = 0,
-             h(x) in K
+subject to   g(x; p)  = 0,
+             h(x; p) in K
 ```
-can be optimized. 
+can be optimized for decision variables x, problem parameters p, and the Cartesian product of non-negative orthant and second-order cones K. 
 
 Additionally, trajectory optimization problems of the form:
 ```
