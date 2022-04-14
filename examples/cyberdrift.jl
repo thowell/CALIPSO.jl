@@ -83,7 +83,7 @@ nc = 1 # number of contact points
 # Parameters
 body_mass = 1.0
 body_inertia = 0.1
-friction_body_world = [0.25]  # coefficient of friction
+friction_body_world = [0.5]  # coefficient of friction
 
 # Model
 cybertruck = Cybertruck(nq, nu, nw, nc,
@@ -152,7 +152,7 @@ dyn = [dt for t = 1:T-1]
 # ## initial conditions
 
 # Initial 
-x1 = [0.0; 1.0; -0.5 * π; 0.0; 1.0; -0.5 * π] 
+x1 = [0.0; 2.0; -0.5 * π; 0.0; 1.0; -0.5 * π] 
 
 # Terminal 
 xT = [3.0; 0.0; 0.5 * π; 3.0; 0.0; 0.5 * π]
@@ -218,8 +218,8 @@ eqt = CALIPSO.Constraint(equality_t, nx, nu)
 eqT = CALIPSO.Constraint(equality_T, nx, 0)
 eq = [eq1, [eqt for t = 2:T-1]..., eqT];
 
-u_min = [0.0; -1.0]
-u_max = [1.0;  1.0]
+u_min = [0.0; -0.5]
+u_max = [1.0;  0.5]
 p_car1 = [3.0, 2.0 * 0.65]
 p_car2 = [3.0, 2.0 * -0.65]
 circle_obstacle(x, p; r=0.5) = (x[1] - p[1])^2.0 + (x[2] - p[2])^2.0 - r^2.0
@@ -265,6 +265,11 @@ plot(hcat(u_sol...)[1:2, :]', label=["v" "ω"])
 vis = Visualizer()
 open(vis)
 
+function set_background!(vis::Visualizer; top_color=RGBA(1,1,1.0), bottom_color=RGBA(1,1,1.0))
+    RoboDojo.MeshCat.setprop!(vis["/Background"], "top_color", top_color)
+    RoboDojo.MeshCat.setprop!(vis["/Background"], "bottom_color", bottom_color)
+end
+
 function visualize!(vis, model::Cybertruck, q;
     scale=0.1,
     Δt = 0.1)
@@ -304,3 +309,4 @@ function visualize!(vis, model::Cybertruck, q;
 end
 
 visualize!(vis, cybertruck, x_sol, Δt=h)
+set_background!(vis)
