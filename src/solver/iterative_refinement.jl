@@ -33,7 +33,9 @@ function iterative_refinement!(step, solver::Solver)
     if residual_norm < solver.options.iterative_refinement_tolerance
         return true
     else
-        step .= step_copy
+        solver.options.verbose && println("iterative refinement failure")
+        search_direction_nonsymmetric!(solver.data.step, solver.data)
+        # step .= step_copy
         return false
     end
 end

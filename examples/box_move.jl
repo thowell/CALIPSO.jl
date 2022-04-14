@@ -272,5 +272,5 @@ x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 # ## visualize
 vis = Visualizer()
 render(vis)
-RoboDojo.visualize!(vis, RoboDojo.box, x_sol, Δt=h);
+RoboDojo.visualize!(vis, RoboDojo.box, x_sol, Δt=h, r=0.5);
 
