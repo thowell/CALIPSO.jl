@@ -2,8 +2,8 @@ n = 2
 m = 0
 p = 2
 
-obj(x) = -x[1]*x[2] + 2/(3*sqrt(3))
-eq(x) = zeros(0)
+obj(x, θ) = -x[1]*x[2] + 2/(3*sqrt(3))
+eq(x, θ) = zeros(0)
 ineq(x) = [-x[1] - x[2]^2 + 1.0;
             x[1] + x[2]]
 

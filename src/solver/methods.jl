@@ -1,30 +1,34 @@
 struct ProblemMethods
-    objective::Any 
-    objective_gradient::Any 
-    objective_hessian::Any 
-    equality_constraint::Any 
-    equality_jacobian::Any 
-    equality_hessian::Any
-    cone_constraint::Any 
-    cone_jacobian::Any 
-    cone_hessian::Any
+    objective::Any                                    # f
+    objective_gradient_variables::Any                 # fx
+    objective_gradient_data::Any                      # fθ
+    objective_jacobian_variables_variables::Any       # fxx 
+    objective_jacobian_variables_data::Any            # fxθ
+    equality_constraint::Any                          # g
+    equality_jacobian_variables::Any                  # gx 
+    equality_jacobian_data::Any                       # gθ
+    equality_dual::Any                                # g'y
+    equality_dual_jacobian_variables::Any             # (g'y)x
+    equality_dual_jacobian_variables_variables::Any   # (g'y)xx
+    equality_dual_jacobian_variables_data::Any        # (g'y)xθ
+    cone_constraint::Any                              # h
+    cone_jacobian_variables::Any                      # hx 
+    cone_jacobian_data::Any                           # hθ
+    cone_dual::Any                                    # h'z
+    cone_dual_jacobian_variables::Any                 # (h'y)x
+    cone_dual_jacobian_variables_variables::Any       # (h'y)xx
+    cone_dual_jacobian_variables_data::Any            # (h'y)xθ
 end
 
-function ProblemMethods(num_variables::Int, objective::Function, equality::Function, cone::Function)
+function ProblemMethods(num_variables::Int, num_parameters::Int, objective::Function, equality::Function, cone::Function)
     # generate methods
-    obj, obj_grad!, obj_hess! = generate_gradients(objective, num_variables, :scalar)
-    eq_con!, eq_jac!, eq_hess! = generate_gradients(equality, num_variables, :vector)
-    cone_con!, cone_jac!, cone_hess! = generate_gradients(cone, num_variables, :vector)
+    f, fx!, fθ!, fxx!, fxθ! = generate_gradients(objective, num_variables, num_parameters, :scalar)
+    g, gx, gθ, gᵀy, gᵀyx, gᵀyxx, gᵀyxθ = generate_gradients(equality, num_variables, num_parameters, :vector)
+    h, hx, hθ, hᵀy, hᵀyx, hᵀyxx, hᵀyxθ = generate_gradients(cone, num_variables, num_parameters, :vector)
 
     ProblemMethods(
-        obj, 
-        obj_grad!, 
-        obj_hess!,
-        eq_con!, 
-        eq_jac!, 
-        eq_hess!, 
-        cone_con!, 
-        cone_jac!, 
-        cone_hess!,
+        f, fx!, fθ!, fxx!, fxθ!,
+        g, gx, gθ, gᵀy, gᵀyx, gᵀyxx, gᵀyxθ,
+        h, hx, hθ, hᵀy, hᵀyx, hᵀyxx, hᵀyxθ,
     )
 end

@@ -8,7 +8,8 @@
                     x in K
     """
 
-    num_variables = 3 
+    num_variables = 3
+    num_parameters = 0 
     num_equality = 1 
     num_cone = 3
     idx_ineq = Int[]
@@ -21,14 +22,13 @@
     for v in V 
         for μ in friction_coefficients 
             for γ in impact_impulse
-
-                obj(x) = transpose(v) * x
-                eq(x) = [x[1] - μ * γ]
-                cone(x) = x
+                obj(x, θ) = transpose(v) * x
+                eq(x, θ) = [x[1] - μ * γ]
+                cone(x, θ) = x
 
                 # solver
-                methods = ProblemMethods(num_variables, obj, eq, cone)
-                solver = Solver(methods, num_variables, num_equality, num_cone;
+                methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
+                solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone;
                     nonnegative_indices=idx_ineq,
                     second_order_indices=idx_soc,)
 

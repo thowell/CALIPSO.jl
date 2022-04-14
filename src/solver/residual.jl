@@ -15,18 +15,18 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
     fill!(res, 0.0)
 
     # gradient of Lagrangian 
-    res[idx.variables] = p_data.objective_gradient 
+    res[idx.variables] = p_data.objective_gradient_variables
 
     for (i, ii) in enumerate(idx.variables)
         cy = 0.0
         for j = 1:num_equality 
-            cy += p_data.equality_jacobian[j, i] * y[j]
+            cy += p_data.equality_jacobian_variables[j, i] * y[j]
         end
         res[ii] += cy 
 
         cz = 0.0
         for k = 1:num_cone 
-            cz += p_data.cone_jacobian[k, i] * z[k]
+            cz += p_data.cone_jacobian_variables[k, i] * z[k]
         end
         res[ii] += cz
     end

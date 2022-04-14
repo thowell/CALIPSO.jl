@@ -12,7 +12,7 @@ struct SolverData{T}
     constraint_violation::Vector{T}
 end
 
-function SolverData(num_variables, num_equality, num_cone)
+function SolverData(num_variables, num_parameters, num_equality, num_cone)
     num_total = num_variables + num_equality + num_cone + num_equality + 2 * num_cone
     num_symmetric = num_variables + num_cone + num_equality
 

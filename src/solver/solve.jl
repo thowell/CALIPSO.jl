@@ -26,6 +26,9 @@ function solve!(solver)
     ẑ = @views candidate[indices.cone_dual] 
     t̂ = @views candidate[indices.cone_slack_dual] 
 
+    # parameters 
+    parameters = solver.parameters 
+
     # solver data 
     data = solver.data
 
@@ -58,7 +61,7 @@ function solve!(solver)
     total_iterations = 1
 
     # evaluate 
-    problem!(problem, methods, indices, variables,
+    problem!(problem, methods, indices, variables, parameters,
         objective=true,
         equality_constraint=true,
         equality_jacobian=true,
@@ -77,7 +80,7 @@ function solve!(solver)
             options.verbose && println("iter: ($j, $i, $total_iterations)")
 
             # evaluate
-            problem!(problem, methods, indices, variables,
+            problem!(problem, methods, indices, variables, parameters,
                 objective_gradient=true,
                 equality_jacobian=true,
                 cone_jacobian=true,
@@ -90,7 +93,7 @@ function solve!(solver)
                 indices)
 
             merit_grad = vcat(merit_gradient(
-                problem.objective_gradient,  
+                problem.objective_gradient_variables,  
                 x, r, s, κ[1], λ, ρ[1],
                 indices)...)
 
@@ -112,7 +115,7 @@ function solve!(solver)
             end
 
             # search direction
-            problem!(problem, methods, indices, variables,
+            problem!(problem, methods, indices, variables, parameters,
                 objective_hessian=true,
                 equality_hessian=true,
                 cone_hessian=true,
@@ -152,7 +155,7 @@ function solve!(solver)
             x̂ .= x - α * Δx
             r̂ .= r - α * Δr
 
-            problem!(problem, methods, indices, candidate,
+            problem!(problem, methods, indices, candidate, parameters,
                 objective=true,
                 equality_constraint=true,
                 cone_constraint=true,
@@ -178,7 +181,7 @@ function solve!(solver)
                 r̂ .= r - α * Δr
                 ŝ .= s - α * Δs
 
-                problem!(problem, methods, indices, candidate,
+                problem!(problem, methods, indices, candidate, parameters,
                     objective=true,
                     equality_constraint=true,
                     cone_constraint=true,

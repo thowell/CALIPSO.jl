@@ -518,7 +518,7 @@ trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so);
 methods = ProblemMethods(trajopt);
 
 # solver
-solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone,
+solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.equality, trajopt.dimensions.cone,
     options=Options(verbose=true));
 initialize_states!(solver, trajopt, x_guess);
 initialize_controls!(solver, trajopt, u_guess);
@@ -545,7 +545,7 @@ initialize_controls!(solver, trajopt, u_guess);
 #     jacobian=true,
 #     target=true
 # )
-# CALIPSO.matrix!(solver.data, solver.problem, solver.indices, random_variables, 1.0, 1.0, zeros(solver.dimensions.equality_dual), 1.0e-5, 1.0e-5,
+# CALIPSO.matrix!(solver.data, solver.problem, solver.indices, 1.0, 1.0, zeros(solver.dimensions.equality_dual), 1.0e-5, 1.0e-5,
 #     constraint_hessian=solver.options.constraint_hessian)
 # CALIPSO.matrix_symmetric!(solver.data.matrix_symmetric, solver.data.matrix, solver.indices)
 

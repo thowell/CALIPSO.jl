@@ -39,6 +39,8 @@ include("trajectory_optimization/constraints_vector.jl")
 include("trajectory_optimization/dynamics.jl")
 include("trajectory_optimization/data.jl")
 include("trajectory_optimization/indices.jl")
+include("trajectory_optimization/sparsity.jl")
+include("trajectory_optimization/dimensions.jl")
 include("trajectory_optimization/problem.jl")
 include("trajectory_optimization/evaluate.jl")
 include("trajectory_optimization/utilities.jl")
@@ -50,7 +52,7 @@ include("trajectory_optimization/methods.jl")
 export Cost
 
 # constraints 
-export Bound, Bounds, Constraint, Constraints
+export Constraint, Constraints
 
 # dynamics 
 export Dynamics

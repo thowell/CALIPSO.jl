@@ -230,9 +230,9 @@
 
     z0 = rand(nz)
     σ = 1.0
-    ho = zeros(trajopt.num_variables, trajopt.num_variables)
-    he = zeros(trajopt.num_variables, trajopt.num_variables)
-    hc = zeros(trajopt.num_variables, trajopt.num_variables)
+    ho = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
+    he = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
+    hc = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
 
 
     CALIPSO.objective_hessian!(ho, trajopt, z0[1:np])

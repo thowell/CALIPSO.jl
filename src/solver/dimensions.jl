@@ -1,5 +1,6 @@
 struct Dimensions 
     variables::Int 
+    parameters::Int
     equality_slack::Int
     cone_slack::Int
     equality_dual::Int 
@@ -13,14 +14,17 @@ struct Dimensions
     cone_second_order::Vector{Int}
 end
 
-function Dimensions(num_variables, num_equality, num_cone;
+function Dimensions(num_variables, num_parameters, num_equality, num_cone;
     nonnegative=num_cone,
-    second_order=[0,]) 
-    num_total = num_variables + num_equality + num_cone # primal 
-    num_total += num_equality + 2 * num_cone
+    second_order=[0,],
+    ) 
+
+    num_total = num_variables + num_equality + num_cone # primals
+    num_total += num_equality + 2 * num_cone            # duals
 
     Dimensions(
         num_variables, 
+        num_parameters,
         num_equality,
         num_cone,
         num_equality, 

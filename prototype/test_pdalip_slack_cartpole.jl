@@ -5,9 +5,9 @@ using CALIPSO
 using LinearAlgebra
 
 include("cartpole.jl")
-n = trajopt.num_variables 
-m = trajopt.num_equality
-p = trajopt.num_cone
+n = trajopt.dimensions.total_variables 
+m = trajopt.dimensions.equality
+p = trajopt.dimensions.cone
 
 # merit 
 function merit(x, r, s, y, z, t, κ, λ, ρ)

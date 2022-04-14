@@ -21,8 +21,8 @@ v = [0.0; 1.0; 1.0]
 μ = 1.0 
 γ = 1.0 
 
-obj(x) = transpose(v) * x #+ 1.0e-5 * dot(x, x)
-eq(x) = [x[1] - μ * γ]
+obj(x, θ) = transpose(v) * x #+ 1.0e-5 * dot(x, x)
+eq(x, θ) = [x[1] - μ * γ]
 ineq(x) = x
 
 # gradients 

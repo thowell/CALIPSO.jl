@@ -137,7 +137,7 @@ x_interpolation = linear_interpolation(x1, xT, T)
 
 # solver
 methods = ProblemMethods(trajopt)
-solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone, 
+solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.equality, trajopt.dimensions.cone, 
     options=Options())
 initialize_states!(solver, trajopt, x_interpolation)
 initialize_controls!(solver, trajopt, u_guess) 

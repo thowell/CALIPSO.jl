@@ -10,8 +10,8 @@ x̄ = max.(randn(n), 1.0e-2)
 b = A * x̄
 
 # equations
-obj(x) = dot(x, x) + dot(ones(n), x)
-eq(x) = A * x - b 
+obj(x, θ) = dot(x, x) + dot(ones(n), x)
+eq(x, θ) = A * x - b 
 ineq(x) = x
 
 # gradients 

@@ -7,7 +7,7 @@ end
 
 function initialize_slacks!(solver)
     # set slacks to constraints
-    problem!(solver.problem, solver.methods, solver.indices, solver.variables,
+    problem!(solver.problem, solver.methods, solver.indices, solver.variables, solver.parameters,
         # objective=false,
         # objective_gradient=false,
         # objective_hessian=false,

@@ -4,8 +4,8 @@ Pkg.instantiate()
 using CALIPSO 
 
 include("cartpole.jl")
-n = trajopt.num_variables 
-m = trajopt.num_equality
+n = trajopt.dimensions.total_variables 
+m = trajopt.dimensions.equality
 
 # augmented Lagrangian 
 al(x, r, λ, ρ) = f(x) + dot(λ, r) + 0.5 * ρ * dot(r, r) 

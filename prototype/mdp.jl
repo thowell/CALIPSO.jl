@@ -19,9 +19,9 @@ v = [0.0; 0.0; 0.0]
 μ = 0.0 
 γ = 0.0 
 
-obj(x) = transpose(v) * x
-eq(x) = [x[1] - μ * γ]
-cone(x) = x
+obj(x, θ) = transpose(v) * x
+eq(x, θ) = [x[1] - μ * γ]
+cone(x, θ) = x
 
 # solver
 methods = ProblemMethods(n, obj, eq, cone)

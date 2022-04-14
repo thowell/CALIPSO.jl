@@ -2,33 +2,46 @@
 # using ECOS, SCS 
 # using MathOptInterface
 
-function generate_gradients(func::Function, num_variables::Int, mode::Symbol; 
-    output=:inplace)
+function generate_gradients(func::Function, num_variables::Int, num_parameters::Int, mode::Symbol)
 
-    @variables x[1:num_variables]
+    @variables x[1:num_variables] θ[1:num_parameters]
 
     if mode == :scalar 
-        f = func(x)
+        f = func(x, θ)
+        
         fx = Symbolics.gradient(f, x) 
-        fxx = Symbolics.hessian(f, x) 
+        fθ = Symbolics.gradient(f, θ)
+        fxx = Symbolics.jacobian(fx, x)
+        fxθ = Symbolics.jacobian(fx, θ)
 
-        f_func = eval(Symbolics.build_function(f, x))
-        fx_func = eval(Symbolics.build_function(fx, x)[output == :inplace ? 2 : 1])
-        fxx_func = eval(Symbolics.build_function(fxx, x)[output == :inplace ? 2 : 1])
+        f_func = eval(Symbolics.build_function(f, x, θ))
+        fx_func = eval(Symbolics.build_function(fx, x, θ)[2])
+        fθ_func = eval(Symbolics.build_function(fθ, x, θ)[2])
+        fxx_func = eval(Symbolics.build_function(fxx, x, θ)[2])
+        fxθ_func = eval(Symbolics.build_function(fxθ, x, θ)[2])
 
-        return f_func, fx_func, fxx_func
+        return f_func, fx_func, fθ_func, fxx_func, fxθ_func
     elseif mode == :vector 
-        f = func(x)
+        f = func(x, θ)
+        
         fx = Symbolics.jacobian(f, x)
-        dim = length(f)
-        @variables y[1:dim]
-        fyxx = Symbolics.hessian(dot(f, y), x) 
+        fθ = Symbolics.jacobian(f, θ)
 
-        f_func = eval(Symbolics.build_function(f, x)[output == :inplace ? 2 : 1])
-        fx_func = eval(Symbolics.build_function(fx, x)[output == :inplace ? 2 : 1])
-        fyxx_func = eval(Symbolics.build_function(fyxx, x, y)[output == :inplace ? 2 : 1])
+        @variables y[1:length(f)]
+        fᵀy = sum(transpose(f) * y)
+        fᵀyx = Symbolics.gradient(fᵀy, x)
+        fᵀyxx = Symbolics.jacobian(fᵀyx, x) 
+        fᵀyxθ = Symbolics.jacobian(fᵀyx, θ) 
 
-        return f_func, fx_func, fyxx_func
+        f_func = eval(Symbolics.build_function(f, x, θ)[2])
+        fx_func = eval(Symbolics.build_function(fx, x, θ)[2])
+        fθ_func = eval(Symbolics.build_function(fθ, x, θ)[2])
+        fᵀy_func = eval(Symbolics.build_function(fᵀy, x, θ, y))
+        fᵀyx_func = eval(Symbolics.build_function(fᵀyx, x, θ, y)[2])
+        fᵀyxx_func = eval(Symbolics.build_function(fᵀyxx, x, θ, y)[2])
+        fᵀyxθ_func = eval(Symbolics.build_function(fᵀyxθ, x, θ, y)[2])
+
+        return f_func, fx_func, fθ_func, fᵀy_func, fᵀyx_func, fᵀyxx_func, fᵀyxθ_func
     end
 end
 
@@ -51,9 +64,9 @@ function generate_random_qp(num_variables, num_equality, num_cone;
     A = randn(p, n)
     b = A * x
 
-    objective(z) = transpose(z) * P * z + transpose(q) * z 
-    constraint_equality(z) = A * z - b 
-    constraint_cone(z) = h - G * z
+    objective(z, θ) = transpose(z) * P * z + transpose(q) * z 
+    constraint_equality(z, θ) = A * z - b 
+    constraint_cone(z, θ) = h - G * z
     
     flag = true
 

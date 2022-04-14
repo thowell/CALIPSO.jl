@@ -1,9 +1,9 @@
-function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, ρ, λ, ϵp, ϵd;
+function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, κ, ρ, λ, ϵp, ϵd;
     constraint_hessian=true)
     # slacks 
-    r = @views w[idx.equality_slack]
-    s = @views w[idx.cone_slack]
-    t = @views w[idx.cone_slack_dual]
+    # r = @views w[idx.equality_slack]
+    # s = @views w[idx.cone_slack]
+    # t = @views w[idx.cone_slack_dual]
 
     # reset
     H = s_data.matrix 
@@ -12,9 +12,9 @@ function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, �
     # Hessian of Lagrangian
     for i in idx.variables 
         for j in idx.variables 
-            H[i, j]  = p_data.objective_hessian[i, j] 
-            constraint_hessian && (H[i, j] += p_data.equality_hessian[i, j])
-            constraint_hessian && (H[i, j] += p_data.cone_hessian[i, j])
+            H[i, j]  = p_data.objective_jacobian_variables_variables[i, j] 
+            constraint_hessian && (H[i, j] += p_data.equality_dual_jacobian_variables_variables[i, j])
+            constraint_hessian && (H[i, j] += p_data.cone_dual_jacobian_variables_variables[i, j])
         end
     end
 
@@ -47,16 +47,16 @@ function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, �
     # equality Jacobian 
     for (i, ii) in enumerate(idx.equality_dual) 
         for (j, jj) in enumerate(idx.variables)
-            H[ii, jj] = p_data.equality_jacobian[i, j]
-            H[jj, ii] = p_data.equality_jacobian[i, j]
+            H[ii, jj] = p_data.equality_jacobian_variables[i, j]
+            H[jj, ii] = p_data.equality_jacobian_variables[i, j]
         end
     end
 
     # cone Jacobian 
     for (i, ii) in enumerate(idx.cone_dual) 
         for (j, jj) in enumerate(idx.variables)
-            H[ii, jj] = p_data.cone_jacobian[i, j]
-            H[jj, ii] = p_data.cone_jacobian[i, j]
+            H[ii, jj] = p_data.cone_jacobian_variables[i, j]
+            H[jj, ii] = p_data.cone_jacobian_variables[i, j]
         end
     end
 

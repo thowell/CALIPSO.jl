@@ -39,7 +39,7 @@ function objective_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, 
         trajopt.indices.actions)
     hessian!(
         hessian, 
-        trajopt.sparsity_objective_hessian, 
+        trajopt.sparsity.objective_hessian, 
         trajopt.data.objective, 
         trajopt.data.states, 
         trajopt.data.actions,
@@ -62,7 +62,7 @@ function equality!(violations, trajopt::TrajectoryOptimizationProblem{T}, variab
         trajopt.data.states, 
         trajopt.data.actions, 
         trajopt.data.parameters)
-    if trajopt.num_equality_constraints > 0
+    if trajopt.dimensions.equality_constraints > 0
         constraints!(
             violations, 
             trajopt.indices.equality_constraints, 
@@ -82,7 +82,7 @@ function cone!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables)
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
-    if trajopt.num_cone_nonnegative > 0
+    if trajopt.dimensions.cone_nonnegative > 0
         constraints!(
             violations, 
             trajopt.indices.nonnegative_constraints, 
@@ -91,7 +91,7 @@ function cone!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables)
             trajopt.data.actions, 
             trajopt.data.parameters)
     end
-    if trajopt.num_cone_second_order > 0
+    if trajopt.dimensions.cone_second_order > 0
         constraints!(
             violations, 
             trajopt.indices.second_order_constraints, 
@@ -113,15 +113,15 @@ function equality_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T},
         trajopt.indices.actions)
     jacobian!(
         jacobian, 
-        trajopt.sparsity_dynamics_jacobian, 
+        trajopt.sparsity.dynamics_jacobian, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
         trajopt.data.parameters)
-    if trajopt.num_equality_constraints > 0
+    if trajopt.dimensions.equality_constraints > 0
         jacobian!(
             jacobian, 
-            trajopt.sparsity_equality_jacobian, 
+            trajopt.sparsity.equality_jacobian, 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -138,19 +138,19 @@ function cone_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, var
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
-    if trajopt.num_cone_nonnegative > 0
+    if trajopt.dimensions.cone_nonnegative > 0
         jacobian!(
             jacobian, 
-            trajopt.sparsity_nonnegative_jacobian, 
+            trajopt.sparsity.nonnegative_jacobian, 
             trajopt.data.nonnegative, 
             trajopt.data.states, 
             trajopt.data.actions, 
             trajopt.data.parameters)
     end
-    if trajopt.num_cone_second_order > 0
+    if trajopt.dimensions.cone_second_order > 0
         jacobian!(
             jacobian, 
-            trajopt.sparsity_second_order_jacobian, 
+            trajopt.sparsity.second_order_jacobian, 
             trajopt.data.second_order, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -176,16 +176,16 @@ function equality_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, v
         trajopt.indices.equality_duals)
     hessian_lagrangian!(
         hessian, 
-        trajopt.sparsity_dynamics_hessian, 
+        trajopt.sparsity.dynamics_hessian, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
         trajopt.data.parameters, 
         trajopt.data.duals_dynamics)
-    if trajopt.num_equality > 0 
+    if trajopt.dimensions.equality > 0 
         hessian_lagrangian!(
             hessian, 
-            trajopt.sparsity_equality_hessian, 
+            trajopt.sparsity.equality_hessian, 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -207,20 +207,20 @@ function cone_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, varia
         trajopt.data.duals_nonnegative, trajopt.data.duals_second_order,
         cone_duals, 
         trajopt.indices.nonnegative_duals, trajopt.indices.second_order_duals)
-    if trajopt.num_cone_nonnegative > 0 
+    if trajopt.dimensions.cone_nonnegative > 0 
         hessian_lagrangian!(
             hessian, 
-            trajopt.sparsity_nonnegative_hessian, 
+            trajopt.sparsity.nonnegative_hessian, 
             trajopt.data.nonnegative, 
             trajopt.data.states, 
             trajopt.data.actions, 
             trajopt.data.parameters, 
             trajopt.data.duals_nonnegative)
     end
-    if trajopt.num_cone_second_order > 0 
+    if trajopt.dimensions.cone_second_order > 0 
         hessian_lagrangian!(
             hessian, 
-            trajopt.sparsity_second_order_hessian, 
+            trajopt.sparsity.second_order_hessian, 
             trajopt.data.second_order, 
             trajopt.data.states, 
             trajopt.data.actions, 

@@ -25,19 +25,20 @@
     b = [1.0; -1.0; z; h]
 
     num_variables = p + 1 
+    num_parameters = 0
     num_equality = 0 
     num_cone = 14 
 
     idx_ineq = collect(1:2) 
     idx_soc = [collect(2 .+ (1:12))]
 
-    obj(x) = dot(c, x)
-    eq(x) = zeros(0)
-    cone(x) = b - A * x
+    obj(x, θ) = dot(c, x)
+    eq(x, θ) = zeros(0)
+    cone(x, θ) = b - A * x
 
     # solver
-    methods = ProblemMethods(num_variables, obj, eq, cone)
-    solver = Solver(methods, num_variables, num_equality, num_cone;
+    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
+    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         nonnegative_indices=idx_ineq,
         second_order_indices=idx_soc,)
 

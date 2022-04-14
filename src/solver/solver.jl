@@ -4,6 +4,7 @@ mutable struct Solver{T}
     data::SolverData{T}
     variables::Vector{T} 
     candidate::Vector{T}
+    parameters::Vector{T}
     indices::Indices
     dimensions::Dimensions
     linear_solver::LinearSolver
@@ -19,24 +20,25 @@ mutable struct Solver{T}
     options::Options{T}
 end
 
-function Solver(methods, num_variables, num_equality, num_cone; 
+function Solver(methods, num_variables, num_parameters, num_equality, num_cone; 
+    parameters=zeros(num_parameters),
     nonnegative_indices=collect(1:num_cone),
     second_order_indices=[collect(1:0)],
     options=Options())
 
     # problem data
-    p_data = ProblemData(num_variables, num_equality, num_cone)
+    p_data = ProblemData(num_variables, num_parameters, num_equality, num_cone)
 
     # solver data
-    s_data = SolverData(num_variables, num_equality, num_cone)
+    s_data = SolverData(num_variables, num_parameters, num_equality, num_cone)
 
     # indices
-    idx = Indices(num_variables, num_equality, num_cone;
+    idx = Indices(num_variables, num_parameters, num_equality, num_cone;
         nonnegative=nonnegative_indices,
         second_order=second_order_indices)
 
     # dimensions 
-    dim = Dimensions(num_variables, num_equality, num_cone;
+    dim = Dimensions(num_variables, num_parameters, num_equality, num_cone;
         nonnegative=length(nonnegative_indices),
         second_order=[length(idx_soc) for idx_soc in second_order_indices])
 
@@ -53,7 +55,7 @@ function Solver(methods, num_variables, num_equality, num_cone;
 
     # linear solver TODO: constructor
     random_variables = randn(dim.total)
-    problem!(p_data, methods, idx, random_variables,
+    problem!(p_data, methods, idx, random_variables, parameters,
         objective=true,
         objective_gradient=true,
         objective_hessian=true,
@@ -69,7 +71,7 @@ function Solver(methods, num_variables, num_equality, num_cone;
         jacobian=true,
         target=true
     )
-    matrix!(s_data, p_data, idx, random_variables, rand(1), rand(1), randn(num_equality), 1.0e-5, 1.0e-5,
+    matrix!(s_data, p_data, idx, rand(1), rand(1), randn(num_equality), 1.0e-5, 1.0e-5,
         constraint_hessian=options.constraint_hessian)
     matrix_symmetric!(s_data.matrix_symmetric, s_data.matrix, idx)
 
@@ -87,6 +89,7 @@ function Solver(methods, num_variables, num_equality, num_cone;
         s_data,
         variables,
         candidate, 
+        parameters,
         idx, 
         dim,
         linear_solver,

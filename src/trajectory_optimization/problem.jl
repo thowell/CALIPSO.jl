@@ -1,31 +1,33 @@
-
 struct TrajectoryOptimizationProblem{T}
     data::TrajectoryOptimizationData{T}
-    num_variables::Int                 
-    num_equality::Int 
-    num_equality_dynamics::Int 
-    num_equality_constraints::Int
-    num_cone::Int
-    num_cone_nonnegative::Int
-    num_cone_second_order::Int
-    num_jacobian_equality::Int 
-    num_jacobian_cone::Int
-    num_hessian_lagrangian::Int  
+    # num_variables::Int     
+    # num_parameters::Int            
+    # num_equality::Int 
+    # num_equality_dynamics::Int 
+    # num_equality_constraints::Int
+    # num_cone::Int
+    # num_cone_nonnegative::Int
+    # num_cone_second_order::Int
+    # num_jacobian_equality::Int 
+    # num_jacobian_cone::Int
+    # num_hessian_lagrangian::Int  
 
     indices::TrajectoryOptimizationIndices
+    sparsity::TrajectoryOptimizationSparsity 
+    dimensions::TrajectoryOptimizationDimensions
 
     # TODO sparsity struct
-    sparsity_dynamics_jacobian
-    sparsity_equality_jacobian
-    sparsity_nonnegative_jacobian
-    sparsity_second_order_jacobian
+    # sparsity_dynamics_jacobian
+    # sparsity_equality_jacobian
+    # sparsity_nonnegative_jacobian
+    # sparsity_second_order_jacobian
 
-    hessian_sparsity_key
-    sparsity_objective_hessian
-    sparsity_dynamics_hessian
-    sparsity_equality_hessian
-    sparsity_nonnegative_hessian
-    sparsity_second_order_hessian
+    # hessian_sparsity_key
+    # sparsity_objective_hessian
+    # sparsity_dynamics_hessian
+    # sparsity_equality_hessian
+    # sparsity_nonnegative_hessian
+    # sparsity_second_order_hessian
 
     hessian_lagrangian::Bool 
     parameters::Vector{T}
@@ -34,55 +36,61 @@ end
 function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData; 
     evaluate_hessian=true) 
 
-    # number of variables
-    total_variables = sum(data.state_dimensions) + sum(data.action_dimensions)
+    # # number of variables
+    # total_variables = sum(data.state_dimensions) + sum(data.action_dimensions)
 
-    # number of constraints
-    num_dynamics = num_constraint(data.dynamics)
-    num_equality = num_constraint(data.equality) 
-    num_nonnegative = num_constraint(data.nonnegative)
-    num_second_order = sum(num_constraint(data.second_order))
-    total_equality = num_dynamics + num_equality 
-    total_cone = num_nonnegative + num_second_order
+    # # number of parameters = 
+    # num_parameters = sum(data.parameter_dimensions)
 
-    # number of nonzeros in constraint Jacobian
-    num_dynamics_jacobian = num_jacobian(data.dynamics)
-    num_equality_jacobian = num_jacobian(data.equality)  
-    num_nonnegative_jacobian = num_jacobian(data.nonnegative)
-    num_second_order_jacobian = sum(num_jacobian(data.second_order))
+    # # number of constraints
+    # num_dynamics = num_constraint(data.dynamics)
+    # num_equality = num_constraint(data.equality) 
+    # num_nonnegative = num_constraint(data.nonnegative)
+    # num_second_order = sum(num_constraint(data.second_order))
+    # total_equality = num_dynamics + num_equality 
+    # total_cone = num_nonnegative + num_second_order
 
-    total_equality_jacobians = num_dynamics_jacobian + num_equality_jacobian 
-    total_cone_jacobians = num_nonnegative_jacobian + num_second_order_jacobian
+    # # number of nonzeros in constraint Jacobian
+    # num_dynamics_jacobian = num_jacobian(data.dynamics)
+    # num_equality_jacobian = num_jacobian(data.equality)  
+    # num_nonnegative_jacobian = num_jacobian(data.nonnegative)
+    # num_second_order_jacobian = sum(num_jacobian(data.second_order))
 
-    # constraint Jacobian sparsity
-    sparsity_dynamics_jacobian = sparsity_jacobian(data.dynamics, data.state_dimensions, data.action_dimensions, 
-        row_shift=0)
-    sparsity_equality_jacobian = sparsity_jacobian(data.equality, data.state_dimensions, data.action_dimensions, 
-        row_shift=num_dynamics)
-    sparsity_nonnegative_jacobian = sparsity_jacobian(data.nonnegative, data.state_dimensions, data.action_dimensions, 
-        row_shift=0)
-    sparsity_second_order_jacobian = sparsity_jacobian(data.second_order, data.state_dimensions, data.action_dimensions, 
-        row_shift=num_nonnegative)
+    # total_equality_jacobians = num_dynamics_jacobian + num_equality_jacobian 
+    # total_cone_jacobians = num_nonnegative_jacobian + num_second_order_jacobian
 
-    # Hessian of Lagrangian sparsity 
-    sparsity_objective_hessian = sparsity_hessian(data.objective, data.state_dimensions, data.action_dimensions)
-    sparsity_dynamics_hessian = sparsity_hessian(data.dynamics, data.state_dimensions, data.action_dimensions)
-    sparsity_equality_hessian = sparsity_hessian(data.equality, data.state_dimensions, data.action_dimensions)
-    sparsity_nonnegative_hessian = sparsity_hessian(data.nonnegative, data.state_dimensions, data.action_dimensions)
-    sparsity_second_order_hessian = sparsity_hessian(data.second_order, data.state_dimensions, data.action_dimensions)
+    # # constraint Jacobian sparsity
+    # sparsity_dynamics_jacobian = sparsity_jacobian(data.dynamics, data.state_dimensions, data.action_dimensions, 
+    #     row_shift=0)
+    # sparsity_equality_jacobian = sparsity_jacobian(data.equality, data.state_dimensions, data.action_dimensions, 
+    #     row_shift=num_dynamics)
+    # sparsity_nonnegative_jacobian = sparsity_jacobian(data.nonnegative, data.state_dimensions, data.action_dimensions, 
+    #     row_shift=0)
+    # sparsity_second_order_jacobian = sparsity_jacobian(data.second_order, data.state_dimensions, data.action_dimensions, 
+    #     row_shift=num_nonnegative)
 
-    hessian_lagrangian_sparsity = [(sparsity_objective_hessian...)..., 
-        (sparsity_dynamics_hessian...)..., 
-        (sparsity_equality_hessian...)..., 
-        (sparsity_nonnegative_hessian...)...,
-        ((sparsity_second_order_hessian...)...)...,
-    ]
+    # # Hessian of Lagrangian sparsity 
+    # sparsity_objective_hessian = sparsity_hessian(data.objective, data.state_dimensions, data.action_dimensions)
+    # sparsity_dynamics_hessian = sparsity_hessian(data.dynamics, data.state_dimensions, data.action_dimensions)
+    # sparsity_equality_hessian = sparsity_hessian(data.equality, data.state_dimensions, data.action_dimensions)
+    # sparsity_nonnegative_hessian = sparsity_hessian(data.nonnegative, data.state_dimensions, data.action_dimensions)
+    # sparsity_second_order_hessian = sparsity_hessian(data.second_order, data.state_dimensions, data.action_dimensions)
+
+    # hessian_lagrangian_sparsity = [(sparsity_objective_hessian...)..., 
+    #     (sparsity_dynamics_hessian...)..., 
+    #     (sparsity_equality_hessian...)..., 
+    #     (sparsity_nonnegative_hessian...)...,
+    #     ((sparsity_second_order_hessian...)...)...,
+    # ]
     
-    hessian_lagrangian_sparsity = !isempty(hessian_lagrangian_sparsity) ? hessian_lagrangian_sparsity : Tuple{Int,Int}[]
-    hessian_sparsity_key = sort(unique(hessian_lagrangian_sparsity))
+    # hessian_lagrangian_sparsity = !isempty(hessian_lagrangian_sparsity) ? hessian_lagrangian_sparsity : Tuple{Int,Int}[]
+    # hessian_sparsity_key = sort(unique(hessian_lagrangian_sparsity))
 
-    # number of nonzeros in Hessian of Lagrangian
-    num_hessian_lagrangian = length(hessian_lagrangian_sparsity)
+    # # number of nonzeros in Hessian of Lagrangian
+    # num_hessian_lagrangian = length(hessian_lagrangian_sparsity)
+
+    spar = TrajectoryOptimizationSparsity(data)
+    dims = TrajectoryOptimizationDimensions(data, num_hessian_lagrangian=length(spar.hessian_key))
 
     # indices 
     idx = indices(
@@ -91,34 +99,39 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
         data.equality, 
         data.nonnegative,
         data.second_order,
-        hessian_sparsity_key, 
-        data.state_dimensions, 
-        data.action_dimensions, 
-        total_variables)
+        spar.hessian_key, 
+        dims.states, 
+        dims.actions, 
+        dims.total_variables)
+
+   
 
     TrajectoryOptimizationProblem(
         data, 
-        total_variables, 
-        total_equality,
-        num_dynamics, 
-        num_equality,
-        total_cone,
-        num_nonnegative, 
-        num_second_order, 
-        total_equality_jacobians, 
-        total_cone_jacobians,
-        num_hessian_lagrangian, 
+        # total_variables, 
+        # num_parameters,
+        # total_equality,
+        # num_dynamics, 
+        # num_equality,
+        # total_cone,
+        # num_nonnegative, 
+        # num_second_order, 
+        # total_equality_jacobians, 
+        # total_cone_jacobians,
+        # num_hessian_lagrangian, 
         idx, 
-        sparsity_dynamics_jacobian,
-        sparsity_equality_jacobian,
-        sparsity_nonnegative_jacobian,
-        sparsity_second_order_jacobian,
-        hessian_sparsity_key,
-        sparsity_objective_hessian,
-        sparsity_dynamics_hessian,
-        sparsity_equality_hessian,
-        sparsity_nonnegative_hessian,
-        sparsity_second_order_hessian,
+        spar, 
+        dims,
+        # sparsity_dynamics_jacobian,
+        # sparsity_equality_jacobian,
+        # sparsity_nonnegative_jacobian,
+        # sparsity_second_order_jacobian,
+        # hessian_sparsity_key,
+        # sparsity_objective_hessian,
+        # sparsity_dynamics_hessian,
+        # sparsity_equality_hessian,
+        # sparsity_nonnegative_hessian,
+        # sparsity_second_order_hessian,
         evaluate_hessian, 
         vcat(data.parameters...),
         )

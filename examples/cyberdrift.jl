@@ -11,9 +11,9 @@ using LinearAlgebra
 using RoboDojo
 
 """
-    Cybertruck
+    CYBERTRUCK
 """
-struct Cybertruck{T} <: RoboDojo.Model{T}
+struct CYBERTRUCK{T} <: RoboDojo.Model{T}
 	# dimensions
 	nq::Int # generalized coordinates
 	nu::Int # controls
@@ -27,22 +27,22 @@ struct Cybertruck{T} <: RoboDojo.Model{T}
     friction_joint::Vector{T} 
 end
 
-function mass_matrix(model::Cybertruck, q) 
+function mass_matrix(model::CYBERTRUCK, q) 
     Diagonal([model.mass, model.mass, model.inertia])
 end
 
-function dynamics_bias(model::Cybertruck, q, q̇) 
+function dynamics_bias(model::CYBERTRUCK, q, q̇) 
     [0.0; 0.0; 0.0]
 end
 
-function input_jacobian(model::Cybertruck, q)
+function input_jacobian(model::CYBERTRUCK, q)
 	[
         cos(q[3]) sin(q[3]) 0.0; 
         0.0       0.0       1.0;
     ]
 end
 
-function contact_jacobian(model::Cybertruck, q)
+function contact_jacobian(model::CYBERTRUCK, q)
 	[
         1.0 0.0 0.0; 
         0.0 1.0 0.0;
@@ -50,12 +50,12 @@ function contact_jacobian(model::Cybertruck, q)
 end
 
 # nominal configuration 
-function nominal_configuration(model::Cybertruck)
+function nominal_configuration(model::CYBERTRUCK)
 	[0.0; 0.0; 0.0]
 end
 
 # friction coefficients 
-friction_coefficients(model::Cybertruck) = model.friction_body_world
+friction_coefficients(model::CYBERTRUCK) = model.friction_body_world
 
 function dynamics(model, mass_matrix, dynamics_bias, h, q0, q1, u1, w1, λ1, q2)
     # evalutate at midpoint
@@ -86,7 +86,7 @@ body_inertia = 0.1
 friction_body_world = [0.5]  # coefficient of friction
 
 # Model
-cybertruck = Cybertruck(nq, nu, nw, nc,
+cybertruck = CYBERTRUCK(nq, nu, nw, nc,
 		  body_mass, body_inertia,
 		  friction_body_world, zeros(0))
 
@@ -94,7 +94,7 @@ cybertruck = Cybertruck(nq, nu, nw, nc,
 nx = 2 * nq
 nu = 2 + 6
 
-function dynamics(model::Cybertruck, h, y, x, u, w)
+function dynamics(model::CYBERTRUCK, h, y, x, u, w)
     
     # configurations
     q1⁻ = x[1:3]
@@ -244,7 +244,7 @@ methods = ProblemMethods(trajopt);
 idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
 
 # ## solver
-solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone,
+solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.equality, trajopt.dimensions.cone,
     nonnegative_indices=idx_nn, 
     second_order_indices=idx_soc,
     options=Options(verbose=true, penalty_initial=1.0, residual_tolerance=1.0e-6));
@@ -270,7 +270,7 @@ function set_background!(vis::Visualizer; top_color=RGBA(1,1,1.0), bottom_color=
     RoboDojo.MeshCat.setprop!(vis["/Background"], "bottom_color", bottom_color)
 end
 
-function visualize!(vis, model::Cybertruck, q;
+function visualize!(vis, model::CYBERTRUCK, q;
     scale=0.1,
     Δt = 0.1)
 

@@ -90,50 +90,50 @@ methods = ProblemMethods(trajopt)
 
 f = methods.objective 
 function fx(x) 
-    grad = zeros(trajopt.num_variables)
+    grad = zeros(trajopt.dimensions.total_variables)
     methods.objective_gradient(grad, x) 
     return grad 
 end
 function fxx(x) 
-    hess = zeros(trajopt.num_variables, trajopt.num_variables)
-    methods.objective_hessian(hess, x) 
+    hess = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
+    methods.objective_jacobian_variables_variables(hess, x) 
     return hess
 end
 function g(x) 
-    con = zeros(trajopt.num_equality)
+    con = zeros(trajopt.dimensions.equality)
     methods.equality(con, x) 
     return con 
 end
 function gx(x) 
-    jac = zeros(trajopt.num_equality, trajopt.num_variables)
-    methods.equality_jacobian(jac, x) 
+    jac = zeros(trajopt.dimensions.equality, trajopt.dimensions.total_variables)
+    methods.equality_jacobian_variables(jac, x) 
     return jac
 end
 function gyxx(x, y) 
-    hess = zeros(trajopt.num_variables, trajopt.num_variables)
-    methods.equality_hessian(hess, x, y) 
+    hess = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
+    methods.equality_dual_jacobian_variables_variables(hess, x, y) 
     return hess
 end
 
 function h(x) 
-    con = zeros(trajopt.num_cone)
+    con = zeros(trajopt.dimensions.cone)
     methods.inequality(con, x) 
     return con 
 end
 function hx(x) 
-    jac = zeros(trajopt.num_cone, trajopt.num_variables)
+    jac = zeros(trajopt.dimensions.cone, trajopt.dimensions.total_variables)
     methods.inequality_jacobian(jac, x) 
     return jac
 end
 function hyxx(x, y) 
-    hess = zeros(trajopt.num_variables, trajopt.num_variables)
-    methods.inequality_hessian(hess, x, y) 
+    hess = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
+    methods.inequality_dual_jacobian_variables_variables(hess, x, y) 
     return hess
 end
 
-x̄ = rand(trajopt.num_variables)
-ȳ = rand(trajopt.num_equality)
-z̄ = rand(trajopt.num_cone)
+x̄ = rand(trajopt.dimensions.total_variables)
+ȳ = rand(trajopt.dimensions.equality)
+z̄ = rand(trajopt.dimensions.cone)
 f(x̄)
 fx(x̄)
 fxx(x̄)
@@ -145,7 +145,7 @@ hx(x̄)
 hyxx(x̄, ȳ)
 
 # initialize
-x = zeros(trajopt.num_variables)
+x = zeros(trajopt.dimensions.total_variables)
  
 for (t, idx) in enumerate(trajopt.indices.states)
     x[idx] = x_interpolation[t]

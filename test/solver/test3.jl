@@ -1,17 +1,18 @@
 @testset "Solver problem: Test 3" begin
     num_variables = 2
+    num_parameters = 0
     num_equality = 0
-    num_inequality = 2
+    num_cone = 2
     x0 = rand(num_variables)
 
-    obj(x) = 100*(x[2]-x[1]^2)^2 + (1-x[1])^2
-    eq(x) = zeros(0)
-    ineq(x) = [-(x[1] -1)^3 + x[2] - 1;
+    obj(x, θ) = 100*(x[2]-x[1]^2)^2 + (1-x[1])^2
+    eq(x, θ) = zeros(0)
+    cone(x, θ) = [-(x[1] -1)^3 + x[2] - 1;
                 -x[1] - x[2] + 2]
 
     # solver
-    methods = ProblemMethods(num_variables, obj, eq, ineq)
-    solver = Solver(methods, num_variables, num_equality, num_inequality)
+    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
+    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
     initialize!(solver, x0)
 
     # solve 

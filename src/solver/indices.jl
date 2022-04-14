@@ -16,7 +16,7 @@ struct Indices
     cone_second_order::Vector{Vector{Int}}
 end 
 
-function Indices(num_variables, num_equality, num_cone;
+function Indices(num_variables, num_parameters, num_equality, num_cone;
     nonnegative=collect(1:num_cone),
     second_order=[collect(1:0)])
 

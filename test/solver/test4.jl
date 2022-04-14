@@ -1,15 +1,16 @@
 @testset "Solver problem: Test 4" begin 
     num_variables = 3
+    num_parameters = 0
     num_equality = 0
-    num_inequality = 1
+    num_cone = 1
     x0 = rand(num_variables)
-    obj(x) = x[1] - 2*x[2] + x[3] + sqrt(6)
-    eq(x) = zeros(0)
-    ineq(x) = [1 - x[1]^2 - x[2]^2 - x[3]^2]
+    obj(x, θ) = x[1] - 2*x[2] + x[3] + sqrt(6)
+    eq(x, θ) = zeros(0)
+    cone(x, θ) = [1 - x[1]^2 - x[2]^2 - x[3]^2]
 
     # solver
-    methods = ProblemMethods(num_variables, obj, eq, ineq)
-    solver = Solver(methods, num_variables, num_equality, num_inequality)
+    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
+    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
     initialize!(solver, x0)
 
     # solve 

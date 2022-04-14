@@ -1,15 +1,25 @@
 # methods
 function ProblemMethods(trajopt::TrajectoryOptimizationProblem) 
     ProblemMethods(
-        z -> objective!(trajopt, z),
-        (g, z) -> objective_gradient!(g, trajopt, z),
-        (h, z) -> objective_hessian!(h, trajopt, z),
-        (c, z) -> equality!(c, trajopt, z), 
-        (j, z) -> equality_jacobian!(j, trajopt, z),
-        (h, z, y) -> equality_hessian!(h, trajopt, z, y),
-        (c, z) -> cone!(c, trajopt, z),
-        (j, z) -> cone_jacobian!(j, trajopt, z),
-        (h, z, y) -> cone_hessian!(h, trajopt, z, y),
+        (z, θ) -> objective!(trajopt, z),
+        (g, z, θ) -> objective_gradient!(g, trajopt, z),
+        (g, z, θ) -> nothing,
+        (h, z, θ) -> objective_hessian!(h, trajopt, z),
+        (h, z, θ) -> nothing,
+        (c, z, θ) -> equality!(c, trajopt, z), 
+        (j, z, θ) -> equality_jacobian!(j, trajopt, z),
+        (j, z, θ) -> nothing,
+        (j, z, θ) -> nothing,
+        (j, z, θ) -> nothing,
+        (h, z, θ, y) -> equality_hessian!(h, trajopt, z, y),
+        (h, z, θ, y) -> nothing,
+        (c, z, θ) -> cone!(c, trajopt, z),
+        (j, z, θ) -> cone_jacobian!(j, trajopt, z),
+        (j, z, θ) -> nothing,
+        (j, z, θ) -> nothing,
+        (j, z, θ) -> nothing,
+        (h, z, θ, y) -> cone_hessian!(h, trajopt, z, y),
+        (h, z, θ, y) -> nothing,
     )
 end
 

@@ -2,8 +2,8 @@ n = 10
 m = 5
 p = 3
 
-obj(x) = transpose(x) * x
-eq(x) = x[1:5].^2.0 .- 1.2
+obj(x, θ) = transpose(x) * x
+eq(x, θ) = x[1:5].^2.0 .- 1.2
 ineq(x) = [x[1] + 10.0; x[2] + 5.0; 20.0 - x[5]]
 
 # gradients 
