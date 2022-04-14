@@ -9,15 +9,23 @@ function ProblemMethods(trajopt::TrajectoryOptimizationProblem)
         (c, z, θ) -> equality!(c, trajopt, z), 
         (j, z, θ) -> equality_jacobian!(j, trajopt, z),
         (j, z, θ) -> nothing,
-        (j, z, θ) -> nothing,
-        (j, z, θ) -> nothing,
+        (f, z, θ, y) -> nothing,
+        (v, z, θ, y) -> begin 
+            j = zeros(trajopt.dimensions.total_equality, trajopt.dimensions.total_variables); 
+            equality_jacobian!(j, trajopt, z); 
+            v .= j' * y; 
+        end,
         (h, z, θ, y) -> equality_hessian!(h, trajopt, z, y),
         (h, z, θ, y) -> nothing,
         (c, z, θ) -> cone!(c, trajopt, z),
         (j, z, θ) -> cone_jacobian!(j, trajopt, z),
         (j, z, θ) -> nothing,
-        (j, z, θ) -> nothing,
-        (j, z, θ) -> nothing,
+        (f, z, θ, y) -> nothing,
+        (v, z, θ, y) -> begin 
+            j = zeros(trajopt.dimensions.total_cone, trajopt.dimensions.total_variables); 
+            cone_jacobian!(j, trajopt, z); 
+            v .= j' * y; 
+        end,
         (h, z, θ, y) -> cone_hessian!(h, trajopt, z, y),
         (h, z, θ, y) -> nothing,
     )

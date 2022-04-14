@@ -18,17 +18,20 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
     res[idx.variables] = p_data.objective_gradient_variables
 
     for (i, ii) in enumerate(idx.variables)
-        cy = 0.0
-        for j = 1:num_equality 
-            cy += p_data.equality_jacobian_variables[j, i] * y[j]
-        end
-        res[ii] += cy 
+        # cy = 0.0
+        # for j = 1:num_equality 
+        #     cy += p_data.equality_jacobian_variables[j, i] * y[j]
+        # end
+        # res[ii] += cy 
 
-        cz = 0.0
-        for k = 1:num_cone 
-            cz += p_data.cone_jacobian_variables[k, i] * z[k]
-        end
-        res[ii] += cz
+        # cz = 0.0
+        # for k = 1:num_cone 
+        #     cz += p_data.cone_jacobian_variables[k, i] * z[k]
+        # end
+        # res[ii] += cz
+
+        res[ii] += p_data.equality_dual_jacobian_variables[i] 
+        res[ii] += p_data.cone_dual_jacobian_variables[i]
     end
     
     # λ + ρr - y 

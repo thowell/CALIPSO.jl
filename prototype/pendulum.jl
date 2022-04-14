@@ -58,7 +58,7 @@ ineq = [[ineqt for t = 1:T-1]..., ineqT]
 
 # ## problem 
 trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq)
-trajopt.dimensions.cone == (T-1) * num_action
+trajopt.dimensions.total_cone == (T-1) * num_action
 # ## initialize
 x_interpolation = linear_interpolation(x1, xT, T)
 u_guess = [1.0 * randn(num_action) for t = 1:T-1]
@@ -77,12 +77,12 @@ function fxx(x)
     return hess
 end
 function g(x) 
-    con = zeros(trajopt.dimensions.equality)
+    con = zeros(trajopt.dimensions.total_equality)
     methods.equality(con, x) 
     return con 
 end
 function gx(x) 
-    jac = zeros(trajopt.dimensions.equality, trajopt.dimensions.total_variables)
+    jac = zeros(trajopt.dimensions.total_equality, trajopt.dimensions.total_variables)
     methods.equality_jacobian_variables(jac, x) 
     return jac
 end
@@ -93,12 +93,12 @@ function gyxx(x, y)
 end
 
 function h(x) 
-    con = zeros(trajopt.dimensions.cone)
+    con = zeros(trajopt.dimensions.total_cone)
     methods.inequality(con, x) 
     return con 
 end
 function hx(x) 
-    jac = zeros(trajopt.dimensions.cone, trajopt.dimensions.total_variables)
+    jac = zeros(trajopt.dimensions.total_cone, trajopt.dimensions.total_variables)
     methods.inequality_jacobian(jac, x) 
     return jac
 end
@@ -109,8 +109,8 @@ function hyxx(x, y)
 end
 
 x̄ = rand(trajopt.dimensions.total_variables)
-ȳ = rand(trajopt.dimensions.equality)
-z̄ = rand(trajopt.dimensions.cone)
+ȳ = rand(trajopt.dimensions.total_equality)
+z̄ = rand(trajopt.dimensions.total_cone)
 f(x̄)
 fx(x̄)
 fxx(x̄)

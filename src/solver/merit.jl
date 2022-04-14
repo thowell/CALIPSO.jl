@@ -1,5 +1,5 @@
 # merit 
-function merit(f, x, r, s, κ, λ, ρ, indices)
+function merit(f, r, s, κ, λ, ρ, indices)
     M = 0.0
     
     # objective
@@ -14,7 +14,7 @@ function merit(f, x, r, s, κ, λ, ρ, indices)
     return M
 end
 
-function merit_gradient(fx, x, r, s, κ, λ, ρ, indices)
+function merit_gradient(fx, r, s, κ, λ, ρ, indices)
     Mx = fx
     Mr = λ + ρ[1] * r 
     Ms = - κ[1] * cone_barrier_gradient(s, indices.cone_nonnegative, indices.cone_second_order)

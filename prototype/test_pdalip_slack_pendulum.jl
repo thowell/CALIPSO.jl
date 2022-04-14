@@ -6,8 +6,8 @@ using LinearAlgebra
 
 include("pendulum.jl")
 n = trajopt.dimensions.total_variables 
-m = trajopt.dimensions.equality
-p = trajopt.dimensions.cone
+m = trajopt.dimensions.total_equality
+p = trajopt.dimensions.total_cone
 
 # merit 
 function merit(x, r, s, y, z, t, κ, λ, ρ)

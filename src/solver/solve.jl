@@ -64,9 +64,7 @@ function solve!(solver)
     problem!(problem, methods, indices, variables, parameters,
         objective=true,
         equality_constraint=true,
-        equality_jacobian=true,
         cone_constraint=true,
-        cone_jacobian=true,
     )
 
     cone!(problem, methods, indices, variables,
@@ -81,20 +79,20 @@ function solve!(solver)
 
             # evaluate
             problem!(problem, methods, indices, variables, parameters,
-                objective_gradient=true,
-                equality_jacobian=true,
-                cone_jacobian=true,
+                objective_gradient_variables=true,
+                equality_dual_jacobian_variables=true,
+                cone_dual_jacobian_variables=true,
             )
 
             # merit
             M = merit(
                 problem.objective[1], 
-                x, r, s, κ[1], λ, ρ[1],
+                r, s, κ[1], λ, ρ[1],
                 indices)
 
             merit_grad = vcat(merit_gradient(
                 problem.objective_gradient_variables,  
-                x, r, s, κ[1], λ, ρ[1],
+                r, s, κ[1], λ, ρ[1],
                 indices)...)
 
             # residual
@@ -116,9 +114,11 @@ function solve!(solver)
 
             # search direction
             problem!(problem, methods, indices, variables, parameters,
-                objective_hessian=true,
-                equality_hessian=true,
-                cone_hessian=true,
+                objective_jacobian_variables_variables=true,
+                equality_jacobian_variables=true,
+                equality_dual_jacobian_variables_variables=true,
+                cone_jacobian_variables=true,
+                cone_dual_jacobian_variables_variables=true,
             )
 
             cone!(problem, methods, indices, variables,
@@ -163,7 +163,7 @@ function solve!(solver)
 
             M̂ = merit(
                 problem.objective[1], 
-                x̂, r̂, ŝ, κ[1], λ, ρ[1], 
+                r̂, ŝ, κ[1], λ, ρ[1], 
                 indices)
             θ̂  = constraint_violation!(constraint_violation, 
                 problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
@@ -189,7 +189,7 @@ function solve!(solver)
 
                 M̂ = merit(
                     problem.objective[1], 
-                    x̂, r̂, ŝ, κ[1], λ, ρ[1],
+                    r̂, ŝ, κ[1], λ, ρ[1],
                     indices)
                 θ̂  = constraint_violation!(constraint_violation, 
                     problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
@@ -224,10 +224,11 @@ function solve!(solver)
         if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance
             options.verbose && println("solve success!")
             return true 
-        # update
+        # outer update
         else
             # central-path
             κ[1] = max(options.scaling_central_path * κ[1], options.min_central_path)
+            
             # augmented Lagrangian
             λ .= λ + ρ[1] * r
             ρ[1] = min(options.scaling_penalty * ρ[1], options.max_penalty) 

@@ -5,7 +5,7 @@ using CALIPSO
 
 include("pendulum.jl")
 n = trajopt.dimensions.total_variables 
-m = trajopt.dimensions.equality
+m = trajopt.dimensions.total_equality
 
 # augmented Lagrangian 
 al(x, λ, ρ) = f(x) + dot(λ, g(x)) + 0.5 * ρ * dot(g(x), g(x)) 

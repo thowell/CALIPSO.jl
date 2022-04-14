@@ -182,7 +182,7 @@ function equality_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, v
         trajopt.data.actions, 
         trajopt.data.parameters, 
         trajopt.data.duals_dynamics)
-    if trajopt.dimensions.equality > 0 
+    if trajopt.dimensions.equality_constraints > 0 
         hessian_lagrangian!(
             hessian, 
             trajopt.sparsity.equality_hessian, 

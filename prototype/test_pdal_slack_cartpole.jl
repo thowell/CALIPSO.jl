@@ -5,7 +5,7 @@ using CALIPSO
 
 include("cartpole.jl")
 n = trajopt.dimensions.total_variables 
-m = trajopt.dimensions.equality
+m = trajopt.dimensions.total_equality
 
 # augmented Lagrangian 
 al(x, r, λ, ρ) = f(x) + dot(λ, r) + 0.5 * ρ * dot(r, r) 

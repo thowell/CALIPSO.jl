@@ -1,23 +1,23 @@
 struct ProblemMethods
     objective::Any                                    # f
     objective_gradient_variables::Any                 # fx
-    objective_gradient_data::Any                      # fθ
+    objective_gradient_parameters::Any                # fθ
     objective_jacobian_variables_variables::Any       # fxx 
-    objective_jacobian_variables_data::Any            # fxθ
+    objective_jacobian_variables_parameters::Any      # fxθ
     equality_constraint::Any                          # g
     equality_jacobian_variables::Any                  # gx 
-    equality_jacobian_data::Any                       # gθ
+    equality_jacobian_parameters::Any                 # gθ
     equality_dual::Any                                # g'y
     equality_dual_jacobian_variables::Any             # (g'y)x
     equality_dual_jacobian_variables_variables::Any   # (g'y)xx
-    equality_dual_jacobian_variables_data::Any        # (g'y)xθ
+    equality_dual_jacobian_variables_parameters::Any  # (g'y)xθ
     cone_constraint::Any                              # h
     cone_jacobian_variables::Any                      # hx 
-    cone_jacobian_data::Any                           # hθ
+    cone_jacobian_parameters::Any                     # hθ
     cone_dual::Any                                    # h'z
     cone_dual_jacobian_variables::Any                 # (h'y)x
     cone_dual_jacobian_variables_variables::Any       # (h'y)xx
-    cone_dual_jacobian_variables_data::Any            # (h'y)xθ
+    cone_dual_jacobian_variables_parameters::Any      # (h'y)xθ
 end
 
 function ProblemMethods(num_variables::Int, num_parameters::Int, objective::Function, equality::Function, cone::Function)

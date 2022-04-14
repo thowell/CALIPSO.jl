@@ -4,10 +4,10 @@ struct TrajectoryOptimizationDimensions
     parameters::Vector{Int}  
     total_variables::Int     
     total_parameters::Int   
-    equality::Int 
+    total_equality::Int 
     equality_dynamics::Int 
     equality_constraints::Int
-    cone::Int
+    total_cone::Int
     cone_nonnegative::Int
     cone_second_order::Int
     jacobian_equality::Int 

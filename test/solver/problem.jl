@@ -45,9 +45,11 @@
         objective_jacobian_variables_variables=true,
         equality_constraint=true,
         equality_jacobian_variables=true,
+        equality_dual_jacobian_variables=true,
         equality_dual_jacobian_variables_variables=true,
         cone_constraint=true,
         cone_jacobian_variables=true,
+        cone_dual_jacobian_variables=true,
         cone_dual_jacobian_variables_variables=true,
     )
     
