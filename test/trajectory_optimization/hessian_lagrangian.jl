@@ -199,11 +199,11 @@
     Lxx_func = eval(Symbolics.build_function(Lxx, z)[1])
     Lxx_sp_func = eval(Symbolics.build_function(Lxx_sp.nzval, z)[1])
 
-    sparsity_objective_hessians = CALIPSO.sparsity_hessian(obj, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    sparsity_dynamics_hessians = CALIPSO.sparsity_hessian(dyn, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    sparsity_equality_hessian = CALIPSO.sparsity_hessian(eq, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    sparsity_nonnegative_hessian = CALIPSO.sparsity_hessian(ineq, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    sparsity_second_order_hessian = CALIPSO.sparsity_hessian(so, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    sparsity_objective_hessians = CALIPSO.sparsity_hessian(obj, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_dynamics_hessians = CALIPSO.sparsity_hessian(dyn, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_equality_hessian = CALIPSO.sparsity_hessian(eq, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_nonnegative_hessian = CALIPSO.sparsity_hessian(ineq, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_second_order_hessian = CALIPSO.sparsity_hessian(so, trajopt.dimensions.states, trajopt.dimensions.actions)
 
     hessian_sparsity = collect([(sparsity_objective_hessians...)..., 
         (sparsity_dynamics_hessians...)..., 
@@ -213,11 +213,11 @@
         ]) 
     sp_key = sort(unique(hessian_sparsity))
 
-    idx_objective_hessians = CALIPSO.hessian_indices(obj, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    idx_dynamics_hessians = CALIPSO.hessian_indices(dyn, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    idx_eq_hess = CALIPSO.hessian_indices(eq, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    idx_nn_hess = CALIPSO.hessian_indices(ineq, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
-    idx_so_hess = CALIPSO.hessian_indices(so, sp_key, trajopt.data.state_dimensions, trajopt.data.action_dimensions)
+    idx_objective_hessians = CALIPSO.hessian_indices(obj, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    idx_dynamics_hessians = CALIPSO.hessian_indices(dyn, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    idx_eq_hess = CALIPSO.hessian_indices(eq, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    idx_nn_hess = CALIPSO.hessian_indices(ineq, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    idx_so_hess = CALIPSO.hessian_indices(so, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
 
     # indices
     @test sp_key[vcat(idx_objective_hessians...)] == [(sparsity_objective_hessians...)...]

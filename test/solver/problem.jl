@@ -41,15 +41,16 @@
 
     CALIPSO.problem!(solver.problem, solver.methods, solver.indices, w, θ,
         objective=true,
-        objective_gradient=true,
-        objective_hessian=true,
+        objective_gradient_variables=true,
+        objective_jacobian_variables_variables=true,
         equality_constraint=true,
-        equality_jacobian=true,
-        equality_hessian=true,
+        equality_jacobian_variables=true,
+        equality_dual_jacobian_variables_variables=true,
         cone_constraint=true,
-        cone_jacobian=true,
-        cone_hessian=true,
+        cone_jacobian_variables=true,
+        cone_dual_jacobian_variables_variables=true,
     )
+    
     CALIPSO.cone!(solver.problem, solver.methods, solver.indices, w,
         product=true,
         jacobian=true,
