@@ -32,8 +32,10 @@ using CALIPSO
 # include("examples/acrobot.jl")
 # include("examples/rocket_landing.jl")
 include("examples/box_move.jl")
-include("examples/hopper_gait.jl")
+include("examples/box_move_soc.jl")
 
+# include("examples/hopper_gait.jl")
+# 
 
 
 
