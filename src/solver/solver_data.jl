@@ -2,7 +2,7 @@ struct SolverData{T}
     residual::Vector{T}
     residual_error::Vector{T}
     jacobian_variables::SparseMatrixCSC{T,Int}
-    jacobian_parameters::SparseMatrixCSC{T,Int}
+    jacobian_parameters::Matrix{T}
     residual_symmetric::Vector{T} 
     jacobian_variables_symmetric::SparseMatrixCSC{T,Int}
     step::Vector{T}
@@ -11,6 +11,7 @@ struct SolverData{T}
     merit::Vector{T} 
     merit_gradient::Vector{T} 
     constraint_violation::Vector{T}
+    solution_sensitivity::Matrix{T}
 end
 
 function SolverData(num_variables, num_parameters, num_equality, num_cone)
@@ -21,7 +22,7 @@ function SolverData(num_variables, num_parameters, num_equality, num_cone)
     residual_error = zeros(num_total)
 
     jacobian_variables = spzeros(num_total, num_total)
-    jacobian_parameters = spzeros(num_total, num_parameters)
+    jacobian_parameters = zeros(num_total, num_parameters)
 
     residual_symmetric = zeros(num_symmetric)
     jacobian_variables_symmetric = spzeros(num_symmetric, num_symmetric)
@@ -34,6 +35,8 @@ function SolverData(num_variables, num_parameters, num_equality, num_cone)
     merit_gradient = zeros(num_variables + num_equality + num_cone)
 
     constraint_violation = zeros(num_equality + num_cone) 
+
+    solution_sensitivity = zeros(num_total, num_parameters)
 
     SolverData(
         residual, 
@@ -48,5 +51,6 @@ function SolverData(num_variables, num_parameters, num_equality, num_cone)
         merit, 
         merit_gradient, 
         constraint_violation,
+        solution_sensitivity,
     )
 end

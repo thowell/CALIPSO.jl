@@ -1,9 +1,5 @@
 function residual_jacobian_variables!(data::SolverData, problem::ProblemData, idx::Indices, κ, ρ, λ, ϵp, ϵd;
     constraint_hessian=true)
-    # slacks 
-    # r = @views w[idx.equality_slack]
-    # s = @views w[idx.cone_slack]
-    # t = @views w[idx.cone_slack_dual]
 
     # reset
     H = data.jacobian_variables 

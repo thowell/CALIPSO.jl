@@ -1,5 +1,6 @@
 struct Indices 
-    variables::Vector{Int} 
+    variables::Vector{Int}
+    parameters::Vector{Int}
     equality_slack::Vector{Int} 
     cone_slack::Vector{Int}
     equality_dual::Vector{Int} 
@@ -39,8 +40,11 @@ function Indices(num_variables, num_parameters, num_equality, num_cone;
     violation_equality = collect(1:num_equality) 
     violation_cone = collect(num_equality .+ (1:num_cone))
 
+    parameters = collect(1:num_parameters)
+
     return Indices(
         variables, 
+        parameters,
         equality_slack, 
         cone_slack,
         equality_dual,

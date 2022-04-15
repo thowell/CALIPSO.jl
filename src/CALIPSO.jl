@@ -27,8 +27,10 @@ include("solver/solver.jl")
 include("solver/merit.jl")
 include("solver/constraint_violation.jl")
 include("solver/initialize.jl")
+include("solver/differentiate.jl")
 include("solver/solve.jl")
 include("solver/iterative_refinement.jl")
+
 
 export 
     ProblemMethods, Solver, solve!, initialize!, Options

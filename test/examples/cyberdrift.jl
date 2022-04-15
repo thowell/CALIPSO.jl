@@ -126,7 +126,7 @@
         [
             β[1] - μ * model.mass * 9.81 * h[1];
             v[1:2] - η[2:3];
-            second_order_product(β, η);
+            CALIPSO.second_order_product(β, η);
         ]
     end
 

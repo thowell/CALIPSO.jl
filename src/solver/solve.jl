@@ -227,6 +227,7 @@ function solve!(solver)
         # convergence
         if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance
             options.verbose && println("solve success!")
+            options.differentiate && differentiate!(solver) 
             return true 
         # outer update
         else

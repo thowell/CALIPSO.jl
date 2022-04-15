@@ -1,106 +1,41 @@
-function residual_jacobian_parameters!(data::SolverData, problem::ProblemData, idx::Indices, κ, ρ, λ, ϵp, ϵd;
-    constraint_hessian=true)
+function residual_jacobian_parameters!(data::SolverData, problem::ProblemData, idx::Indices)
   
-    # # reset
-    # H = data.jacobian 
-    # fill!(H, 0.0)
+    # reset
+    H = data.jacobian_parameters 
+    fill!(H, 0.0)
 
-    # # Hessian of Lagrangian
-    # for i in idx.variables 
-    #     for j in idx.variables 
-    #         H[i, j]  = problem.objective_jacobian_variables_variables[i, j] 
-    #         constraint_hessian && (H[i, j] += problem.equality_dual_jacobian_variables_variables[i, j])
-    #         constraint_hessian && (H[i, j] += problem.cone_dual_jacobian_variables_variables[i, j])
-    #     end
-    # end
+    # Lxθ
+    for i in enumerate(idx.variables) 
+        for j in enumerate(idx.parameters)
+            H[i, j] = problem.objective_jacobian_variables_parameters[i, j] 
+            H[i, j] += problem.equality_dual_jacobian_variables_parameters[i, j]
+            H[i, j] += problem.cone_dual_jacobian_variables_parameters[i, j]
+        end
+    end
 
-    # for (i, ii) in enumerate(idx.equality_slack) 
-    #     for (j, jj) in enumerate(idx.equality_dual) 
-    #         if i == j
-    #             H[ii, jj] = -1.0 
-    #             H[jj, ii] = -1.0
-    #         end 
-    #     end
-    # end
+    # Lrθ 
+    nothing 
 
-    # for (i, ii) in enumerate(idx.cone_slack) 
-    #     for (j, jj) in enumerate(idx.cone_dual) 
-    #         if i == j
-    #             H[ii, jj] = -1.0 
-    #             H[jj, ii] = -1.0 
-    #         end
-    #     end
-    # end
+    # Lsθ 
+    nothing 
 
-    # for (i, ii) in enumerate(idx.cone_slack) 
-    #     for (j, jj) in enumerate(idx.cone_slack_dual) 
-    #         if i == j
-    #             H[ii, jj] = -1.0 
-    #         end
-    #     end
-    # end
-
-    # # equality Jacobian 
-    # for (i, ii) in enumerate(idx.equality_dual) 
-    #     for (j, jj) in enumerate(idx.variables)
-    #         H[ii, jj] = problem.equality_jacobian_variables[i, j]
-    #         H[jj, ii] = problem.equality_jacobian_variables[i, j]
-    #     end
-    # end
-
-    # # cone Jacobian 
-    # for (i, ii) in enumerate(idx.cone_dual) 
-    #     for (j, jj) in enumerate(idx.variables)
-    #         H[ii, jj] = problem.cone_jacobian_variables[i, j]
-    #         H[jj, ii] = problem.cone_jacobian_variables[i, j]
-    #     end
-    # end
-
-    # # augmented Lagrangian block 
-    # for (i, ii) in enumerate(idx.equality_slack) 
-    #     H[ii, ii] = ρ[1]
-    # end
+    # Lyθ 
+    for (i, ii) in enumerate(idx.equality_dual)
+        for (j, jj) in idx.parameters 
+            H[ii, jj] = problem.equality_jacobian_parameters[i, j] 
+        end
+    end
     
-    # # cone block (non-negative)
-    # for i in idx.cone_nonnegative
-    #     H[idx.cone_slack_dual[i], idx.cone_slack[i]] = problem.cone_product_jacobian_primal[i, i] 
-    #     H[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] = problem.cone_product_jacobian_dual[i, i]  
-    # end
+    # Lzθ 
+    for (i, ii) in enumerate(idx.cone_dual)
+        for (j, jj) in idx.parameters 
+            H[ii, jj] = problem.cone_jacobian_parameters[i, j] 
+        end
+    end
 
-    # # cone block (second-order)
-    # for idx_soc in idx.cone_second_order
-    #     Cs = @views problem.cone_product_jacobian_primal[idx_soc, idx_soc] 
-    #     Ct = @views problem.cone_product_jacobian_dual[idx_soc, idx_soc] 
-    #     H[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]] = Cs 
-    #     H[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] = Ct 
-    # end
-
-    # # regularization 
-    # for i in idx.variables 
-    #     H[i, i] += ϵp 
-    # end
-
-    # for i in idx.equality_slack
-    #     H[i, i] += ϵp
-    # end 
-
-    # for i in idx.cone_slack
-    #     H[i, i] += ϵp
-    # end 
-
-    # for i in idx.equality_dual
-    #     H[i, i] -= ϵd
-    # end
-
-    # for i in idx.cone_dual
-    #     H[i, i] -= ϵd 
-    # end
-
-    # for i in idx.cone_slack_dual 
-    #     H[i, i] -= ϵd 
-    # end 
-
-    # return
+    # Ltθ 
     nothing
+
+    return
 end
 
