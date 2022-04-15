@@ -13,7 +13,11 @@ minimize     f(x; p)
 subject to   g(x; p)  = 0,
              h(x; p) in K
 ```
-can be optimized for decision variables x, problem parameters p, and the Cartesian product of non-negative orthant and second-order cones K. 
+can be optimized for 
+
+- x: decision variables 
+- p: problem parameters 
+- K: Cartesian product of non-negative orthant and second-order cones 
 
 Additionally, trajectory optimization problems of the form:
 ```
