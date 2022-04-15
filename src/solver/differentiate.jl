@@ -23,7 +23,7 @@ function differentiate!(solver)
     # compute solution sensitivities
     for i in solver.indices.parameters 
         ∂z∂pi = @views solver.data.solution_sensitivity[:, i]
-        Rpi   = @views solver.data.residual_jacobian_parameters[:, i]
+        Rpi   = @views solver.data.jacobian_parameters[:, i]
         search_direction_symmetric!(∂z∂pi, Rpi, 
             solver.data.jacobian_variables, 
             solver.data.step_symmetric, 

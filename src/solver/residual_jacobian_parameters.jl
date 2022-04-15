@@ -5,8 +5,8 @@ function residual_jacobian_parameters!(data::SolverData, problem::ProblemData, i
     fill!(H, 0.0)
 
     # Lxθ
-    for i in enumerate(idx.variables) 
-        for j in enumerate(idx.parameters)
+    for i in idx.variables
+        for j in idx.parameters
             H[i, j] = problem.objective_jacobian_variables_parameters[i, j] 
             H[i, j] += problem.equality_dual_jacobian_variables_parameters[i, j]
             H[i, j] += problem.cone_dual_jacobian_variables_parameters[i, j]
@@ -21,15 +21,15 @@ function residual_jacobian_parameters!(data::SolverData, problem::ProblemData, i
 
     # Lyθ 
     for (i, ii) in enumerate(idx.equality_dual)
-        for (j, jj) in idx.parameters 
-            H[ii, jj] = problem.equality_jacobian_parameters[i, j] 
+        for j in idx.parameters
+            H[ii, j] = problem.equality_jacobian_parameters[i, j] 
         end
     end
     
     # Lzθ 
     for (i, ii) in enumerate(idx.cone_dual)
-        for (j, jj) in idx.parameters 
-            H[ii, jj] = problem.cone_jacobian_parameters[i, j] 
+        for j in idx.parameters
+            H[ii, j] = problem.cone_jacobian_parameters[i, j] 
         end
     end
 
