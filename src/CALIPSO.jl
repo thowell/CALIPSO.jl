@@ -7,7 +7,7 @@ using Scratch
 using QDLDL
 
 # Solver
-include("solver/generate_gradients.jl")
+include("solver/codegen.jl")
 include("solver/indices.jl")
 include("solver/methods.jl")
 include("solver/problem_data.jl")
@@ -20,7 +20,8 @@ include("solver/inertia.jl")
 include("solver/qdldl.jl")
 include("solver/options.jl")
 include("solver/residual.jl")
-include("solver/residual_matrix.jl")
+include("solver/residual_jacobian_variables.jl")
+include("solver/residual_jacobian_parameters.jl")
 include("solver/search_direction.jl")
 include("solver/solver.jl")
 include("solver/merit.jl")

@@ -545,18 +545,18 @@ initialize_controls!(solver, trajopt, u_guess);
 #     jacobian=true,
 #     target=true
 # )
-# CALIPSO.matrix!(solver.data, solver.problem, solver.indices, 1.0, 1.0, zeros(solver.dimensions.equality_dual), 1.0e-5, 1.0e-5,
+# CALIPSO.residual_jacobian_variables!(solver.data, solver.problem, solver.indices, 1.0, 1.0, zeros(solver.dimensions.equality_dual), 1.0e-5, 1.0e-5,
 #     constraint_hessian=solver.options.constraint_hessian)
-# CALIPSO.matrix_symmetric!(solver.data.matrix_symmetric, solver.data.matrix, solver.indices)
+# CALIPSO.residual_jacobian_variables_symmetric!(solver.data.jacobian_variables_symmetric, solver.data.jacobian_variables, solver.indices)
 
-# linear_solver = CALIPSO.ldl_solver(solver.data.matrix_symmetric)
+# linear_solver = CALIPSO.ldl_solver(solver.data.jacobian_variables_symmetric)
 # linear_solver.F.nzval
 
 
 
-# solver.data.matrix_symmetric.nzval
+# solver.data.jacobian_variables_symmetric.nzval
 
-# solver.data.matrix_symmetric.nzval
+# solver.data.jacobian_variables_symmetric.nzval
 
 
 # solve 

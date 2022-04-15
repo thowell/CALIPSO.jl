@@ -3,8 +3,8 @@ function search_direction!(solver)
     inertia_correction!(solver)
 
     # compute search direction
-    search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
-        solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
+    search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 
+        solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
         solver.indices, solver.linear_solver)
 
     # refine search direction
@@ -18,7 +18,7 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
     
     # solve symmetric system
     residual_symmetric!(residual_symmetric, residual, matrix, idx) 
-    # matrix_symmetric!(matrix_symmetric, matrix, idx) 
+    # residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx) 
     
     linear_solve!(solver, step_symmetric, matrix_symmetric, residual_symmetric)
     
@@ -72,6 +72,6 @@ end
 
 function search_direction_nonsymmetric!(step, data::SolverData)
     # fill!(step, 0.0)
-    step .= data.matrix \ data.residual
+    step .= data.jacobian_variables \ data.residual
     return 
 end

@@ -126,7 +126,7 @@
         [
             β[1] - μ * model.mass * 9.81 * h[1];
             v[1:2] - η[2:3];
-            CALIPSO.second_order_product(β, η);
+            second_order_product(β, η);
         ]
     end
 
@@ -236,7 +236,7 @@
     solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
         nonnegative_indices=idx_nn, 
         second_order_indices=idx_soc,
-        options=Options(verbose=true, penalty_initial=1.0, residual_tolerance=1.0e-6));
+        options=Options(verbose=true, penalty_initial=1.0, residual_tolerance=1.0e-4));
     initialize_states!(solver, trajopt, x_guess);
     initialize_controls!(solver, trajopt, u_guess);
 

@@ -52,69 +52,74 @@
         cone_dual_jacobian_variables=true,
         cone_dual_jacobian_variables_variables=true,
     )
-    
+
     CALIPSO.cone!(solver.problem, solver.methods, solver.indices, w,
         product=true,
         jacobian=true,
         target=true,
     )
 
-    CALIPSO.matrix!(solver.data, solver.problem, solver.indices, κ, ρ, λ, ϵp, ϵd)
+    CALIPSO.residual_jacobian_variables!(solver.data, solver.problem, solver.indices, κ, ρ, λ, ϵp, ϵd)
 
-    CALIPSO.matrix_symmetric!(solver.data.matrix_symmetric, solver.data.matrix, solver.indices)
+    rank(solver.data.jacobian_variables)
+
+    CALIPSO.residual_jacobian_variables_symmetric!(solver.data.jacobian_variables_symmetric, solver.data.jacobian_variables, solver.indices)
+
+    rank(solver.data.jacobian_variables_symmetric)
+
 
     CALIPSO.residual!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
 
-    CALIPSO.residual_symmetric!(solver.data.residual_symmetric, solver.data.residual, solver.data.matrix, solver.indices)
+    CALIPSO.residual_symmetric!(solver.data.residual_symmetric, solver.data.residual, solver.data.jacobian_variables, solver.indices)
 
     # KKT matrix 
-    @test rank(solver.data.matrix) == solver.dimensions.total
-    @test norm(solver.data.matrix[solver.indices.variables, solver.indices.variables] 
+    @test rank(solver.data.jacobian_variables) == solver.dimensions.total
+    @test norm(solver.data.jacobian_variables[solver.indices.variables, solver.indices.variables] 
         - (solver.problem.objective_jacobian_variables_variables + solver.problem.equality_dual_jacobian_variables_variables + solver.problem.cone_dual_jacobian_variables_variables + ϵp * I)) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.equality_dual, solver.indices.variables] 
+    @test norm(solver.data.jacobian_variables[solver.indices.equality_dual, solver.indices.variables] 
         - solver.problem.equality_jacobian_variables) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.variables, solver.indices.equality_dual] 
+    @test norm(solver.data.jacobian_variables[solver.indices.variables, solver.indices.equality_dual] 
         - solver.problem.equality_jacobian_variables') < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.equality_dual, solver.indices.equality_dual] 
+    @test norm(solver.data.jacobian_variables[solver.indices.equality_dual, solver.indices.equality_dual] 
         -(-ϵd * I)) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.cone_dual, solver.indices.variables] 
+    @test norm(solver.data.jacobian_variables[solver.indices.cone_dual, solver.indices.variables] 
         - solver.problem.cone_jacobian_variables) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.variables, solver.indices.cone_dual] 
+    @test norm(solver.data.jacobian_variables[solver.indices.variables, solver.indices.cone_dual] 
         - solver.problem.cone_jacobian_variables') < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.cone_slack, solver.indices.cone_dual] 
+    @test norm(solver.data.jacobian_variables[solver.indices.cone_slack, solver.indices.cone_dual] 
         + I(num_cone)) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.cone_dual, solver.indices.cone_slack] 
+    @test norm(solver.data.jacobian_variables[solver.indices.cone_dual, solver.indices.cone_slack] 
         + I(num_cone)) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.cone_slack, solver.indices.cone_slack_dual] 
+    @test norm(solver.data.jacobian_variables[solver.indices.cone_slack, solver.indices.cone_slack_dual] 
         + I(num_cone)) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.cone_slack_dual, solver.indices.cone_slack] 
+    @test norm(solver.data.jacobian_variables[solver.indices.cone_slack_dual, solver.indices.cone_slack] 
         - Diagonal(w[solver.indices.cone_slack_dual])) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.cone_slack_dual, solver.indices.cone_slack_dual] 
+    @test norm(solver.data.jacobian_variables[solver.indices.cone_slack_dual, solver.indices.cone_slack_dual] 
         - (Diagonal(w[solver.indices.cone_slack]) -ϵd * I)) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.equality_slack, solver.indices.equality_dual] 
+    @test norm(solver.data.jacobian_variables[solver.indices.equality_slack, solver.indices.equality_dual] 
         + I) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.equality_dual, solver.indices.equality_slack] 
+    @test norm(solver.data.jacobian_variables[solver.indices.equality_dual, solver.indices.equality_slack] 
         + I) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.equality_slack, solver.indices.equality_slack] 
+    @test norm(solver.data.jacobian_variables[solver.indices.equality_slack, solver.indices.equality_slack] 
         - (ρ[1] +  ϵp) * I) < 1.0e-6
-    @test norm(solver.data.matrix[solver.indices.cone_slack, solver.indices.cone_slack] 
+    @test norm(solver.data.jacobian_variables[solver.indices.cone_slack, solver.indices.cone_slack] 
         - (ϵp) * I) < 1.0e-6
 
     # KKT matrix (symmetric)
-    @test rank(solver.data.matrix_symmetric) == solver.dimensions.symmetric
-    @test norm(solver.data.matrix_symmetric[solver.indices.variables, solver.indices.variables] 
+    @test rank(solver.data.jacobian_variables_symmetric) == solver.dimensions.symmetric
+    @test norm(solver.data.jacobian_variables_symmetric[solver.indices.variables, solver.indices.variables] 
         - (solver.problem.objective_jacobian_variables_variables + solver.problem.equality_dual_jacobian_variables_variables + solver.problem.cone_dual_jacobian_variables_variables + ϵp * I)) < 1.0e-6
-    @test norm(solver.data.matrix_symmetric[solver.indices.symmetric_equality, solver.indices.variables] 
+    @test norm(solver.data.jacobian_variables_symmetric[solver.indices.symmetric_equality, solver.indices.variables] 
         - solver.problem.equality_jacobian_variables) < 1.0e-6
-    @test norm(solver.data.matrix_symmetric[solver.indices.variables, solver.indices.symmetric_equality] 
+    @test norm(solver.data.jacobian_variables_symmetric[solver.indices.variables, solver.indices.symmetric_equality] 
         - solver.problem.equality_jacobian_variables') < 1.0e-6
-    @test norm(solver.data.matrix_symmetric[solver.indices.symmetric_equality, solver.indices.symmetric_equality] 
+    @test norm(solver.data.jacobian_variables_symmetric[solver.indices.symmetric_equality, solver.indices.symmetric_equality] 
         -(-1.0 / (ρ[1] + ϵp) * I(num_equality) - ϵd * I)) < 1.0e-6
-    @test norm(solver.data.matrix_symmetric[solver.indices.symmetric_cone, solver.indices.variables] 
+    @test norm(solver.data.jacobian_variables_symmetric[solver.indices.symmetric_cone, solver.indices.variables] 
         - solver.problem.cone_jacobian_variables) < 1.0e-6
-    @test norm(solver.data.matrix_symmetric[solver.indices.variables, solver.indices.symmetric_cone] 
+    @test norm(solver.data.jacobian_variables_symmetric[solver.indices.variables, solver.indices.symmetric_cone] 
         - solver.problem.cone_jacobian_variables') < 1.0e-6
-    @test norm(solver.data.matrix_symmetric[solver.indices.symmetric_cone, solver.indices.symmetric_cone] 
+    @test norm(solver.data.jacobian_variables_symmetric[solver.indices.symmetric_cone, solver.indices.symmetric_cone] 
         - Diagonal(-1.0 * (s .- ϵd) ./ (t + (s .- ϵd) * ϵp) .- ϵd)) < 1.0e-6
 
     # residual 
@@ -153,8 +158,8 @@
     CALIPSO.search_direction_nonsymmetric!(solver.data.step, solver.data)
     Δ = deepcopy(solver.data.step)
 
-    CALIPSO.search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.matrix, 
-        solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
+    CALIPSO.search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 
+        solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
         solver.indices, solver.linear_solver)
     Δ_symmetric = deepcopy(solver.data.step)
 
@@ -162,7 +167,7 @@
 
     # iterative refinement
     noisy_step = solver.data.step + randn(length(solver.data.step))
-    # @show norm(solver.data.residual - solver.data.matrix * noisy_step)
+    # @show norm(solver.data.residual - solver.data.jacobian_variables * noisy_step)
     CALIPSO.iterative_refinement!(noisy_step, solver)
-    @test norm(solver.data.residual - solver.data.matrix * noisy_step) < solver.options.iterative_refinement_tolerance
+    @test norm(solver.data.residual - solver.data.jacobian_variables * noisy_step) < solver.options.iterative_refinement_tolerance
 end

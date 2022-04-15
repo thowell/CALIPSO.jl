@@ -64,7 +64,9 @@ function solve!(solver)
     problem!(problem, methods, indices, variables, parameters,
         objective=true,
         equality_constraint=true,
+        equality_jacobian_variables=true,
         cone_constraint=true,
+        # cone_jacobian_variables=true,
     )
 
     cone!(problem, methods, indices, variables,
@@ -80,8 +82,10 @@ function solve!(solver)
             # evaluate
             problem!(problem, methods, indices, variables, parameters,
                 objective_gradient_variables=true,
+                # equality_jacobian_variables=true,
                 equality_dual_jacobian_variables=true,
                 cone_dual_jacobian_variables=true,
+                # cone_jacobian_variables=true,
             )
 
             # merit

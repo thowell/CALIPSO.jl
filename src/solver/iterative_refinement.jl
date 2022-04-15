@@ -8,7 +8,7 @@ function iterative_refinement!(step, solver::Solver)
     step_copy = deepcopy(step)
 
     # residual error
-    solver.data.residual_error .= solver.data.residual - solver.data.matrix * step
+    solver.data.residual_error .= solver.data.residual - solver.data.jacobian_variables * step
     residual_norm = norm(solver.data.residual, Inf)
 
     while (iteration < solver.options.max_iterative_refinement && residual_norm > solver.options.iterative_refinement_tolerance) || iteration < solver.options.min_iterative_refinement
@@ -16,15 +16,15 @@ function iterative_refinement!(step, solver::Solver)
         # @show norm(solver.data.residual_error)
         norm(solver.data.residual_error) < solver.options.iterative_refinement_tolerance && return 
         # correction
-        search_direction_symmetric!(solver.data.step_correction, solver.data.residual_error, solver.data.matrix, 
-            solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.matrix_symmetric, 
+        search_direction_symmetric!(solver.data.step_correction, solver.data.residual_error, solver.data.jacobian_variables, 
+            solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
             solver.indices, solver.linear_solver)
         
         # update
         step .+= solver.data.step_correction 
 
          # residual error
-        solver.data.residual_error .= solver.data.residual - solver.data.matrix * step
+        solver.data.residual_error .= solver.data.residual - solver.data.jacobian_variables * step
         residual_norm = norm(solver.data.residual, Inf)
 
         iteration += 1

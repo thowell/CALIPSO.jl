@@ -18,7 +18,7 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
     res[idx.variables] = p_data.objective_gradient_variables
 
     for (i, ii) in enumerate(idx.variables)
-        # cy = 0.0
+        cy = 0.0
         # for j = 1:num_equality 
         #     cy += p_data.equality_jacobian_variables[j, i] * y[j]
         # end

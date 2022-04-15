@@ -10,15 +10,15 @@ function inertia(s)
   && s.linear_solver.inertia.zero     == 0)
 end
 
-function factorize_regularized_matrix!(s)
-    matrix!(s.data, s.problem, s.indices, 
+function factorize_regularized_residual_jacobian_variables!(s)
+    residual_jacobian_variables!(s.data, s.problem, s.indices, 
         s.central_path, s.penalty, s.dual,
         s.primal_regularization, s.dual_regularization,
         constraint_hessian=s.options.constraint_hessian)
 
-    matrix_symmetric!(s.data.matrix_symmetric, s.data.matrix, s.indices) 
+    residual_jacobian_variables_symmetric!(s.data.jacobian_variables_symmetric, s.data.jacobian_variables, s.indices) 
 
-    factorize!(s.linear_solver, s.data.matrix_symmetric)
+    factorize!(s.linear_solver, s.data.jacobian_variables_symmetric)
     compute_inertia!(s.linear_solver)
 
     return nothing
@@ -31,7 +31,7 @@ function inertia_correction!(s)
     s.dual_regularization = 1.0e-7
 
     # IC-1
-    factorize_regularized_matrix!(s)
+    factorize_regularized_residual_jacobian_variables!(s)
 
     if inertia(s)
         return nothing
@@ -52,7 +52,7 @@ function inertia_correction!(s)
 
     while !inertia(s)
         # IC-4
-        factorize_regularized_matrix!(s)
+        factorize_regularized_residual_jacobian_variables!(s)
 
         if inertia(s)
             break

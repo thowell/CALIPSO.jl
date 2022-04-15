@@ -1,4 +1,4 @@
-function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, κ, ρ, λ, ϵp, ϵd;
+function residual_jacobian_variables!(data::SolverData, problem::ProblemData, idx::Indices, κ, ρ, λ, ϵp, ϵd;
     constraint_hessian=true)
     # slacks 
     # r = @views w[idx.equality_slack]
@@ -6,15 +6,15 @@ function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, κ, ρ, 
     # t = @views w[idx.cone_slack_dual]
 
     # reset
-    H = s_data.matrix 
+    H = data.jacobian_variables 
     fill!(H, 0.0)
 
     # Hessian of Lagrangian
     for i in idx.variables 
         for j in idx.variables 
-            H[i, j]  = p_data.objective_jacobian_variables_variables[i, j] 
-            constraint_hessian && (H[i, j] += p_data.equality_dual_jacobian_variables_variables[i, j])
-            constraint_hessian && (H[i, j] += p_data.cone_dual_jacobian_variables_variables[i, j])
+            H[i, j]  = problem.objective_jacobian_variables_variables[i, j] 
+            constraint_hessian && (H[i, j] += problem.equality_dual_jacobian_variables_variables[i, j])
+            constraint_hessian && (H[i, j] += problem.cone_dual_jacobian_variables_variables[i, j])
         end
     end
 
@@ -47,16 +47,16 @@ function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, κ, ρ, 
     # equality Jacobian 
     for (i, ii) in enumerate(idx.equality_dual) 
         for (j, jj) in enumerate(idx.variables)
-            H[ii, jj] = p_data.equality_jacobian_variables[i, j]
-            H[jj, ii] = p_data.equality_jacobian_variables[i, j]
+            H[ii, jj] = problem.equality_jacobian_variables[i, j]
+            H[jj, ii] = problem.equality_jacobian_variables[i, j]
         end
     end
 
     # cone Jacobian 
     for (i, ii) in enumerate(idx.cone_dual) 
         for (j, jj) in enumerate(idx.variables)
-            H[ii, jj] = p_data.cone_jacobian_variables[i, j]
-            H[jj, ii] = p_data.cone_jacobian_variables[i, j]
+            H[ii, jj] = problem.cone_jacobian_variables[i, j]
+            H[jj, ii] = problem.cone_jacobian_variables[i, j]
         end
     end
 
@@ -67,14 +67,14 @@ function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, κ, ρ, 
     
     # cone block (non-negative)
     for i in idx.cone_nonnegative
-        H[idx.cone_slack_dual[i], idx.cone_slack[i]] = p_data.cone_product_jacobian_primal[i, i] 
-        H[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] = p_data.cone_product_jacobian_dual[i, i]  
+        H[idx.cone_slack_dual[i], idx.cone_slack[i]] = problem.cone_product_jacobian_primal[i, i] 
+        H[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] = problem.cone_product_jacobian_dual[i, i]  
     end
 
     # cone block (second-order)
     for idx_soc in idx.cone_second_order
-        Cs = @views p_data.cone_product_jacobian_primal[idx_soc, idx_soc] 
-        Ct = @views p_data.cone_product_jacobian_dual[idx_soc, idx_soc] 
+        Cs = @views problem.cone_product_jacobian_primal[idx_soc, idx_soc] 
+        Ct = @views problem.cone_product_jacobian_dual[idx_soc, idx_soc] 
         H[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]] = Cs 
         H[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] = Ct 
     end
@@ -107,7 +107,7 @@ function matrix!(s_data::SolverData, p_data::ProblemData, idx::Indices, κ, ρ, 
     return
 end
 
-function matrix_symmetric!(matrix_symmetric, matrix, idx::Indices)
+function residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx::Indices)
     # reset
     fill!(matrix_symmetric, 0.0)
 

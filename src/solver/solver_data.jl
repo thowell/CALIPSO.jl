@@ -1,9 +1,10 @@
 struct SolverData{T}
     residual::Vector{T}
     residual_error::Vector{T}
-    matrix::SparseMatrixCSC{T,Int}
+    jacobian_variables::SparseMatrixCSC{T,Int}
+    jacobian_parameters::SparseMatrixCSC{T,Int}
     residual_symmetric::Vector{T} 
-    matrix_symmetric::SparseMatrixCSC{T,Int}
+    jacobian_variables_symmetric::SparseMatrixCSC{T,Int}
     step::Vector{T}
     step_correction::Vector{T}
     step_symmetric::Vector{T}
@@ -18,10 +19,12 @@ function SolverData(num_variables, num_parameters, num_equality, num_cone)
 
     residual = zeros(num_total)
     residual_error = zeros(num_total)
-    matrix = spzeros(num_total, num_total)
+
+    jacobian_variables = spzeros(num_total, num_total)
+    jacobian_parameters = spzeros(num_total, num_parameters)
 
     residual_symmetric = zeros(num_symmetric)
-    matrix_symmetric = spzeros(num_symmetric, num_symmetric)
+    jacobian_variables_symmetric = spzeros(num_symmetric, num_symmetric)
 
     step = zeros(num_total) 
     step_correction = zeros(num_total) 
@@ -35,9 +38,10 @@ function SolverData(num_variables, num_parameters, num_equality, num_cone)
     SolverData(
         residual, 
         residual_error,
-        matrix,
+        jacobian_variables,
+        jacobian_parameters,
         residual_symmetric,
-        matrix_symmetric,
+        jacobian_variables_symmetric,
         step,
         step_correction,
         step_symmetric,
