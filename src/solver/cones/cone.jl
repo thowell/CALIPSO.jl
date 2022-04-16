@@ -7,7 +7,7 @@ end
 function cone_barrier(x, idx_ineq, idx_soc)
     Φ = 0.0 
     
-    # non-negative orthant
+    # nonnegative orthant
     if length(idx_ineq) > 0
         x_ineq = @views x[idx_ineq]
         Φ += nonnegative_barrier(x_ineq) 

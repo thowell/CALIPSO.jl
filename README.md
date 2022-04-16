@@ -5,6 +5,7 @@
 Conic Augmented Lagrangian Interior-Point SOlver: A solver for contact-implicit trajectory optimization
 
 The CALIPSO algorithm is an infeasible-start, primal-dual augmented-Lagrangian interior-point solver for non-convex optimization problems. 
+An augmented Lagrangian is employed for equality constraints and cones are handled by interior-point methods.
 
 ## Standard form
 Problems of the following form:
@@ -18,7 +19,7 @@ can be optimized for
 
 - x: decision variables 
 - p: problem parameters 
-- K: Cartesian product of non-negative orthant and second-order cones 
+- K: Cartesian product of convex cones; nonnegative orthant and second-order cones are currently implemented
 
 ## Trajectory optimization
 Additionally, trajectory optimization problems of the form:

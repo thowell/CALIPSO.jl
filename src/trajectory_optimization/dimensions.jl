@@ -10,13 +10,17 @@ struct TrajectoryOptimizationDimensions
     total_cone::Int
     cone_nonnegative::Int
     cone_second_order::Int
-    jacobian_equality::Int 
-    jacobian_cone::Int
-    hessian_lagrangian::Int  
+    equality_jacobian_variables::Int 
+    equality_jacobian_parameters::Int
+    cone_jacobian_variables::Int
+    cone_jacobian_parameters::Int
+    jacobian_variables_variables::Int  
+    jacobian_variables_parameters::Int
 end
 
 function TrajectoryOptimizationDimensions(data::TrajectoryOptimizationData; 
-    num_hessian_lagrangian=0)
+    num_jacobian_variables_variables=0,
+    num_jacobian_variables_parameters=0)
     
     # number of states 
     num_states = [length(x) for x in data.states]
@@ -42,16 +46,21 @@ function TrajectoryOptimizationDimensions(data::TrajectoryOptimizationData;
     total_cone = num_nonnegative + num_second_order
 
     # number of nonzeros in constraint Jacobian
-    num_dynamics_jacobian = num_jacobian(data.dynamics)
-    num_equality_jacobian = num_jacobian(data.equality)  
-    num_nonnegative_jacobian = num_jacobian(data.nonnegative)
-    num_second_order_jacobian = sum(num_jacobian(data.second_order))
+    num_dynamics_jacobian_variables = num_jacobian_variables(data.dynamics)
+    num_dynamics_jacobian_parameters = num_jacobian_parameters(data.dynamics)
+    num_equality_jacobian_variables = num_jacobian_variables(data.equality)  
+    num_equality_jacobian_parameters = num_jacobian_parameters(data.equality)  
+    num_nonnegative_jacobian_variables = num_jacobian_variables(data.nonnegative)
+    num_nonnegative_jacobian_parameters = num_jacobian_parameters(data.nonnegative)
 
-    total_equality_jacobians = num_dynamics_jacobian + num_equality_jacobian 
-    total_cone_jacobians = num_nonnegative_jacobian + num_second_order_jacobian
+    num_second_order_jacobian_variables = sum(num_jacobian_variables(data.second_order))
+    num_second_order_jacobian_parameters = sum(num_jacobian_parameters(data.second_order))
 
-    # number of nonzeros in Hessian of Lagrangian
-    # num_hessian_lagrangian = length(hessian_lagrangian_sparsity)
+    total_equality_jacobians_variables = num_dynamics_jacobian_variables + num_equality_jacobian_variables 
+    total_equality_jacobians_parameters = num_dynamics_jacobian_parameters + num_equality_jacobian_parameters 
+
+    total_cone_jacobians_variables = num_nonnegative_jacobian_variables + num_second_order_jacobian_variables
+    total_cone_jacobians_parameters = num_nonnegative_jacobian_parameters + num_second_order_jacobian_parameters
 
     TrajectoryOptimizationDimensions(
         num_states, 
@@ -65,8 +74,11 @@ function TrajectoryOptimizationDimensions(data::TrajectoryOptimizationData;
         total_cone,
         num_nonnegative, 
         num_second_order, 
-        total_equality_jacobians, 
-        total_cone_jacobians,
-        num_hessian_lagrangian, 
+        total_equality_jacobians_variables, 
+        total_equality_jacobians_parameters, 
+        total_cone_jacobians_variables,
+        total_cone_jacobians_parameters,
+        num_jacobian_variables_variables, 
+        num_jacobian_variables_parameters, 
     )
 end

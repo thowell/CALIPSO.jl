@@ -138,7 +138,7 @@ function cone!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables)
     return 
 end
 
-function equality_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function equality_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -146,17 +146,17 @@ function equality_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T},
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
-    jacobian!(
+    jacobian_variables!(
         jacobian, 
-        trajopt.sparsity.dynamics_jacobian, 
+        trajopt.sparsity.dynamics_jacobian_variables, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
         trajopt.data.parameters)
     if trajopt.dimensions.equality_constraints > 0
-        jacobian!(
+        jacobian_variables!(
             jacobian, 
-            trajopt.sparsity.equality_jacobian, 
+            trajopt.sparsity.equality_jacobian_variables, 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -165,7 +165,34 @@ function equality_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T},
     return
 end
 
-function cone_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+    fill!(jacobian, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    jacobian_parameters!(
+        jacobian, 
+        trajopt.sparsity.dynamics_jacobian_parameters, 
+        trajopt.data.dynamics, 
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        trajopt.data.parameters)
+    if trajopt.dimensions.equality_constraints > 0
+        jacobian_parameters!(
+            jacobian, 
+            trajopt.sparsity.equality_jacobian_parameters, 
+            trajopt.data.equality, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters)
+    end
+    return
+end
+
+function cone_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -174,18 +201,18 @@ function cone_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, var
         trajopt.indices.states, 
         trajopt.indices.actions)
     if trajopt.dimensions.cone_nonnegative > 0
-        jacobian!(
+        jacobian_variables!(
             jacobian, 
-            trajopt.sparsity.nonnegative_jacobian, 
+            trajopt.sparsity.nonnegative_jacobian_variables, 
             trajopt.data.nonnegative, 
             trajopt.data.states, 
             trajopt.data.actions, 
             trajopt.data.parameters)
     end
     if trajopt.dimensions.cone_second_order > 0
-        jacobian!(
+        jacobian_variables!(
             jacobian, 
-            trajopt.sparsity.second_order_jacobian, 
+            trajopt.sparsity.second_order_jacobian_variables, 
             trajopt.data.second_order, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -194,8 +221,37 @@ function cone_jacobian!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, var
     return
 end
 
-function equality_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, variables, equality_duals) where T
-    fill!(hessian, 0.0)
+function cone_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+    fill!(jacobian, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    if trajopt.dimensions.cone_nonnegative > 0
+        jacobian_parameters!(
+            jacobian, 
+            trajopt.sparsity.nonnegative_jacobian_parameters, 
+            trajopt.data.nonnegative, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters)
+    end
+    if trajopt.dimensions.cone_second_order > 0
+        jacobian_parameters!(
+            jacobian, 
+            trajopt.sparsity.second_order_jacobian_parameters, 
+            trajopt.data.second_order, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters)
+    end
+    return
+end
+
+function equality_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, equality_duals) where T
+    fill!(jacobian, 0.0)
 
     trajectory!(
         trajopt.data.states, 
@@ -209,18 +265,18 @@ function equality_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, v
         equality_duals, 
         trajopt.indices.dynamics_duals, 
         trajopt.indices.equality_duals)
-    hessian_lagrangian!(
-        hessian, 
-        trajopt.sparsity.dynamics_hessian, 
+    jacobian_variables_variables!(
+        jacobian, 
+        trajopt.sparsity.dynamics_jacobian_variables_variables, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
         trajopt.data.parameters, 
         trajopt.data.duals_dynamics)
     if trajopt.dimensions.equality_constraints > 0 
-        hessian_lagrangian!(
-            hessian, 
-            trajopt.sparsity.equality_hessian, 
+        jacobian_variables_variables!(
+            jacobian, 
+            trajopt.sparsity.equality_jacobian_variables_variables, 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -230,8 +286,44 @@ function equality_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, v
     return 
 end
 
-function cone_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, variables, cone_duals) where T
-    fill!(hessian, 0.0)
+function equality_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, equality_duals) where T
+    fill!(jacobian, 0.0)
+
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    equality_duals!(
+        trajopt.data.duals_dynamics, 
+        trajopt.data.duals_equality, 
+        equality_duals, 
+        trajopt.indices.dynamics_duals, 
+        trajopt.indices.equality_duals)
+    jacobian_variables_parameters!(
+        jacobian, 
+        trajopt.sparsity.dynamics_jacobian_variables_parameters, 
+        trajopt.data.dynamics, 
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        trajopt.data.parameters, 
+        trajopt.data.duals_dynamics)
+    if trajopt.dimensions.equality_constraints > 0 
+        jacobian_variables_parameters!(
+            jacobian, 
+            trajopt.sparsity.equality_jacobian_variables_parameters, 
+            trajopt.data.equality, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters, 
+            trajopt.data.duals_equality)
+    end
+    return 
+end
+
+function cone_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, cone_duals) where T
+    fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
         trajopt.data.actions, 
@@ -243,9 +335,9 @@ function cone_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, varia
         cone_duals, 
         trajopt.indices.nonnegative_duals, trajopt.indices.second_order_duals)
     if trajopt.dimensions.cone_nonnegative > 0 
-        hessian_lagrangian!(
-            hessian, 
-            trajopt.sparsity.nonnegative_hessian, 
+        jacobian_variables_variables!(
+            jacobian, 
+            trajopt.sparsity.nonnegative_jacobian_variables_variables, 
             trajopt.data.nonnegative, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -253,9 +345,9 @@ function cone_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, varia
             trajopt.data.duals_nonnegative)
     end
     if trajopt.dimensions.cone_second_order > 0 
-        hessian_lagrangian!(
-            hessian, 
-            trajopt.sparsity.second_order_hessian, 
+        jacobian_variables_variables!(
+            jacobian, 
+            trajopt.sparsity.second_order_jacobian_variables_variables, 
             trajopt.data.second_order, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -264,3 +356,39 @@ function cone_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, varia
     end
     return 
 end
+
+function cone_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, cone_duals) where T
+    fill!(jacobian, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    cone_duals!(
+        trajopt.data.duals_nonnegative, trajopt.data.duals_second_order,
+        cone_duals, 
+        trajopt.indices.nonnegative_duals, trajopt.indices.second_order_duals)
+    if trajopt.dimensions.cone_nonnegative > 0 
+        jacobian_variables_parameters!(
+            jacobian, 
+            trajopt.sparsity.nonnegative_jacobian_variables_parameters, 
+            trajopt.data.nonnegative, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters, 
+            trajopt.data.duals_nonnegative)
+    end
+    if trajopt.dimensions.cone_second_order > 0 
+        jacobian_variables_parameters!(
+            jacobian, 
+            trajopt.sparsity.second_order_jacobian_variables_parameters, 
+            trajopt.data.second_order, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters, 
+            trajopt.data.duals_second_order)
+    end
+    return 
+end
+

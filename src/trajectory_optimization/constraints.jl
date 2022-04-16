@@ -1,119 +1,187 @@
 struct Constraint{T}
-    evaluate::Any 
-    jacobian::Any 
-    hessian::Any
+    constraint::Any 
+    jacobian_variables::Any 
+    jacobian_parameters::Any 
+    constraint_dual::Any 
+    constraint_dual_jacobian_variables::Any 
+    constraint_dual_jacobian_parameters::Any 
+    constraint_dual_jacobian_variables_variables::Any 
+    constraint_dual_jacobian_variables_parameters::Any
     num_state::Int 
     num_action::Int 
     num_parameter::Int
     num_constraint::Int
-    num_jacobian::Int 
-    num_hessian::Int
-    jacobian_sparsity::Vector{Vector{Int}}
-    hessian_sparsity::Vector{Vector{Int}}
-    evaluate_cache::Vector{T} 
-    jacobian_cache::Vector{T}
-    hessian_cache::Vector{T}
-    indices_inequality::Vector{Int}
+    num_jacobian_variables::Int 
+    num_jacobian_parameters::Int
+    num_jacobian_variables_variables::Int
+    num_jacobian_variables_parameters::Int
+    jacobian_variables_sparsity::Vector{Vector{Int}}
+    jacobian_parameters_sparsity::Vector{Vector{Int}}
+    jacobian_variables_variables_sparsity::Vector{Vector{Int}}
+    jacobian_variables_parameters_sparsity::Vector{Vector{Int}}
+    constraint_cache::Vector{T} 
+    jacobian_variables_cache::Vector{T}
+    jacobian_parameters_cache::Vector{T}
+    jacobian_variables_variables_cache::Vector{T}
+    jacobian_variables_parameters_cache::Vector{T}
 end
 
 Constraints{T} = Vector{Constraint{T}} where T
 
-function Constraint(f::Function, num_state::Int, num_action::Int; 
+function Constraint(constraint::Function, num_state::Int, num_action::Int; 
     num_parameter::Int=0,
-    indices_inequality=collect(1:0), 
     evaluate_hessian=true)
 
     #TODO: option to load/save methods
     @variables x[1:num_state], u[1:num_action], w[1:num_parameter]
-    evaluate = f(x, u, w)
-    jac = Symbolics.sparsejacobian(evaluate, [x; u])
-    evaluate_func = eval(Symbolics.build_function(evaluate, x, u, w)[2])
-    jac_func = eval(Symbolics.build_function(jac.nzval, x, u, w)[2])
-    num_constraint = length(evaluate) 
-    num_jacobian = length(jac.nzval)
-    jacobian_sparsity = [findnz(jac)[1:2]...]
+
+    c = constraint(x, u, w)
+    cz = Symbolics.sparsejacobian(c, [x; u])
+    cw = Symbolics.sparsejacobian(c, w)
+
+    num_constraint = length(c) 
+    @variables y[1:num_constraint]
+    cᵀy = dot(c, y) 
+    cᵀyz = Symbolics.gradient(cᵀy, [x; u]) 
+    cᵀyw = Symbolics.gradient(cᵀy, w) 
+  
+    c_func = eval(Symbolics.build_function(c, x, u, w)[2])
+    cz_func = eval(Symbolics.build_function(cz.nzval, x, u, w)[2])
+    cw_func = eval(Symbolics.build_function(cw.nzval, x, u, w)[2])
+    cᵀy_func = eval(Symbolics.build_function(cᵀy, x, u, w, y)) 
+    cᵀyz_func = eval(Symbolics.build_function(cᵀyz, x, u, w, y)[2])
+    cᵀyw_func = eval(Symbolics.build_function(cᵀyw, x, u, w, y)[2])
+
+    num_jacobian_variables = length(cz.nzval)
+    num_jacobian_parameters = length(cw.nzval)
+    
+    jacobian_variables_sparsity = [findnz(cz)[1:2]...]
+    jacobian_parameters_sparsity = [findnz(cw)[1:2]...]
+   
     if evaluate_hessian
-        @variables λ[1:num_constraint]
-        lag_con = dot(λ, evaluate) 
-        hessian = Symbolics.sparsehessian(lag_con, [x; u])
-        hess_func = eval(Symbolics.build_function(hessian.nzval, x, u, w, λ)[2])
-        hessian_sparsity = [findnz(hessian)[1:2]...]
-        num_hessian = length(hessian.nzval)
-    else 
-        hess_func = Expr(:null) 
-        hessian_sparsity = [Int[]]
-        num_hessian = 0
+        cᵀyzz = Symbolics.sparsejacobian(cᵀyz, [x; u])
+        cᵀyzw = Symbolics.sparsejacobian(cᵀyz, w)
+        num_jacobian_variables_variables = length(cᵀyzz.nzval)
+        num_jacobian_variables_parameters = length(cᵀyzw.nzval)
+        cᵀyzz_func = eval(Symbolics.build_function(cᵀyzz.nzval, x, u, w, y)[2])
+        cᵀyzw_func = eval(Symbolics.build_function(cᵀyzw.nzval, x, u, w, y)[2])
+        jacobian_variables_variables_sparsity = [findnz(cᵀyzz)[1:2]...]
+        jacobian_variables_parameters_sparsity = [findnz(cᵀyzw)[1:2]...]
+    else      
+        num_jacobian_variables_variables = 0
+        num_jacobian_variables_parameters = 0
+        cᵀyzz_func = Expr(:null) 
+        cᵀyzw_func = Expr(:null) 
+        jacobian_variables_variables_sparsity = [Int[]]
+        jacobian_variables_parameters_sparsity = [Int[]]
     end
     
     return Constraint(
-        evaluate_func, 
-        jac_func, 
-        hess_func,
+        c_func, 
+        cz_func, 
+        cw_func,
+        cᵀy_func,
+        cᵀyz_func,
+        cᵀyw_func,
+        cᵀyzz_func,
+        cᵀyzw_func, 
         num_state, 
         num_action, 
         num_parameter, 
         num_constraint, 
-        num_jacobian, 
-        num_hessian, 
-        jacobian_sparsity, 
-        hessian_sparsity, 
+        num_jacobian_variables,
+        num_jacobian_parameters,
+        num_jacobian_variables_variables,
+        num_jacobian_variables_parameters,
+        jacobian_variables_sparsity,
+        jacobian_parameters_sparsity,
+        jacobian_variables_variables_sparsity,
+        jacobian_variables_parameters_sparsity,
         zeros(num_constraint), 
-        zeros(num_jacobian), 
-        zeros(num_hessian), 
-        indices_inequality)
+        zeros(num_jacobian_variables), 
+        zeros(num_jacobian_parameters), 
+        zeros(num_jacobian_variables_variables),
+        zeros(num_jacobian_variables_parameters),
+    )
 end
 
 function Constraint()
     return Constraint(
         (constraint, state, action, parameter) -> nothing, 
         (jacobian,   state, action, parameter) -> nothing, 
-        (hessian,    state, action, parameter) -> nothing, 
-        0, 0, 0, 0, 0, 0, 
+        (jacobian,   state, action, parameter) -> nothing, 
+        (constraint_dual, state, action, parameter, dual) -> nothing, 
+        (jacobian,    state, action, parameter, dual) -> nothing, 
+        (jacobian,    state, action, parameter, dual) -> nothing, 
+        (jacobian,    state, action, parameter, dual) -> nothing, 
+        (jacobian,    state, action, parameter, dual) -> nothing, 
+        0, 0, 0, 0, 0, 0, 0, 0,
+        [Int[], Int[]], 
+        [Int[], Int[]],
         [Int[], Int[]], 
         [Int[], Int[]],
         Float64[], 
         Float64[], 
         Float64[], 
-        collect(1:0))
+        Float64[], 
+        Float64[], 
+    )
 end
 
 function constraints!(violations, indices, constraints::Constraints{T}, states, actions, parameters) where T
     for (t, con) in enumerate(constraints)
         if con.num_constraint > 0
-            con.evaluate(con.evaluate_cache, states[t], actions[t], parameters[t])
-            @views violations[indices[t]] .= con.evaluate_cache
-            # fill!(con.evaluate_cache, 0.0) # TODO: confirm this is necessary 
+            con.constraint(con.constraint_cache, states[t], actions[t], parameters[t])
+            @views violations[indices[t]] .= con.constraint_cache
         end
     end
 end
 
-function jacobian!(jacobians, sparsity, constraints::Constraints{T}, states, actions, parameters) where T
+function jacobian_variables!(jacobians, sparsity, constraints::Constraints{T}, states, actions, parameters) where T
     for (t, con) in enumerate(constraints)
-        if !isempty(con.jacobian_cache) 
-            con.jacobian(con.jacobian_cache, states[t], actions[t], parameters[t])
+        if !isempty(con.jacobian_variables_cache) 
+            con.jacobian_variables(con.jacobian_variables_cache, states[t], actions[t], parameters[t])
             for (i, idx) in enumerate(sparsity[t]) 
-                jacobians[idx...] = con.jacobian_cache[i] 
+                jacobians[idx...] = con.jacobian_variables_cache[i] 
             end
-            # @views jacobians[indices[t]] .= con.jacobian_cache
-            # fill!(con.jacobian_cache, 0.0) # TODO: confirm this is necessary
         end
     end
 end
 
-function hessian_lagrangian!(hessians, sparsity, constraints::Constraints{T}, states, actions, parameters, duals) where T
+function jacobian_parameters!(jacobians, sparsity, constraints::Constraints{T}, states, actions, parameters) where T
     for (t, con) in enumerate(constraints)
-        if !isempty(con.hessian_cache)
-            con.hessian(con.hessian_cache, states[t], actions[t], parameters[t], duals[t])
+        if !isempty(con.jacobian_parameters_cache) 
+            con.jacobian_parameters(con.jacobian_parameters_cache, states[t], actions[t], parameters[t])
             for (i, idx) in enumerate(sparsity[t]) 
-                hessians[idx...] += con.hessian_cache[i]
+                jacobians[idx...] = con.jacobian_parameters_cache[i] 
             end
-            # @views hessians[indices[t]] .+= con.hessian_cache
-            # fill!(con.hessian_cache, 0.0) # TODO: confirm this is necessary
         end
     end
 end
 
-function sparsity_jacobian(constraints::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}; 
+function jacobian_variables_variables!(jacobians, sparsity, constraints::Constraints{T}, states, actions, parameters, duals) where T
+    for (t, con) in enumerate(constraints)
+        if !isempty(con.jacobian_variables_variables_cache)
+            con.constraint_dual_jacobian_variables_variables(con.jacobian_variables_variables_cache, states[t], actions[t], parameters[t], duals[t])
+            for (i, idx) in enumerate(sparsity[t]) 
+                jacobians[idx...] += con.jacobian_variables_variables_cache[i]
+            end
+        end
+    end
+end
+
+function jacobian_variables_parameters!(jacobians, sparsity, constraints::Constraints{T}, states, actions, parameters, duals) where T
+    for (t, con) in enumerate(constraints)
+        if !isempty(con.jacobian_variables_parameters_cache)
+            con.constraint_dual_jacobian_variables_parameters(con.jacobian_variables_parameters_cache, states[t], actions[t], parameters[t], duals[t])
+            for (i, idx) in enumerate(sparsity[t]) 
+                jacobians[idx...] += con.jacobian_variables_parameters_cache[i]
+            end
+        end
+    end
+end
+
+function sparsity_jacobian_variables(constraints::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}; 
     row_shift=0) where T
 
     sp = Vector{Tuple{Int,Int}}[]
@@ -123,8 +191,8 @@ function sparsity_jacobian(constraints::Constraints{T}, num_state::Vector{Int}, 
         col = Int[]
 
         col_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
-        push!(row, (con.jacobian_sparsity[1] .+ row_shift)...) 
-        push!(col, (con.jacobian_sparsity[2] .+ col_shift)...) 
+        push!(row, (con.jacobian_variables_sparsity[1] .+ row_shift)...) 
+        push!(col, (con.jacobian_variables_sparsity[2] .+ col_shift)...) 
 
         s = collect(zip(row, col))
         push!(sp, s)
@@ -135,16 +203,56 @@ function sparsity_jacobian(constraints::Constraints{T}, num_state::Vector{Int}, 
     return sp
 end
 
-function sparsity_hessian(constraints::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}) where T
+function sparsity_jacobian_parameters(constraints::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}; 
+    row_shift=0) where T
+
     sp = Vector{Tuple{Int,Int}}[]
 
     for (t, con) in enumerate(constraints)
         row = Int[]
         col = Int[]
-        if !isempty(con.hessian_sparsity[1])
+
+        col_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
+        push!(row, (con.jacobian_parameters_sparsity[1] .+ row_shift)...) 
+        push!(col, (con.jacobian_parameters_sparsity[2] .+ col_shift)...) 
+
+        s = collect(zip(row, col))
+        push!(sp, s)
+
+        row_shift += con.num_constraint
+    end
+
+    return sp
+end
+
+function sparsity_jacobian_variables_variables(constraints::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}) where T
+    sp = Vector{Tuple{Int,Int}}[]
+
+    for (t, con) in enumerate(constraints)
+        row = Int[]
+        col = Int[]
+        if !isempty(con.jacobian_variables_variables_sparsity[1])
             shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
-            push!(row, (con.hessian_sparsity[1] .+ shift)...) 
-            push!(col, (con.hessian_sparsity[2] .+ shift)...) 
+            push!(row, (con.jacobian_variables_variables_sparsity[1] .+ shift)...) 
+            push!(col, (con.jacobian_variables_variables_sparsity[2] .+ shift)...) 
+        end
+        s = collect(zip(row, col))
+        push!(sp, s)
+    end
+    
+    return sp
+end
+
+function sparsity_jacobian_variables_parameters(constraints::Constraints{T}, num_state::Vector{Int}, num_action::Vector{Int}) where T
+    sp = Vector{Tuple{Int,Int}}[]
+
+    for (t, con) in enumerate(constraints)
+        row = Int[]
+        col = Int[]
+        if !isempty(con.jacobian_variables_parameters_sparsity[1])
+            shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
+            push!(row, (con.jacobian_variables_parameters_sparsity[1] .+ shift)...) 
+            push!(col, (con.jacobian_variables_parameters_sparsity[2] .+ shift)...) 
         end
         s = collect(zip(row, col))
         push!(sp, s)
@@ -154,8 +262,8 @@ function sparsity_hessian(constraints::Constraints{T}, num_state::Vector{Int}, n
 end
 
 num_constraint(constraints::Constraints{T}) where T = sum([con.num_constraint for con in constraints])
-num_jacobian(constraints::Constraints{T}) where T = sum([con.num_jacobian for con in constraints])
-# num_hessian(constraints::Constraints{T}) where T = sum([con.num_hessian for con in constraints])
+num_jacobian_variables(constraints::Constraints{T}) where T = sum([con.num_jacobian_variables for con in constraints])
+num_jacobian_parameters(constraints::Constraints{T}) where T = sum([con.num_jacobian_parameters for con in constraints])
 
 function constraint_indices(constraints::Constraints{T}; 
     shift=0) where T
@@ -170,28 +278,57 @@ function constraint_indices(constraints::Constraints{T};
     return indices
 end 
 
-function jacobian_indices(constraints::Constraints{T}; 
+function jacobian_variables_indices(constraints::Constraints{T}; 
     shift=0) where T
 
     indices = Vector{Int}[]
 
     for (t, con) in enumerate(constraints) 
-        push!(indices, collect(shift .+ (1:con.num_jacobian)))
-        shift += con.num_jacobian
+        push!(indices, collect(shift .+ (1:con.num_jacobian_variables)))
+        shift += con.num_jacobian_variables
     end
 
     return indices
 end
 
-function hessian_indices(constraints::Constraints{T}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}) where T
+function jacobian_parameters_indices(constraints::Constraints{T}; 
+    shift=0) where T
+
+    indices = Vector{Int}[]
+
+    for (t, con) in enumerate(constraints) 
+        push!(indices, collect(shift .+ (1:con.num_jacobian_parameters)))
+        shift += con.num_jacobian_parameters
+    end
+
+    return indices
+end
+
+function jacobian_variables_variables_indices(constraints::Constraints{T}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}) where T
     indices = Vector{Int}[]
     for (t, con) in enumerate(constraints) 
-        if !isempty(con.hessian_sparsity[1])
+        if !isempty(con.jacobian_variables_variables_sparsity[1])
             row = Int[]
             col = Int[]
             shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
-            push!(row, (con.hessian_sparsity[1] .+ shift)...) 
-            push!(col, (con.hessian_sparsity[2] .+ shift)...) 
+            push!(row, (con.jacobian_variables_variables_sparsity[1] .+ shift)...) 
+            push!(col, (con.jacobian_variables_variables_sparsity[2] .+ shift)...) 
+            rc = collect(zip(row, col))
+            push!(indices, [findfirst(x -> x == i, key) for i in rc])
+        end
+    end
+    return indices
+end
+
+function jacobian_variables_parameters_indices(constraints::Constraints{T}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}) where T
+    indices = Vector{Int}[]
+    for (t, con) in enumerate(constraints) 
+        if !isempty(con.jacobian_variables_parameters_sparsity[1])
+            row = Int[]
+            col = Int[]
+            shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
+            push!(row, (con.jacobian_variables_parameters_sparsity[1] .+ shift)...) 
+            push!(col, (con.jacobian_variables_parameters_sparsity[2] .+ shift)...) 
             rc = collect(zip(row, col))
             push!(indices, [findfirst(x -> x == i, key) for i in rc])
         end

@@ -10,7 +10,9 @@ end
 function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData; 
     evaluate_hessian=true) 
     spar = TrajectoryOptimizationSparsity(data)
-    dims = TrajectoryOptimizationDimensions(data, num_hessian_lagrangian=length(spar.hessian_key))
+    dims = TrajectoryOptimizationDimensions(data, 
+        num_jacobian_variables_variables=length(spar.jacobian_variables_variables_key),
+        num_jacobian_variables_parameters=length(spar.jacobian_variables_parameters_key))
 
     # indices 
     idx = indices(
@@ -19,7 +21,8 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
         data.equality, 
         data.nonnegative,
         data.second_order,
-        spar.hessian_key, 
+        spar.jacobian_variables_variables_key, 
+        spar.jacobian_variables_parameters_key,
         dims.states, 
         dims.actions, 
         dims.total_variables)

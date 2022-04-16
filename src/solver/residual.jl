@@ -84,7 +84,7 @@ function residual_symmetric!(residual_symmetric, residual, matrix, idx::Indices)
         residual_symmetric[ii] += rr[i] / matrix[idx.equality_slack[i], idx.equality_slack[i]]
     end
  
-    # cone correction (non-negative)
+    # cone correction (nonnegative)
     for i in idx.cone_nonnegative
         S̄i = matrix[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] 
         Ti = matrix[idx.cone_slack_dual[i], idx.cone_slack[i]]

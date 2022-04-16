@@ -43,7 +43,7 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
         Δr[i] = (rr[i] + Δy[i]) / matrix[idx.equality_slack[i], idx.equality_slack[i]]
     end
    
-    # Δs, Δt (non-negative)
+    # Δs, Δt (nonnegative)
     for i in idx.cone_nonnegative
         S̄i = matrix[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] 
         Ti = matrix[idx.cone_slack_dual[i], idx.cone_slack[i]]

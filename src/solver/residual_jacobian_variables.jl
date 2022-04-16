@@ -61,7 +61,7 @@ function residual_jacobian_variables!(data::SolverData, problem::ProblemData, id
         H[ii, ii] = ρ[1]
     end
     
-    # cone block (non-negative)
+    # cone block (nonnegative)
     for i in idx.cone_nonnegative
         H[idx.cone_slack_dual[i], idx.cone_slack[i]] = problem.cone_product_jacobian_primal[i, i] 
         H[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] = problem.cone_product_jacobian_dual[i, i]  
@@ -135,7 +135,7 @@ function residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx::I
         end
     end
 
-    # cone correction (non-negative)
+    # cone correction (nonnegative)
     for i in idx.cone_nonnegative
         S̄i = matrix[idx.cone_slack_dual[i], idx.cone_slack_dual[i]] 
         Ti = matrix[idx.cone_slack_dual[i], idx.cone_slack[i]]

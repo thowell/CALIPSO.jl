@@ -13,27 +13,27 @@
     ct = (x, u, w) -> [-ones(num_state) - x; x - ones(num_state)]
     cT = (x, u, w) -> x
 
-    cont = Constraint(ct, num_state, num_action, num_parameter=num_parameter, indices_inequality=collect(1:2num_state))
+    cont = Constraint(ct, num_state, num_action, num_parameter=num_parameter)
     conT = Constraint(cT, num_state, 0, num_parameter=0)
 
     constraints = [[cont for t = 1:T-1]..., conT]
     nc = CALIPSO.num_constraint(constraints)
-    nj = CALIPSO.num_jacobian(constraints)
+    nj = CALIPSO.num_jacobian_variables(constraints)
     idx_c = CALIPSO.constraint_indices(constraints)
-    idx_j = CALIPSO.jacobian_indices(constraints)
+    idx_j = CALIPSO.jacobian_variables_indices(constraints)
     c = zeros(nc) 
     j = zeros(CALIPSO.num_constraint(constraints), T * num_state + (T - 1) * num_action)
-    sp = CALIPSO.sparsity_jacobian(constraints, [num_state for t = 1:T], [[num_action for t = 1:T-1]..., 0], row_shift=0)
+    sp = CALIPSO.sparsity_jacobian_variables(constraints, [num_state for t = 1:T], [[num_action for t = 1:T-1]..., 0], row_shift=0)
 
-    cont.evaluate(c[idx_c[1]], x[1], u[1], w[1])
-    conT.evaluate(c[idx_c[T]], x[T], u[T], w[T])
+    cont.constraint(c[idx_c[1]], x[1], u[1], w[1])
+    conT.constraint(c[idx_c[T]], x[T], u[T], w[T])
 
     CALIPSO.constraints!(c, idx_c, constraints, x, u, w)
     # info = @benchmark CALIPSO.constraints!($c, $idx_c, $constraints, $x, $u, $w)
 
     @test norm(c - vcat([ct(x[t], u[t], w[t]) for t = 1:T-1]..., cT(x[T], u[T], w[T]))) < 1.0e-8
 
-    CALIPSO.jacobian!(j, sp, constraints, x, u, w)
+    CALIPSO.jacobian_variables!(j, sp, constraints, x, u, w)
     # info = @benchmark CALIPSO.jacobian!($j, $idx_j, $constraints, $x, $u, $w)
 
     dct = [-I zeros(num_state, num_action); I zeros(num_state, num_action)]

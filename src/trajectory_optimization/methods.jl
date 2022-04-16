@@ -7,27 +7,27 @@ function ProblemMethods(trajopt::TrajectoryOptimizationProblem)
         (j, z, θ) -> objective_jacobian_variables_variables!(j, trajopt, z),
         (j, z, θ) -> objective_jacobian_variables_parameters!(j, trajopt, z),
         (c, z, θ) -> equality!(c, trajopt, z), 
-        (j, z, θ) -> equality_jacobian!(j, trajopt, z),
-        (j, z, θ) -> nothing,
+        (j, z, θ) -> equality_jacobian_variables!(j, trajopt, z),
+        (j, z, θ) -> equality_jacobian_parameters!(j, trajopt, z),
         (f, z, θ, y) -> nothing,
         (v, z, θ, y) -> begin 
             j = zeros(trajopt.dimensions.total_equality, trajopt.dimensions.total_variables); 
-            equality_jacobian!(j, trajopt, z); 
+            equality_jacobian_variables!(j, trajopt, z); 
             v .= j' * y; 
         end,
-        (h, z, θ, y) -> equality_hessian!(h, trajopt, z, y),
-        (h, z, θ, y) -> nothing,
+        (h, z, θ, y) -> equality_jacobian_variables_variables!(h, trajopt, z, y),
+        (h, z, θ, y) -> equality_jacobian_variables_parameters!(h, trajopt, z, y),
         (c, z, θ) -> cone!(c, trajopt, z),
-        (j, z, θ) -> cone_jacobian!(j, trajopt, z),
-        (j, z, θ) -> nothing,
+        (j, z, θ) -> cone_jacobian_variables!(j, trajopt, z),
+        (j, z, θ) -> cone_jacobian_parameters!(j, trajopt, z),
         (f, z, θ, y) -> nothing,
         (v, z, θ, y) -> begin 
             j = zeros(trajopt.dimensions.total_cone, trajopt.dimensions.total_variables); 
-            cone_jacobian!(j, trajopt, z); 
+            cone_jacobian_variables!(j, trajopt, z); 
             v .= j' * y; 
         end,
-        (h, z, θ, y) -> cone_hessian!(h, trajopt, z, y),
-        (h, z, θ, y) -> nothing,
+        (h, z, θ, y) -> cone_jacobian_variables_variables!(h, trajopt, z, y),
+        (h, z, θ, y) -> cone_jacobian_variables_parameters!(h, trajopt, z, y),
     )
 end
 

@@ -116,14 +116,14 @@
     eqT = Constraint(eT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
     eq = [[eqt for t = 1:T-1]..., eqT]
 
-    # non-negative constraints
+    # nonnegative constraints
     it = (x, u, w) -> sin.(x) .- sum(u)
     iT = (x, u, w) -> cos.(x) .+ sum(u)
     ineqt = Constraint(it, num_state, num_action, num_parameter=num_parameter, evaluate_hessian=true)
     ineqT = Constraint(iT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
     ineq = [[ineqt for t = 1:T-1]..., ineqT]
 
-    # non-negative constraints
+    # nonnegative constraints
     st = (x, u, w, e) -> e .* tan.(x) .- sqrt(sum(u.^2) + e^2)
     sT = (x, u, w, e) -> e .* tan.(x) .+ cos(sum(u) + e^2)
     nsi = 2
@@ -201,37 +201,70 @@
 
     sparsity_objective_jacobians_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(obj, trajopt.dimensions.states, trajopt.dimensions.actions)
     sparsity_objective_jacobians_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(obj, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_dynamics_hessians = CALIPSO.sparsity_hessian(dyn, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_equality_hessian = CALIPSO.sparsity_hessian(eq, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_nonnegative_hessian = CALIPSO.sparsity_hessian(ineq, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_second_order_hessian = CALIPSO.sparsity_hessian(so, trajopt.dimensions.states, trajopt.dimensions.actions)
 
-    hessian_sparsity = collect([
+    sparsity_dynamics_jacobian_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(dyn, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_dynamics_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(dyn, trajopt.dimensions.states, trajopt.dimensions.actions)
+
+    sparsity_equality_jacobian_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(eq, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_equality_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(eq, trajopt.dimensions.states, trajopt.dimensions.actions)
+
+    sparsity_nonnegative_jacobian_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(ineq, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_nonnegative_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(ineq, trajopt.dimensions.states, trajopt.dimensions.actions)
+
+    sparsity_second_order_jacobian_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(so, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_second_order_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(so, trajopt.dimensions.states, trajopt.dimensions.actions)
+
+    jacobian_variables_variables_sparsity = collect([
         (sparsity_objective_jacobians_variables_variables...)..., 
         (sparsity_objective_jacobians_variables_variables...)..., 
-        (sparsity_dynamics_hessians...)..., 
-        (sparsity_equality_hessian...)...,
-        (sparsity_nonnegative_hessian...)...,
-        ((sparsity_second_order_hessian...)...)...,
+        (sparsity_dynamics_jacobian_variables_variables...)..., 
+        (sparsity_equality_jacobian_variables_variables...)...,
+        (sparsity_nonnegative_jacobian_variables_variables...)...,
+        ((sparsity_second_order_jacobian_variables_variables...)...)...,
         ]) 
-    sp_key = sort(unique(hessian_sparsity))
+    sp_vv_key = sort(unique(jacobian_variables_variables_sparsity))
 
-    idx_objective_jacobians_variables_variables = CALIPSO.jacobian_variables_variables_indices(obj, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    idx_objective_jacobians_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(obj, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    idx_dynamics_hessians = CALIPSO.hessian_indices(dyn, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    idx_eq_hess = CALIPSO.hessian_indices(eq, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    idx_nn_hess = CALIPSO.hessian_indices(ineq, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    idx_so_hess = CALIPSO.hessian_indices(so, sp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    # jacobian_variables_parameters_sparsity = collect([
+    #     (sparsity_objective_jacobians_variables_parameters...)..., 
+    #     (sparsity_objective_jacobians_variables_parameters...)..., 
+    #     (sparsity_dynamics_jacobian_variables_parameters...)..., 
+    #     (sparsity_equality_jacobian_variables_parameters...)...,
+    #     (sparsity_nonnegative_jacobian_variables_parameters...)...,
+    #     ((sparsity_second_order_jacobian_variables_parameters...)...)...,
+    #     ]) 
+    # sp_vp_key = sort(unique(jacobian_variables_parameters_sparsity))
+
+    # jacobian_variables_parameters_sparsity = Tuple{Int64,Int64}[]
+    # sp_vp_key = Int[]
+
+    idx_objective_jacobians_variables_variables = CALIPSO.jacobian_variables_variables_indices(obj, sp_vv_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    idx_dynamics_jacobian_variables_variables = CALIPSO.jacobian_variables_variables_indices(dyn, sp_vv_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    idx_eq_jacobian_variables_variables = CALIPSO.jacobian_variables_variables_indices(eq, sp_vv_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    idx_nn_jacobian_variables_variables = CALIPSO.jacobian_variables_variables_indices(ineq, sp_vv_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    idx_so_jacobian_variables_variables = CALIPSO.jacobian_variables_variables_indices(so, sp_vv_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+
+    # idx_objective_jacobians_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(obj, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    # idx_dynamics_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(dyn, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    # idx_eq_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(eq, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    # idx_nn_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(ineq, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    # idx_so_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(so, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
 
     # indices
-    @test sp_key[vcat(idx_objective_jacobians_variables_variables...)] == [(sparsity_objective_jacobians_variables_variables...)...]
-    @test sp_key[vcat(idx_objective_jacobians_variables_parameters...)] == [(sparsity_objective_jacobians_variables_parameters...)...]
-    @test sp_key[vcat(idx_dynamics_hessians...)] == [(sparsity_dynamics_hessians...)...]
-    @test sp_key[vcat(idx_eq_hess...)] == [(sparsity_equality_hessian...)...]
-    @test sp_key[vcat(idx_nn_hess...)] == [(sparsity_nonnegative_hessian...)...]
-    @test sp_key[vcat(idx_so_hess[1]...)] == [(sparsity_second_order_hessian[1]...)...]
-    @test sp_key[vcat(idx_so_hess[2]...)] == [(sparsity_second_order_hessian[2]...)...]
-    @test sp_key[vcat(idx_so_hess[3]...)] == [(sparsity_second_order_hessian[3]...)...]
+    @test sp_vv_key[vcat(idx_objective_jacobians_variables_variables...)] == [(sparsity_objective_jacobians_variables_variables...)...]
+    @test sp_vv_key[vcat(idx_dynamics_jacobian_variables_variables...)] == [(sparsity_dynamics_jacobian_variables_variables...)...]
+    @test sp_vv_key[vcat(idx_eq_jacobian_variables_variables...)] == [(sparsity_equality_jacobian_variables_variables...)...]
+    @test sp_vv_key[vcat(idx_nn_jacobian_variables_variables...)] == [(sparsity_nonnegative_jacobian_variables_variables...)...]
+    @test sp_vv_key[vcat(idx_so_jacobian_variables_variables[1]...)] == [(sparsity_second_order_jacobian_variables_variables[1]...)...]
+    @test sp_vv_key[vcat(idx_so_jacobian_variables_variables[2]...)] == [(sparsity_second_order_jacobian_variables_variables[2]...)...]
+    @test sp_vv_key[vcat(idx_so_jacobian_variables_variables[3]...)] == [(sparsity_second_order_jacobian_variables_variables[3]...)...]
+
+    # @test sp_vp_key[vcat(idx_objective_jacobians_variables_parameters...)] == [(sparsity_objective_jacobians_variables_parameters...)...]
+    # @test sp_vp_key[vcat(idx_dynamics_jacobian_variables_parameters...)] == [(sparsity_dynamics_jacobian_variables_parameters...)...]
+    # @test sp_vp_key[vcat(idx_eq_jacobian_variables_parameters...)] == [(sparsity_equality_jacobian_variables_parameters...)...]
+    # @test sp_vp_key[vcat(idx_nn_jacobian_variables_parameters...)] == [(sparsity_nonnegative_jacobian_variables_parameters...)...]
+    # @test sp_vp_key[vcat(idx_so_jacobian_variables_parameters[1]...)] == [(sparsity_second_order_jacobian_variables_parameters[1]...)...]
+    # @test sp_vp_key[vcat(idx_so_jacobian_variables_parameters[2]...)] == [(sparsity_second_order_jacobian_variables_parameters[2]...)...]
+    # @test sp_vp_key[vcat(idx_so_jacobian_variables_parameters[3]...)] == [(sparsity_second_order_jacobian_variables_parameters[3]...)...]
 
     z0 = rand(nz)
     σ = 1.0
@@ -240,8 +273,8 @@
     hc = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
 
     CALIPSO.objective_jacobian_variables_variables!(ho, trajopt, z0[1:np])
-    CALIPSO.equality_hessian!(he, trajopt, z0[1:np], z0[np .+ (1:nde)])
-    CALIPSO.cone_hessian!(hc, trajopt, z0[1:np], z0[np + nde .+ (1:ndc)])
+    CALIPSO.equality_jacobian_variables_variables!(he, trajopt, z0[1:np], z0[np .+ (1:nde)])
+    CALIPSO.cone_jacobian_variables_variables!(hc, trajopt, z0[1:np], z0[np + nde .+ (1:ndc)])
 
     @test norm(norm((ho + he + hc) - Lxx_func(z0))) < 1.0e-8
 end
