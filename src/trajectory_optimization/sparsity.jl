@@ -4,7 +4,8 @@ struct TrajectoryOptimizationSparsity
     nonnegative_jacobian
     second_order_jacobian
     hessian_key
-    objective_hessian
+    objective_jacobian_variables_variables
+    objective_jacobian_variables_parameters
     dynamics_hessian
     equality_hessian
     nonnegative_hessian
@@ -28,13 +29,17 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
         row_shift=num_nonnegative)
 
     # Hessian of Lagrangian sparsity 
-    sparsity_objective_hessian = sparsity_hessian(data.objective, num_states, num_actions)
+    sparsity_objective_jacobian_variables_variables = sparsity_jacobian_variables_variables(data.objective, num_states, num_actions)
+    sparsity_objective_jacobian_variables_parameters = sparsity_jacobian_variables_parameters(data.objective, num_states, num_actions)
+
     sparsity_dynamics_hessian = sparsity_hessian(data.dynamics, num_states, num_actions)
     sparsity_equality_hessian = sparsity_hessian(data.equality, num_states, num_actions)
     sparsity_nonnegative_hessian = sparsity_hessian(data.nonnegative, num_states, num_actions)
     sparsity_second_order_hessian = sparsity_hessian(data.second_order, num_states, num_actions)
 
-    hessian_lagrangian_sparsity = [(sparsity_objective_hessian...)..., 
+    hessian_lagrangian_sparsity = [
+        (sparsity_objective_jacobian_variables_variables...)..., 
+        (sparsity_objective_jacobian_variables_parameters...)..., 
         (sparsity_dynamics_hessian...)..., 
         (sparsity_equality_hessian...)..., 
         (sparsity_nonnegative_hessian...)...,
@@ -50,7 +55,8 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
         sparsity_nonnegative_jacobian,
         sparsity_second_order_jacobian,
         hessian_sparsity_key,
-        sparsity_objective_hessian,
+        sparsity_objective_jacobian_variables_variables,
+        sparsity_objective_jacobian_variables_parameters,
         sparsity_dynamics_hessian,
         sparsity_equality_hessian,
         sparsity_nonnegative_hessian,

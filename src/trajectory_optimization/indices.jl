@@ -1,5 +1,6 @@
 struct TrajectoryOptimizationIndices 
-    objective_hessians::Vector{Vector{Int}}
+    objective_jacobians_variables_variables::Vector{Vector{Int}}
+    objective_jacobians_variables_parameters::Vector{Vector{Int}}
     dynamics_constraints::Vector{Vector{Int}} 
     dynamics_jacobians::Vector{Vector{Int}} 
     dynamics_hessians::Vector{Vector{Int}}
@@ -69,8 +70,10 @@ function indices(
     second_order_duals = constraint_indices(second_order, 
         shift=num_constraint(nonnegative))
 
-    # Hessian of Lagrangian 
-    objective_hessians = hessian_indices(objective, key, num_state, num_action)
+    # objective Jacobians
+    objective_jacobians_variables_variables = jacobian_variables_variables_indices(objective, key, num_state, num_action)
+    objective_jacobians_variables_parameters = jacobian_variables_parameters_indices(objective, key, num_state, num_action)
+
     dynamics_hessians = hessian_indices(dynamics, key, num_state, num_action)
     equality_hessians = hessian_indices(equality, key, num_state, num_action)
     nonnegative_hessians = hessian_indices(nonnegative, key, num_state, num_action)
@@ -83,7 +86,8 @@ function indices(
     xuy_idx = state_action_next_state_indices(dynamics)
 
     return TrajectoryOptimizationIndices(
-        objective_hessians, 
+        objective_jacobians_variables_variables, 
+        objective_jacobians_variables_parameters, 
         dynamics_constraints, 
         dynamics_jacobians, 
         dynamics_hessians, 

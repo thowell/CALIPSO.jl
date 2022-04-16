@@ -19,18 +19,18 @@
     U = [t < T ? u1 : zeros(0) for t = 1:T]
     W = [w1 for t = 1:T]
 
-    ct.evaluate(ct.evaluate_cache, x1, u1, w1)
-    ct.gradient(ct.gradient_cache, x1, u1, w1)
-    @test ct.evaluate_cache[1] ≈ ot(x1, u1, w1)
-    @test norm(ct.gradient_cache - [2.0 * x1; 0.2 * u1]) < 1.0e-8
+    ct.cost(ct.cost_cache, x1, u1, w1)
+    ct.gradient_variables(ct.gradient_variables_cache, x1, u1, w1)
+    @test ct.cost_cache[1] ≈ ot(x1, u1, w1)
+    @test norm(ct.gradient_variables_cache - [2.0 * x1; 0.2 * u1]) < 1.0e-8
 
-    cT.evaluate(cT.evaluate_cache, x1, u1, w1)
-    cT.gradient(cT.gradient_cache, x1, u1, w1)
-    @test cT.evaluate_cache[1] ≈ oT(x1, u1, w1)
-    @test norm(cT.gradient_cache - 20.0 * x1) < 1.0e-8
+    cT.cost(cT.cost_cache, x1, u1, w1)
+    cT.gradient_variables(cT.gradient_variables_cache, x1, u1, w1)
+    @test cT.cost_cache[1] ≈ oT(x1, u1, w1)
+    @test norm(cT.gradient_variables_cache - 20.0 * x1) < 1.0e-8
 
     @test CALIPSO.cost(objective, X, U, X) - sum([ot(X[t], U[t], W[t]) for t = 1:T-1]) - oT(X[T], U[T], W[T]) ≈ 0.0
-    CALIPSO.gradient!(gradient, idx_xu, objective, X, U, W) 
+    CALIPSO.gradient_variables!(gradient, idx_xu, objective, X, U, W) 
     @test norm(gradient - vcat([[2.0 * x1; 0.2 * u1] for t = 1:T-1]..., 20.0 * x1)) < 1.0e-8
 
     # info = @benchmark CALIPSO.cost($objective, $X, $U, $W)

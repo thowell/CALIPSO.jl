@@ -2,10 +2,10 @@
 function ProblemMethods(trajopt::TrajectoryOptimizationProblem) 
     ProblemMethods(
         (z, θ) -> objective!(trajopt, z),
-        (g, z, θ) -> objective_gradient!(g, trajopt, z),
-        (g, z, θ) -> nothing,
-        (h, z, θ) -> objective_hessian!(h, trajopt, z),
-        (h, z, θ) -> nothing,
+        (g, z, θ) -> objective_gradient_variables!(g, trajopt, z),
+        (g, z, θ) -> objective_gradient_parameters!(g, trajopt, z),
+        (j, z, θ) -> objective_jacobian_variables_variables!(j, trajopt, z),
+        (j, z, θ) -> objective_jacobian_variables_parameters!(j, trajopt, z),
         (c, z, θ) -> equality!(c, trajopt, z), 
         (j, z, θ) -> equality_jacobian!(j, trajopt, z),
         (j, z, θ) -> nothing,

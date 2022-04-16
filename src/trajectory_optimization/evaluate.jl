@@ -12,7 +12,7 @@ function objective!(trajopt::TrajectoryOptimizationProblem{T}, variables) where 
         trajopt.data.parameters) 
 end
 
-function objective_gradient!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective_gradient_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
     fill!(gradient, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -20,7 +20,7 @@ function objective_gradient!(gradient, trajopt::TrajectoryOptimizationProblem{T}
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
-    gradient!(gradient, 
+    gradient_variables!(gradient, 
         trajopt.indices.state_action, 
         trajopt.data.objective, 
         trajopt.data.states, 
@@ -29,17 +29,52 @@ function objective_gradient!(gradient, trajopt::TrajectoryOptimizationProblem{T}
     return 
 end
 
-function objective_hessian!(hessian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
-    fill!(hessian, 0.0)
+function objective_gradient_parameters!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+    fill!(gradient, 0.0)
     trajectory!(
         trajopt.data.states, 
         trajopt.data.actions, 
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
-    hessian!(
-        hessian, 
-        trajopt.sparsity.objective_hessian, 
+    gradient_parameters!(gradient, 
+        trajopt.indices.state_action, 
+        trajopt.data.objective, 
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        trajopt.data.parameters) 
+    return 
+end
+
+function objective_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+    fill!(jacobian, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    jacobian_variables_variables!(
+        jacobian, 
+        trajopt.sparsity.objective_jacobian_variables_variables, 
+        trajopt.data.objective, 
+        trajopt.data.states, 
+        trajopt.data.actions,
+        trajopt.data.parameters)
+   return
+end
+
+function objective_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+    fill!(jacobian, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    jacobian_variables_parameters!(
+        jacobian, 
+        trajopt.sparsity.objective_jacobian_variables_parameters, 
         trajopt.data.objective, 
         trajopt.data.states, 
         trajopt.data.actions,

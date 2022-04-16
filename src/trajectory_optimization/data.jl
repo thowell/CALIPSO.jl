@@ -11,9 +11,6 @@ struct TrajectoryOptimizationData{T}
     duals_equality::Vector{Vector{T}}
     duals_nonnegative::Vector{Vector{T}}
     duals_second_order::Vector{Vector{Vector{T}}}
-    # state_dimensions::Vector{Int}
-    # action_dimensions::Vector{Int}
-    # parameter_dimensions::Vector{Int}
 end
 
 function TrajectoryOptimizationData(
@@ -47,10 +44,7 @@ function TrajectoryOptimizationData(
         duals_equality, 
         duals_nonnegative,
         duals_second_order,
-        # state_dimensions, 
-        # action_dimensions, 
-        # parameter_dimensions,
-        )
+    )
 end
 
 function TrajectoryOptimizationData(dynamics::Vector{Dynamics}, objective::Objective)

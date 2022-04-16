@@ -101,21 +101,21 @@ solve!(solver)
 norm(solver.data.residual, Inf) < 1.0e-5
 
 # ## solution
-x_sol, u_sol = get_trajectory(solver, trajopt)
+# x_sol, u_sol = get_trajectory(solver, trajopt)
 
-@show x_sol[1]
-@show x_sol[T]
+# @show x_sol[1]
+# @show x_sol[T]
 
-# ## state
-using Plots
-plot(hcat(x_sol...)', 
-    label=["px" "py" "pz" "vx" "vy" "vz"])
+# # ## state
+# using Plots
+# plot(hcat(x_sol...)', 
+#     label=["px" "py" "pz" "vx" "vy" "vz"])
 
-# ## control
-plot(hcat(u_sol[1:end-1]..., u_sol[end-1])', 
-    linetype=:steppost,
-    legend=:topleft,
-    label=["Fx" "Fy" "Fz"])
+# # ## control
+# plot(hcat(u_sol[1:end-1]..., u_sol[end-1])', 
+#     linetype=:steppost,
+#     legend=:topleft,
+#     label=["Fx" "Fy" "Fz"])
 
-soc_check = [norm(u[1:2]) < u[3] for u in u_sol]
-all(soc_check)
+# soc_check = [norm(u[1:2]) < u[3] for u in u_sol]
+# all(soc_check)
