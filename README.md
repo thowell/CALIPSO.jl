@@ -6,6 +6,7 @@ Conic Augmented Lagrangian Interior-Point SOlver: A solver for contact-implicit 
 
 The CALIPSO algorithm is an infeasible-start, primal-dual augmented-Lagrangian interior-point solver for non-convex optimization problems. 
 
+## Standard form
 Problems of the following form:
 ```
 minimize     f(x; p)
@@ -15,6 +16,7 @@ subject to   g(x; p)  = 0,
 ```
 can be optimized for decision variables x, problem parameters p, and the Cartesian product of non-negative orthant and second-order cones K. 
 
+## Trajectory optimization
 Additionally, trajectory optimization problems of the form:
 ```
 minimize        cost_T(state_T; parameter_T) + sum(cost_t(state_t, action_t; parameter_t))
@@ -25,4 +27,7 @@ subject to      dynamics_t(state_t+1, state_t, action_t; parameter_t)  = 0,     
                 second_order_t(state_t, action_t; parameter_t)        in Q,        t = 1,...,T
 ``` 
 are automatically formulated, and fast gradients generated, for CALIPSO.
+
+## Solution gradients
+The solver is differentiable, and gradients of the solution (including internal solver variables) with respect to the problem parameters are efficiently computed.
 

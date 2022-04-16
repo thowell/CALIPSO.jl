@@ -21,6 +21,7 @@ function differentiate!(solver)
     residual_jacobian_parameters!(solver.data, solver.problem, solver.indices)
 
     # compute solution sensitivities
+    fill!(solver.data.solution_sensitivity, 0.0)
     for i in solver.indices.parameters 
         ∂z∂pi = @views solver.data.solution_sensitivity[:, i]
         Rpi   = @views solver.data.jacobian_parameters[:, i]
@@ -31,6 +32,7 @@ function differentiate!(solver)
             solver.data.jacobian_variables_symmetric, 
             solver.indices, 
             solver.linear_solver)
+        ∂z∂pi .*= -1.0
     end
 
     return 

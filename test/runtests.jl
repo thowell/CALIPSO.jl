@@ -10,6 +10,8 @@ using CALIPSO
 
 # Solver
 include("solver/problem.jl")
+include("solver/qp_eq.jl")
+include("solver/qp_ineq.jl")
 include("solver/test1.jl")
 include("solver/test2.jl")
 include("solver/test3.jl")
