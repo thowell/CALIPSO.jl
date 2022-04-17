@@ -22,6 +22,7 @@ struct Dynamics{T}
     constraint_cache::Vector{T} 
     jacobian_variables_cache::Vector{T}
     jacobian_parameters_cache::Vector{T}
+    constraint_dual_jacobian_variables_cache::Vector{T}
     jacobian_variables_variables_cache::Vector{T}
     jacobian_variables_parameters_cache::Vector{T}
 end
@@ -103,6 +104,7 @@ function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_a
         zeros(num_next_state), 
         zeros(num_jacobian_variables), 
         zeros(num_jacobian_parameters), 
+        zeros(num_state + num_action + num_next_state),
         zeros(num_jacobian_variables_variables),
         zeros(num_jacobian_variables_parameters),
     )
@@ -173,6 +175,15 @@ function jacobian_parameters!(jacobians, sparsity, constraints::Vector{Dynamics{
         con.jacobian_parameters(con.jacobian_parameters_cache, states[t+1], states[t], actions[t], parameters[t])
         for (i, idx) in enumerate(sparsity[t]) 
             jacobians[idx...] = con.jacobian_parameters_cache[i]
+        end
+    end
+end
+
+function constraint_dual_jacobian_variables!(gradient, indices, constraints::Vector{Dynamics{T}}, states, actions, parameters, duals) where T
+    for (t, con) in enumerate(constraints) 
+        con.constraint_dual_jacobian_variables(con.constraint_dual_jacobian_variables_cache, states[t+1], states[t], actions[t], parameters[t], duals[t])
+        for (i, idx) in enumerate(indices[t]) 
+            gradient[idx...] += con.constraint_dual_jacobian_variables_cache[i]
         end
     end
 end

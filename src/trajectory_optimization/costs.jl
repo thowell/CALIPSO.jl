@@ -103,24 +103,18 @@ function gradient_parameters!(gradient, indices, objective::Objective, states, a
     end
 end
 
-function jacobian_variables_variables!(jacobians, sparsity, objective::Objective, states, actions, parameters; 
-    scaling=1.0)
-    
+function jacobian_variables_variables!(jacobians, sparsity, objective::Objective, states, actions, parameters)
     for (t, obj) in enumerate(objective)
         obj.jacobian_variables_variables(obj.jacobian_variables_variables_cache, states[t], actions[t], parameters[t])
-        obj.jacobian_variables_variables_cache .*= scaling
         for (i, idx) in enumerate(sparsity[t]) 
             jacobians[idx...] += obj.jacobian_variables_variables_cache[i] 
         end
     end
 end
 
-function jacobian_variables_parameters!(jacobians, sparsity, objective::Objective, states, actions, parameters; 
-    scaling=1.0)
-    
+function jacobian_variables_parameters!(jacobians, sparsity, objective::Objective, states, actions, parameters)
     for (t, obj) in enumerate(objective)
         obj.jacobian_variables_parameters(obj.jacobian_variables_parameters_cache, states[t], actions[t], parameters[t])
-        obj.jacobian_variables_parameters_cache .*= scaling
         for (i, idx) in enumerate(sparsity[t]) 
             jacobians[idx...] += obj.jacobian_variables_parameters_cache[i] 
         end
@@ -142,7 +136,6 @@ function sparsity_jacobian_variables_variables(objective::Objective, num_state::
     end
     return sp
 end
-
 
 function sparsity_jacobian_variables_parameters(objective::Objective, num_state::Vector{Int}, num_action::Vector{Int})
     sp = Vector{Tuple{Int,Int}}[]

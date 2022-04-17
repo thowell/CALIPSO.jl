@@ -192,6 +192,41 @@ function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimization
     return
 end
 
+function equality_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables, duals) where T
+    fill!(gradient, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    equality_duals!(
+        trajopt.data.duals_dynamics, 
+        trajopt.data.duals_equality, 
+        duals, 
+        trajopt.indices.dynamics_duals, 
+        trajopt.indices.equality_duals)
+    constraint_dual_jacobian_variables!(
+        gradient, 
+        trajopt.indices.state_action_next_state, 
+        trajopt.data.dynamics, 
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        trajopt.data.parameters,
+        trajopt.data.duals_dynamics)
+    if trajopt.dimensions.equality_constraints > 0
+        constraint_dual_jacobian_variables!(
+            gradient, 
+            trajopt.indices.state_action, 
+            trajopt.data.equality, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters,
+            trajopt.data.duals_equality)
+    end
+    return
+end
+
 function cone_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
     fill!(jacobian, 0.0)
     trajectory!(
@@ -246,6 +281,45 @@ function cone_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProb
             trajopt.data.states, 
             trajopt.data.actions, 
             trajopt.data.parameters)
+    end
+    return
+end
+
+function cone_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables, duals) where T
+    fill!(gradient, 0.0)
+    trajectory!(
+        trajopt.data.states, 
+        trajopt.data.actions, 
+        variables, 
+        trajopt.indices.states, 
+        trajopt.indices.actions)
+    cone_duals!(
+        trajopt.data.duals_nonnegative, 
+        trajopt.data.duals_second_order,
+        duals, 
+        trajopt.indices.nonnegative_duals, 
+        trajopt.indices.second_order_duals)
+    if trajopt.dimensions.cone_nonnegative > 0
+        constraint_dual_jacobian_variables!(
+            gradient, 
+            trajopt.indices.state_action, 
+            trajopt.data.nonnegative, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters,
+            trajopt.data.duals_nonnegative,
+        )
+    end
+    if trajopt.dimensions.cone_second_order > 0
+        constraint_dual_jacobian_variables!(
+            gradient, 
+            trajopt.indices.state_action, 
+            trajopt.data.second_order, 
+            trajopt.data.states, 
+            trajopt.data.actions, 
+            trajopt.data.parameters,
+            trajopt.data.duals_second_order,
+        )
     end
     return
 end

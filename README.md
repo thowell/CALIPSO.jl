@@ -13,13 +13,13 @@ Problems of the following form:
 minimize     f(x; p)
    x
 subject to   g(x; p)  = 0,
-             h(x; p) in K
+             h(x; p) in K = R+ x Q^1 x ... x Q^k
 ```
 can be optimized for 
 
 - x: decision variables 
 - p: problem parameters 
-- K: Cartesian product of convex cones; nonnegative orthant and second-order cones are currently implemented
+- K: Cartesian product of convex cones; nonnegative orthant R+ and second-order cones Q are currently implemented
 
 ## Trajectory optimization
 Additionally, trajectory optimization problems of the form:

@@ -22,6 +22,7 @@ struct Constraint{T}
     constraint_cache::Vector{T} 
     jacobian_variables_cache::Vector{T}
     jacobian_parameters_cache::Vector{T}
+    constraint_dual_jacobian_variables_cache::Vector{T}
     jacobian_variables_variables_cache::Vector{T}
     jacobian_variables_parameters_cache::Vector{T}
 end
@@ -100,6 +101,7 @@ function Constraint(constraint::Function, num_state::Int, num_action::Int;
         zeros(num_constraint), 
         zeros(num_jacobian_variables), 
         zeros(num_jacobian_parameters), 
+        zeros(num_state + num_action),
         zeros(num_jacobian_variables_variables),
         zeros(num_jacobian_variables_parameters),
     )
@@ -122,6 +124,7 @@ function Constraint()
         [Int[], Int[]],
         Float64[], 
         Float64[], 
+        Float64[],
         Float64[], 
         Float64[], 
         Float64[], 
@@ -154,6 +157,17 @@ function jacobian_parameters!(jacobians, sparsity, constraints::Constraints{T}, 
             con.jacobian_parameters(con.jacobian_parameters_cache, states[t], actions[t], parameters[t])
             for (i, idx) in enumerate(sparsity[t]) 
                 jacobians[idx...] = con.jacobian_parameters_cache[i] 
+            end
+        end
+    end
+end
+
+function constraint_dual_jacobian_variables!(gradient, indices, constraints::Constraints{T}, states, actions, parameters, duals) where T
+    for (t, con) in enumerate(constraints)
+        if !isempty(con.constraint_dual_jacobian_variables_cache) 
+            con.constraint_dual_jacobian_variables(con.constraint_dual_jacobian_variables_cache, states[t], actions[t], parameters[t], duals[t])
+            for (i, idx) in enumerate(indices[t]) 
+                gradient[idx...] += con.constraint_dual_jacobian_variables_cache[i] 
             end
         end
     end

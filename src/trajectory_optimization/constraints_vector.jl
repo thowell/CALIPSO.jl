@@ -35,6 +35,19 @@ function jacobian_parameters!(jacobians, sparsity, constraints::Vector{Constrain
     end
 end
 
+function constraint_dual_jacobian_variables!(jacobians, indices, constraints::Vector{Constraints{T}}, states, actions, parameters, duals) where T
+    for (t, cons) in enumerate(constraints)
+        for (i, con) in enumerate(cons)
+            if !isempty(con.constraint_dual_jacobian_variables_cache) 
+                con.constraint_dual_jacobian_variables(con.constraint_dual_jacobian_variables_cache, states[t], actions[t], parameters[t], duals[t][i])
+                for (j, idx) in enumerate(indices[t]) 
+                    jacobians[idx...] += con.constraint_dual_jacobian_variables_cache[j] 
+                end
+            end
+        end
+    end
+end
+
 function jacobian_variables_variables!(jacobians, sparsity, constraints::Vector{Constraints{T}}, states, actions, parameters, duals) where T
     for (t, cons) in enumerate(constraints)
         for (i, con) in enumerate(cons)
