@@ -25,13 +25,17 @@ function quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w)
     γ = u[8 .+ (1:4)] 
     β = u[8 + 4 .+ (1:8)] 
 
-    E = [1.0 -1.0] # friction mapping 
+    b1 = β[2]
+    b2 = β[4]
+    b3 = β[6]
+    b4 = β[8]
+
     J = RoboDojo.contact_jacobian(model, q2⁺)
     λ = transpose(J[1:8, :]) * [
-                                [E * β[1:2]; γ[1]];
-                                [E * β[3:4]; γ[2]];
-                                [E * β[5:6]; γ[3]];
-                                [E * β[7:8]; γ[4]];
+                                [b1; γ[1]];
+                                [b2; γ[2]];
+                                [b3; γ[3]];
+                                [b4; γ[4]];
                             ]
 
     [
@@ -62,55 +66,28 @@ end
 function contact_constraints_inequality_1(h, x, u, w) 
     model = RoboDojo.quadruped
 
-    q2 = x[1:11] 
     q3 = x[11 .+ (1:11)] 
-
-    γ = u[8 .+ (1:4)] 
-    β = u[8 + 4 .+ (1:8)] 
 
     ϕ = RoboDojo.signed_distance(model, q3)[1:4]
     
-    μ = RoboDojo.friction_coefficients(model)[1:4]
-    fc = μ .* γ[1:4] - vcat([sum(β[(i-1) * 2 .+ (1:2)]) for i = 1:4]...)
-
     [
         ϕ;
-        fc;
     ]
 end
 
 function contact_constraints_inequality_t(h, x, u, w) 
     model = RoboDojo.quadruped
-
-    q2 = x[1:11] 
     q3 = x[11 .+ (1:11)] 
-
-    u_control = u[1:8] 
-    γ = u[8 .+ (1:4)] 
-    β = u[8 + 4 .+ (1:8)] 
-    ψ = u[8 + 4 + 8 .+ (1:4)] 
-    η = u[8 + 4 + 8 + 4 .+ (1:8)] 
-
     ϕ = RoboDojo.signed_distance(model, q3)[1:4]
-
-    μ = RoboDojo.friction_coefficients(model)[1:4]
-    fc = μ .* γ[1:4] - vcat([sum(β[(i-1) * 2 .+ (1:2)]) for i = 1:4]...)
-
     [
         ϕ;
-        fc;
     ]
 end
 
 function contact_constraints_inequality_T(h, x, u, w) 
     model = RoboDojo.quadruped
-
-    q2 = x[1:11] 
     q3 = x[11 .+ (1:11)] 
-
     ϕ = RoboDojo.signed_distance(model, q3)[1:4]
-    γ⁻ = x[22 .+ (1:4)]
-
     [
         ϕ;
     ]
@@ -124,23 +101,33 @@ function contact_constraints_equality_1(h, x, u, w)
 
     γ = u[8 .+ (1:4)] 
     β = u[8 + 4 .+ (1:8)] 
-    ψ = u[8 + 4 + 8 .+ (1:4)] 
-    η = u[8 + 4 + 8 + 4 .+ (1:8)] 
+    η = u[8 + 4 + 8 .+ (1:8)] 
 
-    ϕ = RoboDojo.signed_distance(model, q3)[1:4]
+    β1 = β[1:2]
+    η1 = η[1:2]
+
+    β2 = β[2 .+ (1:2)]
+    η2 = η[2 .+ (1:2)]
+
+    β3 = β[4 .+ (1:2)]
+    η3 = η[4 .+ (1:2)]
+
+    β4 = β[6 .+ (1:2)]
+    η4 = η[6 .+ (1:2)]
 
     v = (q3 - q2) ./ h[1]
-    E = [1.0; -1.0]
-    vT = vcat([E * (RoboDojo.quadruped_contact_kinematics_jacobians[i](q3) * v)[1] for i = 1:4]...)
-    ψ_stack = vcat([ψ[i] * ones(2) for i = 1:4]...)
+    vc = vcat([(RoboDojo.quadruped_contact_kinematics_jacobians[i](q3) * v)[1] - η[(i - 1) * 2 .+ (1:2)][2] for i = 1:4]...)
     
     μ = RoboDojo.friction_coefficients(model)[1:4]
-    fc = μ .* γ[1:4] - vcat([sum(β[(i-1) * 2 .+ (1:2)]) for i = 1:4]...)
+    fc = μ .* γ[1:4] - [β[1]; β[3]; β[5]; β[7]]
     
     return [
-            η - vT - ψ_stack;
-            β .* η;
-            ψ .* fc;
+            fc;
+            vc;
+            CALIPSO.second_order_product(β1, η1);
+            CALIPSO.second_order_product(β2, η2);
+            CALIPSO.second_order_product(β3, η3);
+            CALIPSO.second_order_product(β4, η4);
     ]
 end
 
@@ -150,43 +137,52 @@ function contact_constraints_equality_t(h, x, u, w)
     q2 = x[1:11] 
     q3 = x[11 .+ (1:11)] 
 
-    γ = u[8 .+ (1:4)] 
-    β = u[8 + 4 .+ (1:8)] 
-    ψ = u[8 + 4 + 8 .+ (1:4)] 
-    η = u[8 + 4 + 8 + 4 .+ (1:8)] 
-
     ϕ = RoboDojo.signed_distance(model, q3)[1:4]
-    γ⁻ = x[nx .+ (1:4)] 
-
-    v = (q3 - q2) ./ h[1]
-    E = [1.0; -1.0]
-    vT = vcat([E * (RoboDojo.quadruped_contact_kinematics_jacobians[i](q3) * v)[1] for i = 1:4]...)
-    ψ_stack = vcat([ψ[i] * ones(2) for i = 1:4]...)
-    
-    μ = RoboDojo.friction_coefficients(model)[1:4]
-    fc = μ .* γ[1:4] - vcat([sum(β[(i-1) * 2 .+ (1:2)]) for i = 1:4]...)
-    
-    return [
-        η - vT - ψ_stack;
-        γ⁻ .* ϕ;
-        β .* η; 
-        ψ .* fc;
-    ]
-end
-
-function contact_constraints_equality_T(h, x, u, w) 
-    model = RoboDojo.quadruped
+    γ⁻ = x[22 .+ (1:4)] 
 
     q2 = x[1:11] 
     q3 = x[11 .+ (1:11)] 
 
     γ = u[8 .+ (1:4)] 
     β = u[8 + 4 .+ (1:8)] 
-    ψ = u[8 + 4 + 8 .+ (1:4)] 
-    η = u[8 + 4 + 8 + 4 .+ (1:8)] 
+    η = u[8 + 4 + 8 .+ (1:8)] 
+
+    β1 = β[1:2]
+    η1 = η[1:2]
+
+    β2 = β[2 .+ (1:2)]
+    η2 = η[2 .+ (1:2)]
+
+    β3 = β[4 .+ (1:2)]
+    η3 = η[4 .+ (1:2)]
+
+    β4 = β[6 .+ (1:2)]
+    η4 = η[6 .+ (1:2)]
+
+    v = (q3 - q2) ./ h[1]
+    vc = vcat([(RoboDojo.quadruped_contact_kinematics_jacobians[i](q3) * v)[1] - η[(i - 1) * 2 .+ (1:2)][2] for i = 1:4]...)
+    
+    μ = RoboDojo.friction_coefficients(model)[1:4]
+    fc = μ .* γ[1:4] - [β[1]; β[3]; β[5]; β[7]]
+    
+    return [
+            fc;
+            vc;
+            ϕ .* γ⁻;
+            CALIPSO.second_order_product(β1, η1);
+            CALIPSO.second_order_product(β2, η2);
+            CALIPSO.second_order_product(β3, η3);
+            CALIPSO.second_order_product(β4, η4);
+    ]
+end
+
+function contact_constraints_equality_T(h, x, u, w) 
+    model = RoboDojo.quadruped
+
+    q3 = x[11 .+ (1:11)] 
 
     ϕ = RoboDojo.signed_distance(model, q3)[1:4]
-    γ⁻ = x[nx .+ (1:4)] 
+    γ⁻ = x[22 .+ (1:4)] 
 
     return γ⁻ .* ϕ
 end
@@ -248,7 +244,7 @@ end
 nc = 4
 nq = RoboDojo.quadruped.nq
 nx = 2 * nq
-nu = RoboDojo.quadruped.nu + nc + 8 + nc + 8
+nu = RoboDojo.quadruped.nu + nc + 8 + 8
 nw = RoboDojo.quadruped.nw
 
 # ## time 
@@ -432,7 +428,6 @@ ineq = CALIPSO.Constraint{Float64}[]
 function inequality_1(x, u, w) 
     [
         contact_constraints_inequality_1(h, x, u, w);
-        u[8 .+ (1:(nu - 8))];
     ]
 end
 push!(ineq, CALIPSO.Constraint(inequality_1, nx, nu))
@@ -441,7 +436,6 @@ for t = 2:T_fix
     function inequality_t(x, u, w) 
         [
             contact_constraints_inequality_t(h, x, u, w);
-            u[8 .+ (1:(nu - 8))];
         ]
     end
     push!(ineq, CALIPSO.Constraint(inequality_t, nx + nc + nx, nu))
@@ -451,7 +445,6 @@ for t = (T_fix + 1):(T-1)
     function inequality_t(x, u, w) 
         [
             contact_constraints_inequality_t(h, x, u, w);
-            u[8 .+ (1:(nu - 8))];
         ]
     end
     push!(ineq, CALIPSO.Constraint(inequality_t, nx + nc + nx, nu))
@@ -464,7 +457,11 @@ function inequality_T(x, u, w)
 end
 push!(ineq, CALIPSO.Constraint(inequality_T, nx + nc + nx, 0))
 
-so = [[Constraint()] for t = 1:T]
+soc = [
+        [Constraint((x, u, w) -> u[8 + (i - 1) * 2 .+ (1:2)], nx, nu) for i = 1:8],
+        [[Constraint((x, u, w) -> u[8 + (i - 1) * 2 .+ (1:2)], 2nx + 4, nu) for i = 1:8] for t = 2:T-1]...,
+        [Constraint()],
+    ] 
 
 # ## initialize
 q_interp = CALIPSO.linear_interpolation(q1, qT, T+1)
@@ -502,7 +499,7 @@ solve!(solver)
 # ## solution
 x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 
-norm(solver.data.residual, Inf) < 1.0e-3
+norm(solver.data.residual, Inf) ./ length(solver.data.residual) <= 1.0e-3
 norm(solver.problem.equality_constraint, Inf) < 1.0e-2 
 norm(solver.problem.cone_product, Inf) < 1.0e-2 
 

@@ -18,7 +18,8 @@ function factorize_regularized_residual_jacobian_variables!(s)
 
     residual_jacobian_variables_symmetric!(s.data.jacobian_variables_symmetric, s.data.jacobian_variables, s.indices) 
 
-    factorize!(s.linear_solver, s.data.jacobian_variables_symmetric)
+    factorize!(s.linear_solver, s.data.jacobian_variables_symmetric;
+        update=s.options.update_factorization)
     compute_inertia!(s.linear_solver)
 
     return nothing
