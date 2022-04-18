@@ -38,6 +38,7 @@ include("examples/box_move_soc.jl")
 include("examples/hopper_gait.jl")
 include("examples/hopper_gait_soc.jl")
 include("examples/cyberdrift.jl")
+include("examples/cyberdrift_v2.jl")
 include("examples/double_integrator.jl")
 
 
