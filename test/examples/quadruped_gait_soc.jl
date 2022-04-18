@@ -249,9 +249,9 @@
     q1 = initial_configuration(RoboDojo.quadruped, θ1, θ2, θ3)
     q1[2] += 0.0#
     # RoboDojo.signed_distance(RoboDojo.quadruped, q1)[1:4]
-    vis = Visualizer()
-    open(vis)
-    RoboDojo.visualize!(vis, RoboDojo.quadruped, [q1])
+    # vis = Visualizer()
+    # open(vis)
+    # RoboDojo.visualize!(vis, RoboDojo.quadruped, [q1])
     
     # ## feet positions
     pr1 = RoboDojo.quadruped_contact_kinematics[1](q1)
@@ -446,7 +446,7 @@
     end
     push!(ineq, CALIPSO.Constraint(inequality_T, nx + nc + nx, 0))
     
-    soc = [
+    so = [
             [Constraint((x, u, w) -> u[8 + (i - 1) * 2 .+ (1:2)], nx, nu) for i = 1:8],
             [[Constraint((x, u, w) -> u[8 + (i - 1) * 2 .+ (1:2)], 2nx + 4, nu) for i = 1:8] for t = 2:T-1]...,
             [Constraint()],
