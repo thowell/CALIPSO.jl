@@ -21,7 +21,8 @@ function TrajectoryOptimizationData(
     second_order::Vector{Constraints{T}}; 
     parameters=[zeros(num_parameter) for num_parameter in dimensions(dynamics)[3]]) where T
 
-    state_dimensions, action_dimensions, parameter_dimensions = dimensions(dynamics)
+    state_dimensions, action_dimensions, parameter_dimensions = dimensions(dynamics,
+        parameters=[length(p) for p in parameters])
 
     states = [zeros(nx) for nx in state_dimensions]
     actions = [zeros(nu) for nu in action_dimensions]

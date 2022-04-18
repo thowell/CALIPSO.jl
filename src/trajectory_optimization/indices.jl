@@ -41,6 +41,7 @@ function indices(
     jacobian_variables_parameters_key::Vector{Tuple{Int,Int}}, 
     num_state::Vector{Int}, 
     num_action::Vector{Int}, 
+    num_parameter::Vector{Int},
     num_trajectory::Int) where T 
     
     # dynamics
@@ -89,19 +90,19 @@ function indices(
 
     # objective Jacobians
     objective_jacobians_variables_variables = jacobian_variables_variables_indices(objective, jacobian_variables_variables_key, num_state, num_action)
-    objective_jacobians_variables_parameters = jacobian_variables_parameters_indices(objective, jacobian_variables_parameters_key, num_state, num_action)
+    objective_jacobians_variables_parameters = jacobian_variables_parameters_indices(objective, jacobian_variables_parameters_key, num_state, num_action, num_parameter)
 
     dynamics_jacobians_variables_variables = jacobian_variables_variables_indices(dynamics, jacobian_variables_variables_key, num_state, num_action)
-    dynamics_jacobians_variables_parameters = jacobian_variables_parameters_indices(dynamics, jacobian_variables_parameters_key, num_state, num_action)
+    dynamics_jacobians_variables_parameters = jacobian_variables_parameters_indices(dynamics, jacobian_variables_parameters_key, num_state, num_action, num_parameter)
 
     equality_jacobian_variables_variables = jacobian_variables_variables_indices(equality, jacobian_variables_variables_key, num_state, num_action)
-    equality_jacobian_variables_parameters = jacobian_variables_parameters_indices(equality, jacobian_variables_parameters_key, num_state, num_action)
+    equality_jacobian_variables_parameters = jacobian_variables_parameters_indices(equality, jacobian_variables_parameters_key, num_state, num_action, num_parameter)
 
     nonnegative_jacobian_variables_variables = jacobian_variables_variables_indices(nonnegative, jacobian_variables_variables_key, num_state, num_action)
-    nonnegative_jacobian_variables_parameters = jacobian_variables_parameters_indices(nonnegative, jacobian_variables_parameters_key, num_state, num_action)
+    nonnegative_jacobian_variables_parameters = jacobian_variables_parameters_indices(nonnegative, jacobian_variables_parameters_key, num_state, num_action, num_parameter)
 
     second_order_jacobian_variables_variables = jacobian_variables_variables_indices(second_order, jacobian_variables_variables_key, num_state, num_action)
-    second_order_jacobian_variables_parameters = jacobian_variables_parameters_indices(second_order, jacobian_variables_parameters_key, num_state, num_action)
+    second_order_jacobian_variables_parameters = jacobian_variables_parameters_indices(second_order, jacobian_variables_parameters_key, num_state, num_action, num_parameter)
 
     # indices
     x_idx = state_indices(dynamics)

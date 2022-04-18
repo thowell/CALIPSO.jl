@@ -200,19 +200,19 @@
     Lxx_sp_func = eval(Symbolics.build_function(Lxx_sp.nzval, z)[1])
 
     sparsity_objective_jacobians_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(obj, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_objective_jacobians_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(obj, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_objective_jacobians_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(obj, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
 
     sparsity_dynamics_jacobian_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(dyn, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_dynamics_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(dyn, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_dynamics_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(dyn, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
 
     sparsity_equality_jacobian_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(eq, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_equality_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(eq, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_equality_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(eq, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
 
     sparsity_nonnegative_jacobian_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(ineq, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_nonnegative_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(ineq, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_nonnegative_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(ineq, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
 
     sparsity_second_order_jacobian_variables_variables = CALIPSO.sparsity_jacobian_variables_variables(so, trajopt.dimensions.states, trajopt.dimensions.actions)
-    sparsity_second_order_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(so, trajopt.dimensions.states, trajopt.dimensions.actions)
+    sparsity_second_order_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(so, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
 
     jacobian_variables_variables_sparsity = collect([
         (sparsity_objective_jacobians_variables_variables...)..., 
@@ -243,11 +243,11 @@
     idx_nn_jacobian_variables_variables = CALIPSO.jacobian_variables_variables_indices(ineq, sp_vv_key, trajopt.dimensions.states, trajopt.dimensions.actions)
     idx_so_jacobian_variables_variables = CALIPSO.jacobian_variables_variables_indices(so, sp_vv_key, trajopt.dimensions.states, trajopt.dimensions.actions)
 
-    # idx_objective_jacobians_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(obj, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    # idx_dynamics_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(dyn, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    # idx_eq_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(eq, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    # idx_nn_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(ineq, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
-    # idx_so_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(so, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions)
+    # idx_objective_jacobians_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(obj, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
+    # idx_dynamics_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(dyn, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
+    # idx_eq_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(eq, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
+    # idx_nn_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(ineq, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
+    # idx_so_jacobian_variables_parameters = CALIPSO.jacobian_variables_parameters_indices(so, sp_vp_key, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
 
     # indices
     @test sp_vv_key[vcat(idx_objective_jacobians_variables_variables...)] == [(sparsity_objective_jacobians_variables_variables...)...]

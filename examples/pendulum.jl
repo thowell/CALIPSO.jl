@@ -83,3 +83,6 @@ initialize_controls!(solver, trajopt, u_guess)
 # ## solve 
 solve!(solver)
 norm(solver.data.residual, Inf) < 1.0e-5
+
+trajopt.data.parameters[1] - θ1
+trajopt.data.parameters[2] - θ2

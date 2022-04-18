@@ -137,15 +137,16 @@ function sparsity_jacobian_variables_variables(objective::Objective, num_state::
     return sp
 end
 
-function sparsity_jacobian_variables_parameters(objective::Objective, num_state::Vector{Int}, num_action::Vector{Int})
+function sparsity_jacobian_variables_parameters(objective::Objective, num_state::Vector{Int}, num_action::Vector{Int}, num_parameter::Vector{Int})
     sp = Vector{Tuple{Int,Int}}[]
     for (t, obj) in enumerate(objective)
         row = Int[]
         col = Int[]
         if !isempty(obj.sparsity_variables_parameters[1])
-            shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
-            push!(row, (obj.sparsity_variables_parameters[1] .+ shift)...) 
-            push!(col, (obj.sparsity_variables_parameters[2] .+ shift)...) 
+            row_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
+            col_shift = (t > 1 ? (sum(num_parameter[1:t-1])) : 0)
+            push!(row, (obj.sparsity_variables_parameters[1] .+ row_shift)...) 
+            push!(col, (obj.sparsity_variables_parameters[2] .+ col_shift)...) 
         end
         s = collect(zip(row, col))
         push!(sp, s)
@@ -169,15 +170,16 @@ function jacobian_variables_variables_indices(objective::Objective, key::Vector{
     return indices
 end
 
-function jacobian_variables_parameters_indices(objective::Objective, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int})
+function jacobian_variables_parameters_indices(objective::Objective, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}, num_parameter::Vector{Int})
     indices = Vector{Int}[]
     for (t, obj) in enumerate(objective)
         if !isempty(obj.sparsity_variables_parameters[1])
             row = Int[]
             col = Int[]
-            shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
-            push!(row, (obj.sparsity_variables_parameters[1] .+ shift)...) 
-            push!(col, (obj.sparsity_variables_parameters[2] .+ shift)...) 
+            row_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
+            col_shift = (t > 1 ? (sum(num_parameter[1:t-1])) : 0)
+            push!(row, (obj.sparsity_variables_parameters[1] .+ row_shift)...) 
+            push!(col, (obj.sparsity_variables_parameters[2] .+ col_shift)...) 
             rc = collect(zip(row, col))
             push!(indices, [findfirst(x -> x == i, key) for i in rc])
         end

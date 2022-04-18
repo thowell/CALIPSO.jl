@@ -229,7 +229,7 @@ function sparsity_jacobian_variables(constraints::Vector{Dynamics{T}}, num_state
     return sp
 end
 
-function sparsity_jacobian_parameters(constraints::Vector{Dynamics{T}}, num_state::Vector{Int}, num_actions::Vector{Int}; 
+function sparsity_jacobian_parameters(constraints::Vector{Dynamics{T}}, num_state::Vector{Int}, num_actions::Vector{Int}, num_parameter::Vector{Int}; 
     row_shift=0) where T
 
     sp = Vector{Tuple{Int,Int}}[]
@@ -237,7 +237,7 @@ function sparsity_jacobian_parameters(constraints::Vector{Dynamics{T}}, num_stat
     for (t, con) in enumerate(constraints) 
         row = Int[]
         col = Int[]
-        col_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_actions[1:t-1])) : 0)
+        col_shift = (t > 1 ? (sum(num_parameter[1:t-1])) : 0)
         push!(row, (con.jacobian_parameters_sparsity[1] .+ row_shift)...) 
         push!(col, (con.jacobian_parameters_sparsity[2] .+ col_shift)...) 
         s = collect(zip(row, col))
@@ -265,16 +265,17 @@ function sparsity_jacobian_variables_variables(constraints::Vector{Dynamics{T}},
     return sp
 end
 
-function sparsity_jacobian_variables_parameters(constraints::Vector{Dynamics{T}}, num_state::Vector{Int}, num_actions::Vector{Int}) where T
+function sparsity_jacobian_variables_parameters(constraints::Vector{Dynamics{T}}, num_state::Vector{Int}, num_actions::Vector{Int}, num_parameter::Vector{Int}) where T
     sp = Vector{Tuple{Int,Int}}[]
 
     for (t, con) in enumerate(constraints) 
         row = Int[]
         col = Int[]
         if !isempty(con.jacobian_variables_parameters_sparsity[1])
-            shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_actions[1:t-1])) : 0)
-            push!(row, (con.jacobian_variables_parameters_sparsity[1] .+ shift)...) 
-            push!(col, (con.jacobian_variables_parameters_sparsity[2] .+ shift)...) 
+            row_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_actions[1:t-1])) : 0)
+            col_shift = (t > 1 ? (sum(num_parameter[1:t-1])) : 0)
+            push!(row, (con.jacobian_variables_parameters_sparsity[1] .+ row_shift)...) 
+            push!(col, (con.jacobian_variables_parameters_sparsity[2] .+ col_shift)...) 
         end
         s = collect(zip(row, col))
         push!(sp, s)
@@ -319,13 +320,14 @@ function jacobian_variables_variables_indices(constraints::Vector{Dynamics{T}}, 
     return indices
 end
 
-function jacobian_variables_parameters_indices(constraints::Vector{Dynamics{T}}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}) where T
+function jacobian_variables_parameters_indices(constraints::Vector{Dynamics{T}}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}, num_parameter::Vector{Int}) where T
     indices = Vector{Int}[]
     for (t, con) in enumerate(constraints) 
         if !isempty(con.jacobian_variables_parameters_sparsity[1])
-            shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
-            row = collect(con.jacobian_variables_parameters_sparsity[1] .+ shift)
-            col = collect(con.jacobian_variables_parameters_sparsity[2] .+ shift)
+            row_shift = (t > 1 ? (sum(num_state[1:t-1]) + sum(num_action[1:t-1])) : 0)
+            col_shift = (t > 1 ? (sum(num_parameter[1:t-1])) : 0)
+            row = collect(con.jacobian_variables_parameters_sparsity[1] .+ row_shift)
+            col = collect(con.jacobian_variables_parameters_sparsity[2] .+ col_shift)
             rc = collect(zip(row, col))
             push!(indices, [findfirst(x -> x == i, key) for i in rc])
         end

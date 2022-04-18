@@ -25,6 +25,7 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
         spar.jacobian_variables_parameters_key,
         dims.states, 
         dims.actions, 
+        dims.parameters,
         dims.total_variables)
 
     TrajectoryOptimizationProblem(
