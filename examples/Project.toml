@@ -1,15 +1,14 @@
 [deps]
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
-DirectTrajectoryOptimization = "a9f42406-efe7-414c-8b71-df971cc98041"
 ECOS = "e2685f51-7e38-5353-a97d-a921fd2c8199"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MATLAB = "10e44e05-a98a-55b3-a45b-ba969058deb6"
 RoboDojo = "2859eb88-988f-4613-a49e-c643bedbc906"
 SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
-[compat] 
+[compat]
 Convex = "0.14.18"
-DirectTrajectoryOptimization = "0.2.0"
 ECOS = "0.14.2"
 RoboDojo = "0.1.4"
 SCS = "0.9.0"
