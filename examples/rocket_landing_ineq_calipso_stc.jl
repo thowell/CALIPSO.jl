@@ -106,16 +106,36 @@ so = [[Constraint()] for t = 1:T]
 trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
 
 # ## initialize
-using Random
-Random.seed!(2)
-x_interpolation = [x1 + 0.1*randn(6) for t = 1:T ]
-u_guess = [1.0 * randn(num_action) for t = 1:T-1]
+x_interpolation = linear_interpolation(x1, xT, T)
+for i = 1:T
+    h = 0.05
+    x_interpolation[i][4:6] = (xT[1:3]-x1[1:3])/(h*T)
+end
+u_guess = [zeros(num_action) for t = 1:T-1]
+for i = 1:T-1
+    u_guess[i][1:3] = [0;0;9.8]
+    g = -x_interpolation[i][1] + a
+    if g >= 0
+        u_guess[i][4] = g
+        u_guess[i][5] = 0
+    else
+        u_guess[i][4] = 0
+        u_guess[i][5] = -g
+    end
+    c =  x_interpolation[i][3] - b
+    if c >= 0
+        u_guess[i][6] = c
+        u_guess[i][7] = 0
+    else
+        u_guess[i][6] = 0
+        u_guess[i][7] = -c
+    end
+end
 
 methods = ProblemMethods(trajopt)
 
-# ## solver
-solver = Solver(methods, trajopt.num_variables, trajopt.num_equality, trajopt.num_cone,
-    options=Options(verbose=true))
+solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
+    options=Options(verbose=true,penalty_initial=1.0e3))
 initialize_states!(solver, trajopt, x_interpolation)
 initialize_controls!(solver, trajopt, u_guess)
 
@@ -136,7 +156,7 @@ using MATLAB
 mat"
 figure
 hold on
-plot($Xm(1,:),$Xm(3,:))
+plot($Xm(1,:),$Xm(3,:),'bo')
 s = 10;
 for i = 1:$T-1
     quiver($Xm(1,i),$Xm(3,i),$Um(1,i)/s,$Um(3,i)/s,'r')
