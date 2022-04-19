@@ -31,6 +31,8 @@ Base.@kwdef mutable struct Options{T}
     max_penalty::T=1.0e8
     armijo_tolerance::T=1.0e-4
     constraint_hessian::Bool=true
+    linear_solver::Symbol=:QDLDL
+    update_factorization::Bool=true
     differentiate::Bool=true
     verbose::Bool=true
 end

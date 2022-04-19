@@ -120,9 +120,9 @@ function solve!(solver)
             problem!(problem, methods, indices, variables, parameters,
                 objective_jacobian_variables_variables=true,
                 equality_jacobian_variables=true,
-                equality_dual_jacobian_variables_variables=true,
+                equality_dual_jacobian_variables_variables=(true && options.constraint_hessian),
                 cone_jacobian_variables=true,
-                cone_dual_jacobian_variables_variables=true,
+                cone_dual_jacobian_variables_variables=(true && options.constraint_hessian),
             )
 
             cone!(problem, methods, indices, variables,
@@ -225,7 +225,10 @@ function solve!(solver)
         end
 
         # convergence
-        if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance
+        residual!(data, problem, indices, variables, κ, ρ, λ)
+        res_norm = norm(data.residual, options.residual_norm) / solver.dimensions.total
+        
+        if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance && res_norm <= options.residual_tolerance
             options.verbose && println("solve success!")
             options.differentiate && differentiate!(solver) 
             return true 

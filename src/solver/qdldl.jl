@@ -24,23 +24,27 @@ function LDLSolver(A::SparseMatrixCSC{Tv,Ti}, F::QDLDL.QDLDLFactorisation{Tv,Ti}
     return LDLSolver{Tv,Ti}(F, copy(A), Pr, Pc, Pv, num_entries, inertia)
 end
 
-function factorize!(s::LDLSolver{Tv,Ti}, A::SparseMatrixCSC{Tv,Ti}) where {Tv<:AbstractFloat, Ti<:Integer}
-    # Reset the pre-allocated fields
-    s.Pr .= 0
-    s.Pc .= 0
-    s.Pv .= 0.0
-    s.num_entries .= 0
+function factorize!(s::LDLSolver{Tv,Ti}, A::SparseMatrixCSC{Tv,Ti}; 
+    update=false) where {Tv<:AbstractFloat, Ti<:Integer}
 
-    # Triangularize the matrix with the allocation-free method.
-    A = permute_symmetricAF(A, s.F.iperm, s.Pr, s.Pc, s.Pv, s.num_entries)  #returns an upper triangular matrix
+    if update
+        # Reset the pre-allocated fields
+        s.Pr .= 0
+        s.Pc .= 0
+        s.Pv .= 0.0
+        s.num_entries .= 0
 
-    # Update the workspace, triuA is the only field we need to update
-    s.F.workspace.triuA.nzval .= A.nzval
+        # Triangularize the matrix with the allocation-free method.
+        A = permute_symmetricAF(A, s.F.iperm, s.Pr, s.Pc, s.Pv, s.num_entries)  #returns an upper triangular matrix
 
-    # factor the matrix
-    QDLDL.factor!(s.F.workspace, s.F.logical.x)
+        # Update the workspace, triuA is the only field we need to update
+        s.F.workspace.triuA.nzval .= A.nzval
 
-    # s.F = QDLDL.qdldl(A)
+        # factor the matrix
+        QDLDL.factor!(s.F.workspace, s.F.logical.x)
+    else 
+        s.F = QDLDL.qdldl(A)
+    end
 
     return nothing
 end
@@ -130,14 +134,20 @@ end
 ldl_solver(A::Array{T, 2}) where T = ldl_solver(sparse(A))
 
 function linear_solve!(solver::LDLSolver{Tv,Ti}, x::Vector{Tv}, A::SparseMatrixCSC{Tv,Ti}, b::Vector{Tv};
-    reg=0.0, fact::Bool = true) where {Tv<:AbstractFloat,Ti<:Integer}
-    fact && factorize!(solver, A) # factorize
+    reg=0.0, 
+    fact=true,
+    update=true) where {Tv<:AbstractFloat,Ti<:Integer}
+
+    fact && factorize!(solver, A;
+        update=update) # factorize
     x .= b
     QDLDL.solve!(solver.F, x) # solve
 end
 
 function linear_solve!(solver::LDLSolver{Tv,Ti}, x::Vector{Tv}, A::AbstractMatrix{Tv}, b::Vector{Tv};
-    reg=0.0, fact::Bool = true) where {Tv<:AbstractFloat,Ti<:Integer}
+    reg=0.0, 
+    fact=true,
+    update=true) where {Tv<:AbstractFloat,Ti<:Integer}
     
     # fill sparse_matrix
     n, m = size(A) 
@@ -147,18 +157,23 @@ function linear_solve!(solver::LDLSolver{Tv,Ti}, x::Vector{Tv}, A::AbstractMatri
         end
     end
     
-    linear_solve!(solver, x, solver.A_sparse, b, reg=reg, fact=fact)
+    linear_solve!(solver, x, solver.A_sparse, b, 
+        reg=reg, 
+        fact=fact,
+        update=update)
 end
 
 function linear_solve!(s::LDLSolver{T}, x::Matrix{T}, A::Matrix{T},
     b::Matrix{T}; 
     reg::T = 0.0, 
-    fact::Bool = true) where T
+    fact=true,
+    update=true) where T
 
     fill!(x, 0.0)
     n, m = size(x) 
     r_idx = 1:n
-    fact && factorize!(s, A)
+    fact && factorize!(s, A;
+        update=update)
 
     x .= b 
     for j = 1:m
