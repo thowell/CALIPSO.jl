@@ -1,8 +1,8 @@
 @testset "Examples: CYBERDRIFT" begin
     """
-        CYBERTRUCK
+        CYBERTRUCKV2
     """
-    struct CYBERTRUCK{T} <: RoboDojo.Model{T}
+    struct CYBERTRUCKV2{T} <: RoboDojo.Model{T}
         # dimensions
         nq::Int # generalized coordinates
         nu::Int # controls
@@ -26,22 +26,22 @@
             -x[2] x[1] 0]
     end
 
-    function mass_matrix(model::CYBERTRUCK, q) 
+    function mass_matrix(model::CYBERTRUCKV2, q) 
         Diagonal([model.mass, model.mass, model.inertia])
     end
 
-    function dynamics_bias(model::CYBERTRUCK, q, q̇) 
+    function dynamics_bias(model::CYBERTRUCKV2, q, q̇) 
         [0.0; 0.0; 0.0]
     end
 
-    function input_jacobian(model::CYBERTRUCK, q)
+    function input_jacobian(model::CYBERTRUCKV2, q)
         [
             cos(q[3]) sin(q[3]) 0.0; 
             0.0       0.0       1.0;
         ]
     end
 
-    function contact_jacobian(model::CYBERTRUCK, q)
+    function contact_jacobian(model::CYBERTRUCKV2, q)
 
         R = [cos(q[3]) -sin(q[3]); sin(q[3]) cos(q[3])] 
 
@@ -58,12 +58,12 @@
     end
 
     # nominal configuration 
-    function nominal_configuration(model::CYBERTRUCK)
+    function nominal_configuration(model::CYBERTRUCKV2)
         [0.0; 0.0; 0.0]
     end
 
     # friction coefficients 
-    friction_coefficients(model::CYBERTRUCK) = model.friction_body_world
+    friction_coefficients(model::CYBERTRUCKV2) = model.friction_body_world
 
     function dynamics(model, mass_matrix, dynamics_bias, h, q0, q1, u1, w1, λ1, q2)
         # evalutate at midpoint
@@ -96,7 +96,7 @@
     kinematics_rear =  [-0.1; 0.0]
 
     # Model
-    cybertruck = CYBERTRUCK(nq, nu, nw, nc,
+    cybertruck = CYBERTRUCKV2(nq, nu, nw, nc,
             body_mass, body_inertia,
             kinematics_front, kinematics_rear,
             friction_body_world, zeros(0))
@@ -105,7 +105,7 @@
     nx = 2 * nq
     nu = 2 + nc * 6
 
-    function dynamics(model::CYBERTRUCK, h, y, x, u, w)
+    function dynamics(model::CYBERTRUCKV2, h, y, x, u, w)
         
         # configurations
         q1⁻ = x[1:3]
@@ -307,7 +307,7 @@ end
 #     RoboDojo.MeshCat.setprop!(vis["/Background"], "bottom_color", bottom_color)
 # end
 
-# function visualize!(vis, model::CYBERTRUCK, q;
+# function visualize!(vis, model::CYBERTRUCKV2, q;
 #     scale=0.1,
 #     Δt = 0.1)
 
