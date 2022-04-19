@@ -29,6 +29,67 @@ function lqr(x)
     -K * x
 end
 
+# CALIPSO problem 
+num_variables = m 
+num_parameters = n + n^2
+num_equality = 0 
+num_cone = 0 
+
+function obj(z, θ)
+    # decision variables 
+    u = z[1:m]
+
+    # parameters
+    x = θ[1:n] 
+    P_sqrt = reshape(θ[n .+ (1:n^2)], n, n)
+
+    P = transpose(P_sqrt) * P_sqrt
+    x_next = A * x + B * u 
+
+    J = 0.0 
+    J += transpose(u) * R * u 
+    J += transpose(x_next) * P * x_next 
+    return J 
+end
+
+eq(z, θ) = zeros(0)
+cone(z, θ) = zeros(0) 
+
+methods = ProblemMethods(num_variables, num_parameters,  obj, eq, cone)
+solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone;
+    options=Options(verbose=false),
+    parameters = [ones(n); vec(Array(Diagonal(ones(n))))])
+
+function ϕ_calipso(x, θ)
+    # initialize solver
+    initialize!(solver, randn(m))
+    solver.parameters[1:n] = x 
+    solver.parameters[n .+ (1:n^2)] = vec(θ)
+    # solve 
+    solve!(solver)
+    return solver.variables[1:m] 
+end
+
+function ϕx_calipso(x, θ)
+    # initialize solver
+    initialize!(solver, zeros(m))
+    solver.parameters[1:n] = x 
+    solver.parameters[n .+ (1:n^2)] = vec(θ)
+    # solve 
+    solve!(solver)
+    return solver.data.solution_sensitivity[1:m, 1:n] 
+end
+
+function ϕθ_calipso(x, θ)
+    # initialize solver
+    initialize!(solver, zeros(m))
+    solver.parameters[1:n] = x 
+    solver.parameters[n .+ (1:n^2)] = vec(θ)
+    # solve 
+    solve!(solver)
+    return solver.data.solution_sensitivity[1:m, n .+ (1:n^2)] 
+end
+
 function ϕ(x, θ)
     P = reshape(θ, n, n)' * reshape(θ, n, n) 
     K = (R + B' * P * B) \ (B' * P * A) 
@@ -42,6 +103,12 @@ end
 function ϕθ(x, θ) 
     FiniteDiff.finite_difference_jacobian(p -> ϕ(x, p), θ) 
 end
+
+x0 = randn(n) 
+θ0 = randn(n^2)
+norm(ϕ_calipso(x0, θ0) - ϕ(x0, θ0), Inf) < 1.0e-5
+norm(ϕx_calipso(x0, θ0) - ϕx(x0, θ0), Inf) < 1.0e-5
+norm(ϕθ_calipso(x0, θ0) - ϕθ(x0, θ0), Inf) < 1.0e-5
 
 function ψt(x, u)
     J = 0.0 
@@ -71,8 +138,8 @@ function ψθ(X, U, W, θ)
     ∂ϕ∂θ = []
     for t = 1:T
         # ∂u∂θ
-        push!(∂ϕ∂x, ϕx(X[t], θ))
-        push!(∂ϕ∂θ, ϕθ(X[t], θ)) 
+        push!(∂ϕ∂x, ϕx_calipso(X[t], θ))
+        push!(∂ϕ∂θ, ϕθ_calipso(X[t], θ)) 
         # ∂f∂x, ∂f∂u
         ∂f∂x = fx(X[t], U[t], W[t])
         ∂f∂u = fu(X[t], U[t], W[t])
@@ -135,22 +202,30 @@ end
 J_opt = 0.0
 for i = 1:E
     X, U, W = simulate(x0, T, 
-        x -> ϕ(x, θ),
+        # x -> ϕ(x, θ),
+        x -> ϕ_calipso(x, θ),
     )
     J_opt += ψ(X, U, W)
 end
 @show J_opt / E
 
+# test gradient computation 
+X, U, W = simulate(x0, T, 
+        # x -> ϕ(x, θ),
+        x -> ϕ_calipso(x, θ),
+    )
 @test norm(ψθ(X, U, W, θ) - ψθ_fd(X, U, W, θ), Inf) < 1.0e-5
 
-# plot(hcat(X...)', xlabel="time step", ylabel="states")
+# plot rollout
+plot(hcat(X...)', xlabel="time step", ylabel="states")
 
+# "learning"
 α = 0.5
-cost = [J_opt / E]
+c = [J_opt / E]
 for i = 1:50
     if i == 1 
         println("iteration: $(i)") 
-        println("cost: $(cost[end])") 
+        println("cost: $(c[end])") 
     end
     i == 25 && (α = 0.1) 
 
@@ -160,7 +235,8 @@ for i = 1:50
     for j = 1:N 
         x0 = noise * randn(n)
         X, U, W = simulate(x0, T, 
-            z -> ϕ(z, θ),
+            # z -> ϕ(z, θ),
+            z -> ϕ_calipso(z, θ),
         ) 
         J += ψ(X, U, W)
         Jθ += ψθ_fd(X, U, W, θ)
@@ -173,32 +249,37 @@ for i = 1:50
         for k = 1:E 
             x0 = noise * randn(n)
             X, U, W = simulate(x0, T, 
-                z -> ϕ(z, θ),
+                # z -> ϕ(z, θ),
+                z -> ϕ_calipso(z, θ),
             ) 
             J_eval += ψ(X, U, W)
         end
-        push!(cost, J_eval / E)
+        push!(c, J_eval / E)
         println("iteration: $(i)") 
-        println("cost: $(cost[end])")
+        println("cost: $(c[end])")
     end
 end
 
-plot(cost);
-plot!(J_lqr / E * ones(length(cost)), color=:black)
+plot(c, label="learned_policy");
+plot!(J_lqr / E * ones(length(c)), 
+    label="LQR",
+    xlabel="iteration", 
+    ylabel="cost",
+    color=:black)
 
-function simulate_no_noise(x0, T, policy) 
-    X = [x0] 
-    U = [] 
-    W = [] 
-    for t = 1:T 
-        push!(U, policy(X[end]))
-        push!(W, 1.0 * randn(n)) 
-        push!(X, f(X[end], U[end], W[end]))
-    end 
-    return X, U, W 
-end
+# function simulate_no_noise(x0, T, policy) 
+#     X = [x0] 
+#     U = [] 
+#     W = [] 
+#     for t = 1:T 
+#         push!(U, policy(X[end]))
+#         push!(W, 1.0 * randn(n)) 
+#         push!(X, f(X[end], U[end], W[end]))
+#     end 
+#     return X, U, W 
+# end
 
-θ = ones(n^2)
-X, U, W = simulate_no_noise(randn(n), T, z -> ϕ(z, θ))
+# θ = ones(n^2)
+# X, U, W = simulate_no_noise(randn(n), T, z -> ϕ_calipso(z, θ))
 
-norm(ψθ(X, U, W, θ) - ψθ_fd(X, U, W, θ), Inf)
+# norm(ψθ(X, U, W, θ) - ψθ_fd(X, U, W, θ), Inf)
