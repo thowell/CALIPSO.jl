@@ -1,6 +1,16 @@
 # Learning Convex Optimization Control Policies
 # http://proceedings.mlr.press/v120/agrawal20a/agrawal20a.pdf
 
+# CALIPSO
+using Pkg 
+Pkg.activate(joinpath(@__DIR__, ".."))
+Pkg.instantiate()
+using CALIPSO 
+
+# Examples
+Pkg.activate(@__DIR__) 
+Pkg.instantiate()
+
 using LinearAlgebra 
 using Plots
 using Random
@@ -211,7 +221,7 @@ end
 @show J_opt / E
 
 # test gradient computation 
-X, U, W = simulate(x0, T, 
+X, U, W = simulate(noise * randn(n), T, 
         # x -> ϕ(x, θ),
         x -> ϕ_calipso(x, θ),
     )

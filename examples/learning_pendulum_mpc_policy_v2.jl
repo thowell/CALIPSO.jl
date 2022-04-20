@@ -11,6 +11,7 @@ Pkg.instantiate()
 using LinearAlgebra 
 using Plots
 using Random
+using MatrixEquations
 using Symbolics
 using FiniteDiff
 using Test
@@ -18,14 +19,14 @@ using Test
 # pendulum
 n = 2 
 m = 1 
-T = 100 
-N = 10
+T = 11
+N = 1
 
 # goal 
 xT = [π; 0.0]
 
 # noise
-noise = 0.0e-2
+noise = 1.0e-3
 
 function pendulum(x, u, w)
     mass = 1.0
@@ -47,58 +48,40 @@ end
 # end
 
 function f(x, u, w)
-    h = 0.05 # timestep 
+    h = 0.1 # timestep 
     x + h * pendulum(x + 0.5 * h * pendulum(x, u, w), u, w)
 end
+
+f(ones(n), ones(m), ones(0))
 
 fx(x, u, w) = FiniteDiff.finite_difference_jacobian(z -> f(z, u, w), x) 
 fu(x, u, w) = FiniteDiff.finite_difference_jacobian(z -> f(x, z, w), u) 
     
-# function ϕ(x, θ)
-#     K = reshape(θ, m, n)
-#     return -K * (x - xT)
-# end
-
-# function ϕx(x, θ) 
-#     FiniteDiff.finite_difference_jacobian(z -> ϕ(z, θ), x) 
-# end
-
-# function ϕθ(x, θ) 
-#     FiniteDiff.finite_difference_jacobian(p -> ϕ(x, p), θ) 
-# end
-
 ### MPC policy 
 # ## horizon 
-H = 3
+H = 5#T
 
-# ## acrobot 
+# ## pendulum 
 num_state = 2
 num_action = 1 
 num_parameters = [2 + 1, [2 + 1 for t = 2:H-1]..., 2]
 
 p = sum(num_parameters) - 2
 
-
-function midpoint_implicit(y, x, u, w)
-    h = 0.05 # timestep 
-    y - (x + h * pendulum(0.5 * (x + y), u, w))
-end
-
 # ## model
 dyn = [
         Dynamics(
-        midpoint_implicit, 
+        (y, x, u, w) -> y - f(x, u, w), 
         num_state, 
         num_state, 
         num_action, 
         num_parameter=num_parameters[t]) for t = 1:H-1
     ]
 
-# ## initialization
 # ## objective 
 o1 = (x, u, w) -> w[3] * dot(u, u)
-ot = (x, u, w) -> transpose(x[1:2] - xT) * Diagonal(w[1:2]) * (x[1:2] - xT) + w[3] * dot(u, u)
-oT = (x, u, w) -> transpose(x[1:2] - xT) * Diagonal(w[1:2]) * (x[1:2] - xT)
+ot = (x, u, w) -> transpose(x - xT) * Diagonal(w[1:2]) * (x - xT) + w[3] * dot(u, u)
+oT = (x, u, w) -> transpose(x - xT) * Diagonal(w[1:2]) * (x - xT)
 
 obj = [
         Cost(o1, num_state, num_action, 
@@ -117,7 +100,7 @@ eq = [
         Constraint()
     ]
 
-ineq = [Constraint() for t = 1:H]
+ineq = [[Constraint((x, u, w) -> [10.0 .- u; u .+ 10.0], num_state, num_action) for t = 1:H-1]..., Constraint()]
 so = [[Constraint()] for t = 1:H]
 
 # ## problem 
@@ -134,12 +117,18 @@ trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so;
 methods = ProblemMethods(trajopt)
 solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
     parameters=vcat(parameters...),   
-    options=Options(verbose=false, penalty_initial=1.0e4))
+    options=Options(
+        verbose=false, 
+        penalty_initial=1.0,
+        residual_tolerance=1.0e-4,
+        equality_tolerance=1.0e-3, 
+        complementarity_tolerance=1.0e-3))
 
 function ϕ_calipso(x, θ)
     # initialize
+    fill!(solver.variables, 0.0)
     x_guess = [x for t = 1:H]
-    u_guess = [randn(num_action) for t = 1:H-1]
+    u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, trajopt, x_guess) 
     initialize_controls!(solver, trajopt, u_guess)
     solver.parameters .= [x; θ]
@@ -147,14 +136,15 @@ function ϕ_calipso(x, θ)
     # solve
     solve!(solver)
 
-    # control
     return solver.variables[trajopt.indices.actions[1]]
 end
 
 function ϕx_calipso(x, θ)
     # initialize
+    fill!(solver.variables, 0.0)
+
     x_guess = [x for t = 1:H]
-    u_guess = [1.0 * randn(num_action) for t = 1:H-1]
+    u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, trajopt, x_guess) 
     initialize_controls!(solver, trajopt, u_guess)
     solver.parameters .= [x; θ]
@@ -167,8 +157,10 @@ end
 
 function ϕθ_calipso(x, θ)
     # initialize
+    fill!(solver.variables, 0.0)
+
     x_guess = [x for t = 1:H]
-    u_guess = [1.0 * randn(num_action) for t = 1:H-1]
+    u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, trajopt, x_guess) 
     initialize_controls!(solver, trajopt, u_guess)
     solver.parameters .= [x; θ]
@@ -179,23 +171,31 @@ function ϕθ_calipso(x, θ)
     return solver.data.solution_sensitivity[trajopt.indices.actions[1], num_state .+ (1:(solver.dimensions.parameters-num_state))]
 end
 
-x0 = zeros(num_state)
+x0 = noise * randn(num_state)
 parameters_obj = [
     [1.0], 
     [[1.0; 1.0; 1.0] for t = 2:H-1]..., 
     [1.0; 1.0]
 ]
+p = sum([length(par) for par in parameters_obj])
 θ0 = vcat(parameters_obj...)
 ϕ_calipso(x0, θ0)
+
+solver.parameters
+trajopt.data.parameters
 ϕx_calipso(x0, θ0)
 ϕθ_calipso(x0, θ0)
+
+x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
+solver.parameters
+solver.problem.equality_constraint
 
 ### 
 
 function ψt(x, u)
     J = 0.0 
-    Q = Diagonal(ones(n)) 
-    R = Diagonal(0.1 * ones(m))
+    Q = 0.0 * Diagonal([1.0; 1.0e-1]) 
+    R = Diagonal(1.0e-2 * ones(m))
     J += transpose(x - xT) * Q * (x - xT)
     J += transpose(u) * R * u
     return J 
@@ -206,7 +206,7 @@ end
 
 function ψT(x)
     J = 0.0 
-    Q = 10.0 * Diagonal(ones(n)) 
+    Q = Diagonal([100.0; 100.0]) 
     J += transpose(x - xT) * Q * (x - xT)
     return J 
 end
@@ -275,13 +275,13 @@ function simulate(x0, T, policy)
 end
 
 # number of evaluations 
-E = 5
+E = 1
 
 # initial policy
-θ = rand(p)
+θ = 1.0 * ones(p)
 J_opt = 0.0
 for i = 1:E
-    x0 = [1.0]
+    x0 = noise * randn(n)
     X, U, W = simulate(x0, T, 
         # x -> ϕ(x, θ),
         x -> ϕ_calipso(x, θ),
@@ -290,28 +290,30 @@ for i = 1:E
 end
 @show J_opt / E
 
-X, U, W = simulate([1.0], T, 
+X, U, W = simulate([0.0; 0.0], T, 
         x -> ϕ_calipso(x, θ),
     )
 
 # @test norm(ψθ(X, U, W, θ) - ψθ_fd(X, U, W, θ), Inf) < noise
 # plot(hcat(X...)', xlabel="time step", ylabel="states", labels=["pos." "vel."])
 ψθ(X, U, W, θ)
-N = 4
-α = 0.5
+N = 1
+α = 0.1
 c = [J_opt / E]
-for i = 1:100
+for i = 1:1000
     if i == 1 
         println("iteration: $(i)") 
         println("cost: $(c[end])") 
     end
-    i == 25 && (α = 0.1) 
+    # i == 250 && (α *= 0.1) 
+    # i == 500 && (α *= 0.1) 
+
 
     # train
     J = 0.0 
     Jθ = zeros(p)
     for j = 1:N 
-        x0 = [1.0]
+        x0 = noise * randn(n)
         X, U, W = simulate(x0, T, 
             # z -> ϕ(z, θ),
             z -> ϕ_calipso(z, θ),
@@ -320,7 +322,7 @@ for i = 1:100
         Jθ += ψθ(X, U, W, θ)
     end
     θ = θ - α * Jθ ./ N 
-
+    θ = max.(0.0, θ)
 
     # evaluate
     if i % 10 == 0
@@ -342,13 +344,15 @@ end
 plot(c, xlabel="iteration", ylabel="cost")
 # plot!(J_lqr / E * ones(length(cost)), color=:black)
 
+# ϕ_calipso(ones(n), θ)
+
 # evaluate policy
-X, U, W = simulate(noise * randn(n), T, 
+X, U, W = simulate([0.0; 0.0], T, 
         x -> ϕ_calipso(x, θ),
     )
-
+ψ(X, U, W)
 plot(hcat(X...)', xlabel="time step", ylabel="states", labels=["pos." "vel."])
-plot(hcat(U...)', xlabel="time step", ylabel="control")
+plot(hcat(U...)', xlabel="time step", ylabel="control", linetype=:steppost)
 
 @show X[end]
 

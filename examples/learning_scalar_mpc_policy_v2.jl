@@ -11,13 +11,17 @@ T = 10
 N = 2
 
 # goal 
-xT = [0.0]
+xT = [1.0]
 
 # noise
-noise = 1.0e-1
+noise = 1.0e-2
 
 function f(x, u, w)
     2.0 * x + 1.0 * u #+ w
+end
+
+function f_noise(x, u, w)
+    2.0 * x + 1.0 * u + w
 end
 
 f(ones(n), ones(m), ones(0))
@@ -27,7 +31,7 @@ fu(x, u, w) = FiniteDiff.finite_difference_jacobian(z -> f(x, z, w), u)
     
 ### MPC policy 
 # ## horizon 
-H = T
+H = 5#T
 
 # ## acrobot 
 num_state = 1
@@ -130,7 +134,7 @@ function ϕθ_calipso(x, θ)
     return solver.data.solution_sensitivity[trajopt.indices.actions[1], num_state .+ (1:(solver.dimensions.parameters-num_state))]
 end
 
-x0 = rand(num_state)
+x0 = [0.0]#rand(num_state)
 parameters_obj = [
     [1.0], 
     [[1.0; 1.0] for t = 2:H-1]..., 
@@ -152,8 +156,8 @@ solver.problem.equality_constraint
 
 function ψt(x, u)
     J = 0.0 
-    Q = Diagonal(ones(n)) 
-    R = Diagonal(0.01 * ones(m))
+    Q = Diagonal([0.1]) 
+    R = Diagonal(0.0 * ones(m))
     J += transpose(x - xT) * Q * (x - xT)
     J += transpose(u) * R * u
     return J 
@@ -227,7 +231,7 @@ function simulate(x0, T, policy)
     for t = 1:T 
         push!(U, policy(X[end]))
         push!(W, noise * randn(n)) 
-        push!(X, f(X[end], U[end], W[end]))
+        push!(X, f_noise(X[end], U[end], W[end]))
     end 
     return X, U, W 
 end
@@ -236,10 +240,10 @@ end
 E = 5
 
 # initial policy
-θ = rand(p)
+θ = 1.0 * rand(p)
 J_opt = 0.0
 for i = 1:E
-    x0 = noise * randn(n)
+    x0 = [0.0]#noise * randn(n)
     X, U, W = simulate(x0, T, 
         # x -> ϕ(x, θ),
         x -> ϕ_calipso(x, θ),
@@ -247,8 +251,8 @@ for i = 1:E
     J_opt += ψ(X, U, W)
 end
 @show J_opt / E
-noise * randn(n)
-X, U, W = simulate(noise * randn(n), T, 
+
+X, U, W = simulate([0.0], T, 
         x -> ϕ_calipso(x, θ),
     )
 
@@ -256,20 +260,20 @@ X, U, W = simulate(noise * randn(n), T,
 plot(hcat(X...)', xlabel="time step", ylabel="states", labels=["pos." "vel."])
 ψθ(X, U, W, θ)
 N = 4
-α = 0.5
+α = 0.1
 c = [J_opt / E]
-for i = 1:100
+for i = 1:1000
     if i == 1 
         println("iteration: $(i)") 
         println("cost: $(c[end])") 
     end
-    i == 25 && (α = 0.1) 
+    i == 500 && (α = 0.1) 
 
     # train
     J = 0.0 
     Jθ = zeros(p)
     for j = 1:N 
-        x0 = noise * randn(n)
+        x0 = [0.0]#noise * randn(n)
         X, U, W = simulate(x0, T, 
             # z -> ϕ(z, θ),
             z -> ϕ_calipso(z, θ),
@@ -284,7 +288,7 @@ for i = 1:100
     if i % 10 == 0
         J_eval = 0.0 
         for k = 1:E 
-            x0 = noise * randn(n)
+            x0 = [0.0]#noise * randn(n)
             X, U, W = simulate(x0, T, 
                 # z -> ϕ(z, θ),
                 z -> ϕ_calipso(z, θ),
@@ -301,12 +305,12 @@ plot(c, xlabel="iteration", ylabel="cost")
 # plot!(J_lqr / E * ones(length(cost)), color=:black)
 
 # evaluate policy
-X, U, W = simulate(noise * randn(n), T, 
+X, U, W = simulate([0.0], T, 
         x -> ϕ_calipso(x, θ),
     )
-
+ψ(X, U, W)
 plot(hcat(X...)', xlabel="time step", ylabel="states", labels=["pos." "vel."])
-plot(hcat(U...)', xlabel="time step", ylabel="control")
+plot(hcat(U...)', xlabel="time step", ylabel="control", linetype=:steppost)
 
 @show X[end]
 
