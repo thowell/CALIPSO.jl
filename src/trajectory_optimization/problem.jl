@@ -4,7 +4,7 @@ struct TrajectoryOptimizationProblem{T}
     sparsity::TrajectoryOptimizationSparsity 
     dimensions::TrajectoryOptimizationDimensions
     hessian_lagrangian::Bool 
-    parameters::Vector{T}
+    # parameters::Vector{T}
 end
 
 function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData; 
@@ -34,7 +34,7 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
         spar, 
         dims,
         evaluate_hessian, 
-        vcat(data.parameters...),
+        # vcat(data.parameters...),
     )
 end
 
@@ -77,6 +77,15 @@ function trajectory!(states::Vector{Vector{T}}, actions::Vector{Vector{T}},
     for (t, idx) in enumerate(action_indices)
         actions[t] .= @views trajectory[idx]
     end
+    return 
+end
+
+function parameters!(parameters::Vector{Vector{T}},
+    parameter_trajectory, 
+    parameter_indices::Vector{Vector{Int}}) where T
+    for (t, idx) in enumerate(parameter_indices)
+        parameters[t] .= @views parameter_trajectory[idx]
+    end 
     return 
 end
 

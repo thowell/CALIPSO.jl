@@ -1,10 +1,13 @@
-function objective!(trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective!(trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     trajectory!(
         trajopt.data.states, 
         trajopt.data.actions, 
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     cost(
         trajopt.data.objective, 
         trajopt.data.states, 
@@ -12,7 +15,7 @@ function objective!(trajopt::TrajectoryOptimizationProblem{T}, variables) where 
         trajopt.data.parameters) 
 end
 
-function objective_gradient_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective_gradient_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(gradient, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -20,6 +23,9 @@ function objective_gradient_variables!(gradient, trajopt::TrajectoryOptimization
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     gradient_variables!(gradient, 
         trajopt.indices.state_action, 
         trajopt.data.objective, 
@@ -29,7 +35,7 @@ function objective_gradient_variables!(gradient, trajopt::TrajectoryOptimization
     return 
 end
 
-function objective_gradient_parameters!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective_gradient_parameters!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(gradient, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -37,6 +43,9 @@ function objective_gradient_parameters!(gradient, trajopt::TrajectoryOptimizatio
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     gradient_parameters!(gradient, 
         trajopt.indices.state_action, 
         trajopt.data.objective, 
@@ -46,7 +55,7 @@ function objective_gradient_parameters!(gradient, trajopt::TrajectoryOptimizatio
     return 
 end
 
-function objective_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -54,6 +63,9 @@ function objective_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOp
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     jacobian_variables_variables!(
         jacobian, 
         trajopt.sparsity.objective_jacobian_variables_variables, 
@@ -64,7 +76,7 @@ function objective_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOp
    return
 end
 
-function objective_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function objective_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -72,6 +84,9 @@ function objective_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryO
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     jacobian_variables_parameters!(
         jacobian, 
         trajopt.sparsity.objective_jacobian_variables_parameters, 
@@ -82,7 +97,7 @@ function objective_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryO
    return
 end
 
-function equality!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function equality!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(violations, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -90,6 +105,9 @@ function equality!(violations, trajopt::TrajectoryOptimizationProblem{T}, variab
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     constraints!(
         violations, 
         trajopt.indices.dynamics_constraints, 
@@ -109,7 +127,7 @@ function equality!(violations, trajopt::TrajectoryOptimizationProblem{T}, variab
     return 
 end
 
-function cone!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function cone!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(violations, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -117,6 +135,9 @@ function cone!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables)
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     if trajopt.dimensions.cone_nonnegative > 0
         constraints!(
             violations, 
@@ -138,7 +159,7 @@ function cone!(violations, trajopt::TrajectoryOptimizationProblem{T}, variables)
     return 
 end
 
-function equality_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function equality_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -146,6 +167,9 @@ function equality_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationP
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     jacobian_variables!(
         jacobian, 
         trajopt.sparsity.dynamics_jacobian_variables, 
@@ -165,7 +189,7 @@ function equality_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationP
     return
 end
 
-function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -173,6 +197,9 @@ function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimization
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     jacobian_parameters!(
         jacobian, 
         trajopt.sparsity.dynamics_jacobian_parameters, 
@@ -192,7 +219,7 @@ function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimization
     return
 end
 
-function equality_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables, duals) where T
+function equality_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables, duals, parameters) where T
     fill!(gradient, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -200,6 +227,9 @@ function equality_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimiza
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     equality_duals!(
         trajopt.data.duals_dynamics, 
         trajopt.data.duals_equality, 
@@ -227,7 +257,7 @@ function equality_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimiza
     return
 end
 
-function cone_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function cone_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -235,6 +265,9 @@ function cone_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProbl
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     if trajopt.dimensions.cone_nonnegative > 0
         jacobian_variables!(
             jacobian, 
@@ -256,7 +289,7 @@ function cone_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProbl
     return
 end
 
-function cone_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables) where T
+function cone_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -264,6 +297,9 @@ function cone_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProb
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     if trajopt.dimensions.cone_nonnegative > 0
         jacobian_parameters!(
             jacobian, 
@@ -285,7 +321,7 @@ function cone_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProb
     return
 end
 
-function cone_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables, duals) where T
+function cone_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimizationProblem{T}, variables, duals, parameters) where T
     fill!(gradient, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -293,6 +329,9 @@ function cone_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimization
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     cone_duals!(
         trajopt.data.duals_nonnegative, 
         trajopt.data.duals_second_order,
@@ -324,15 +363,17 @@ function cone_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimization
     return
 end
 
-function equality_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, equality_duals) where T
+function equality_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, equality_duals, parameters) where T
     fill!(jacobian, 0.0)
-
     trajectory!(
         trajopt.data.states, 
         trajopt.data.actions, 
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     equality_duals!(
         trajopt.data.duals_dynamics, 
         trajopt.data.duals_equality, 
@@ -360,15 +401,17 @@ function equality_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOpt
     return 
 end
 
-function equality_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, equality_duals) where T
+function equality_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, equality_duals, parameters) where T
     fill!(jacobian, 0.0)
-
     trajectory!(
         trajopt.data.states, 
         trajopt.data.actions, 
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     equality_duals!(
         trajopt.data.duals_dynamics, 
         trajopt.data.duals_equality, 
@@ -396,7 +439,7 @@ function equality_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOp
     return 
 end
 
-function cone_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, cone_duals) where T
+function cone_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, cone_duals, parameters) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -404,6 +447,9 @@ function cone_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimiz
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     cone_duals!(
         trajopt.data.duals_nonnegative, trajopt.data.duals_second_order,
         cone_duals, 
@@ -431,7 +477,7 @@ function cone_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimiz
     return 
 end
 
-function cone_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, cone_duals) where T
+function cone_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimizationProblem{T}, variables, cone_duals, parameters) where T
     fill!(jacobian, 0.0)
     trajectory!(
         trajopt.data.states, 
@@ -439,6 +485,9 @@ function cone_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimi
         variables, 
         trajopt.indices.states, 
         trajopt.indices.actions)
+    trajopt.dimensions.total_parameters > 0 && parameters!(trajopt.data.parameters,
+        parameters, 
+        trajopt.indices.parameters)
     cone_duals!(
         trajopt.data.duals_nonnegative, trajopt.data.duals_second_order,
         cone_duals, 

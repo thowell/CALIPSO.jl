@@ -29,6 +29,7 @@ struct TrajectoryOptimizationIndices
     actions::Vector{Vector{Int}}
     state_action::Vector{Vector{Int}}
     state_action_next_state::Vector{Vector{Int}}
+    parameters::Vector{Vector{Int}}
 end
 
 function indices(
@@ -44,6 +45,9 @@ function indices(
     num_parameter::Vector{Int},
     num_trajectory::Int) where T 
     
+    # parameters 
+    parameters = [sum(num_parameter[1:(t-1)]) .+ (1:num_parameter[t]) for t = 1:length(num_parameter)]
+
     # dynamics
     dynamics_constraints = constraint_indices(dynamics, 
         shift=0)
@@ -140,5 +144,7 @@ function indices(
         x_idx, 
         u_idx, 
         xu_idx, 
-        xuy_idx) 
+        xuy_idx,
+        parameters,
+    ) 
 end
