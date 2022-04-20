@@ -272,9 +272,9 @@
     he = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
     hc = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
 
-    CALIPSO.objective_jacobian_variables_variables!(ho, trajopt, z0[1:np])
-    CALIPSO.equality_jacobian_variables_variables!(he, trajopt, z0[1:np], z0[np .+ (1:nde)])
-    CALIPSO.cone_jacobian_variables_variables!(hc, trajopt, z0[1:np], z0[np + nde .+ (1:ndc)])
+    CALIPSO.objective_jacobian_variables_variables!(ho, trajopt, z0[1:np], zeros(trajopt.dimensions.total_parameters))
+    CALIPSO.equality_jacobian_variables_variables!(he, trajopt, z0[1:np], z0[np .+ (1:nde)], zeros(trajopt.dimensions.total_parameters))
+    CALIPSO.cone_jacobian_variables_variables!(hc, trajopt, z0[1:np], z0[np + nde .+ (1:ndc)], zeros(trajopt.dimensions.total_parameters))
 
     @test norm(norm((ho + he + hc) - Lxx_func(z0))) < 1.0e-8
 end

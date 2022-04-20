@@ -155,8 +155,8 @@
             β2[1] - μ[2] * model.mass * 9.81 * h[1];
             v[1:2] - η1[2:3];
             v[3:4] - η2[2:3];
-            second_order_product(β1, η1);
-            second_order_product(β2, η2);
+            CALIPSO.second_order_product(β1, η1);
+            CALIPSO.second_order_product(β2, η2);
         ]
     end
 
