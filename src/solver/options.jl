@@ -33,10 +33,17 @@ Base.@kwdef mutable struct Options{T}
     scaling_regularization_last::T=(1.0 / 3.0)
     min_central_path::T=1.0e-8
     max_penalty::T=1.0e8
-    armijo_tolerance::T=1.0e-4
     constraint_hessian::Bool=true
     linear_solver::Symbol=:QDLDL
     update_factorization::Bool=true
+
+    violation_tolerance::T=1.0e-5 
+    violation_exponent::T=1.1
+    merit_tolerance::T=1.0e-5
+    merit_exponent::T=2.3 
+    armijo_tolerance::T=1.0e-4
+    machine_tolerance::T=1.0e-16
+
     differentiate::Bool=true
     verbose::Bool=true
 end

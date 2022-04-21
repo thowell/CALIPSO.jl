@@ -1,37 +1,16 @@
 #TODO: add reference
-function switching_condition()
-    Mx = s.merit_gradient
-    α = s.step_size
-    sM = s.options.exponent_merit
-    δ = s.options.regularization
-    θ = s.constraint_violation
-    sθ = s.options.exponent_constraint_violation
-
-    return (Mx' * d < 0.0 && α * (-Mx' * d)^sM > δ * θ^sθ)
+function switching_condition(step_size, search_direction, merit_gradient, merit_exponent, violation, violation_exponent, regularization)
+    return (merit_gradient' * search_direction < 0.0 &&
+            step_size * (-merit_gradient' * search_direction)^merit_exponent > regularization * violation^violation_exponent)
 end
 
 # TODO: add reference
-function sufficient_progress()
-    θ_cand = s.constraint_violation_candidate
-    θ = s.constraint_violation
-    M_cand = s.merit_candidate
-    M = s.merit
-    γθ = s.options.constraint_violation_tolerance
-    γM = s.options.merit_tolerance
-    ϵ = s.options.machine_tolerance
-
-    return (θ_cand - 10.0 * ϵ * abs(θ) <= (1.0 - γθ) * θ || M_cand - 10.0 * ϵ * abs(M) <= M - γM * θ)
+function sufficient_progress(violation, violation_candidate, merit, merit_candidate, violation_tolerance, merit_tolerance, machine_tolerance)
+    return (violation_candidate - 10.0 * machine_tolerance * abs(violation) <= (1.0 - violation_tolerance) * violation || 
+            merit_candidate - 10.0 * machine_tolerance * abs(merit) <= merit - merit_tolerance * violation)
 end
 
 # TODO: add reference
-function armijo()
-    M_cand = s.merit_candidate
-    M = s.merit
-    γa = s.options.armijo_tolerance
-    α = s.step_size
-    Mx = s.merit_gradient
-    d = s.dx
-    ϵ = s.options.machine_tolerance
-
-    return (M_cand - M - 10.0 * ϵ * abs(M) <= γa * α * Mx' * d)
+function armijo(merit, merit_candidate, merit_gradient, search_direction, step_size, armijo_tolerance, machine_tolerance)
+    return (merit_candidate - merit - 10.0 * machine_tolerance * abs(merit) <= armijo_tolerance * step_size * merit_gradient' * search_direction)
 end

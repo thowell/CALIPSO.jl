@@ -201,6 +201,9 @@ function solve!(solver)
             residual_iteration = 0
 
             check_filter(θ̂ , M̂, filter)
+            switching_condition(α, Δp, merit_grad, options.merit_exponent, θ, options.violation_exponent, 1.0)
+            sufficient_progress(θ, θ̂ , M, M̂, options.violation_tolerance, options.merit_tolerance, options.machine_tolerance)
+            armijo(M, M̂, merit_grad, Δp, α, options.armijo_tolerance, options.machine_tolerance)
 
             while M̂ > M + α * d && θ̂  > θ
                 # decrease step size 
