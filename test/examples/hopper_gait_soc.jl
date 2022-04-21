@@ -320,7 +320,7 @@
     solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
         nonnegative_indices=idx_nn, 
         second_order_indices=idx_soc,
-        options=Options(verbose=true, residual_tolerance=1.0e-4))
+        options=Options(verbose=true))
     initialize_states!(solver, trajopt, x_interpolation)
     initialize_controls!(solver, trajopt, u_guess)
     
@@ -330,8 +330,22 @@
     # ## solution
     x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 
-    # @test norm(solver.data.residual, Inf) < 1.0e-3 TODO: run longer; change solve! return criteria
     @test norm((x_sol[1] - x_sol[T][1:nx])[[2; 3; 4; 6; 7; 8]], Inf) < 1.0e-3
-    @test norm(solver.problem.equality_constraint, Inf) < 1.0e-3 
-    @test norm(solver.problem.cone_product, Inf) < 1.0e-3 
+    
+    # test solution
+    opt_norm = max(
+        norm(solver.data.residual[solver.indices.variables], Inf),
+        norm(solver.data.residual[solver.indices.cone_slack], Inf),
+        # norm(λ - y, Inf),
+    )
+    @test opt_norm < solver.options.optimality_tolerance
+
+    slack_norm = max(
+                    norm(solver.data.residual[solver.indices.equality_dual], Inf),
+                    norm(solver.data.residual[solver.indices.cone_dual], Inf),
+    )
+    @test slack_norm < solver.options.slack_tolerance
+
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 end

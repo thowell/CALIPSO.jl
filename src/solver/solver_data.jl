@@ -11,10 +11,12 @@ struct SolverData{T}
     merit::Vector{T} 
     merit_gradient::Vector{T} 
     constraint_violation::Vector{T}
+    filter::Vector{Tuple{T,T}}
     solution_sensitivity::Matrix{T}
 end
 
-function SolverData(num_variables, num_parameters, num_equality, num_cone)
+function SolverData(num_variables, num_parameters, num_equality, num_cone;
+    T=Float64)
     num_total = num_variables + num_equality + num_cone + num_equality + 2 * num_cone
     num_symmetric = num_variables + num_cone + num_equality
 
@@ -36,6 +38,8 @@ function SolverData(num_variables, num_parameters, num_equality, num_cone)
 
     constraint_violation = zeros(num_equality + num_cone) 
 
+    filter = Tuple{T,T}[]
+    
     solution_sensitivity = zeros(num_total, num_parameters)
 
     SolverData(
@@ -51,6 +55,7 @@ function SolverData(num_variables, num_parameters, num_equality, num_cone)
         merit, 
         merit_gradient, 
         constraint_violation,
+        filter,
         solution_sensitivity,
     )
 end

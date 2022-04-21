@@ -38,9 +38,9 @@
     solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         parameters=parameters,
         options=Options(
-            residual_tolerance=1.0e-8, 
-            equality_tolerance=1.0e-6,
-            complementarity_tolerance=1.0e-6,
+            # residual_tolerance=1.0e-8, 
+            # equality_tolerance=1.0e-6,
+            # complementarity_tolerance=1.0e-6,
             differentiate=true))
     initialize!(solver, x0)
 
@@ -48,9 +48,23 @@
     solve!(solver)
 
     # solution
-    @test norm(solver.data.residual, Inf) < 1.0e-4
+    opt_norm = max(
+        norm(solver.data.residual[solver.indices.variables], Inf),
+        norm(solver.data.residual[solver.indices.cone_slack], Inf),
+        # norm(λ - y, Inf),
+    )
+    @test opt_norm < solver.options.optimality_tolerance
+
+    slack_norm = max(
+                    norm(solver.data.residual[solver.indices.equality_dual], Inf),
+                    norm(solver.data.residual[solver.indices.cone_dual], Inf),
+    )
+    @test slack_norm < solver.options.slack_tolerance
+
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
     @test all(solver.variables[solver.indices.variables] .> -1.0e-4)
-    @test norm(A * solver.variables[solver.indices.variables] - b, Inf) < 1.0e-4
+    @test norm(A * solver.variables[solver.indices.variables] - b, Inf) < solver.options.equality_tolerance
 
     # sensitivity
     @variables x[1:num_variables] y[1:num_equality] θ[1:num_parameters]

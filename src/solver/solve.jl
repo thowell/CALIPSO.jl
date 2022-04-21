@@ -22,8 +22,8 @@ function solve!(solver)
     x̂ = @views candidate[indices.variables] 
     r̂ = @views candidate[indices.equality_slack] 
     ŝ = @views candidate[indices.cone_slack] 
-    ŷ = @views candidate[indices.equality_dual] 
-    ẑ = @views candidate[indices.cone_dual] 
+    # ŷ = @views candidate[indices.equality_dual] 
+    # ẑ = @views candidate[indices.cone_dual] 
     t̂ = @views candidate[indices.cone_slack_dual] 
 
     # parameters 
@@ -74,6 +74,10 @@ function solve!(solver)
         target=true
     )
 
+    # initialize filter 
+    filter = solver.data.filter
+    push!(filter, (Inf, Inf))
+
     for j = 1:options.max_outer_iterations
         for i = 1:options.max_residual_iterations
             # iterations
@@ -104,6 +108,31 @@ function solve!(solver)
             res_norm = norm(data.residual, options.residual_norm) / solver.dimensions.total
             options.verbose && println("res: $(res_norm)")
 
+            # check inner convergence
+            if optimality_error(data.residual, indices) <= options.central_path_update_tolerance * κ[1]
+                # check outer convergence
+                opt_norm = max(
+                                norm(data.residual[indices.variables], Inf),
+                                norm(data.residual[indices.cone_slack], Inf),
+                                # norm(λ - y, Inf),
+                )
+
+                slack_norm = max(
+                                norm(data.residual[indices.equality_dual], Inf),
+                                norm(data.residual[indices.cone_dual], Inf),
+                )
+
+                if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance && slack_norm < options.slack_tolerance && opt_norm < options.optimality_tolerance
+                    options.verbose && println("solve success!")
+                    # differentiate
+                    options.differentiate && (println("differentiating..."); differentiate!(solver))
+                    return true 
+                # perform outer update
+                else
+                    break 
+                end
+            end
+
             # violation
             θ = constraint_violation!(constraint_violation, 
                 problem.equality_constraint, r, problem.cone_constraint, s, indices,
@@ -111,18 +140,13 @@ function solve!(solver)
             
             options.verbose && println("con: $(θ)")
 
-            # check convergence
-            if res_norm < options.residual_tolerance
-                break 
-            end
-
             # search direction
             problem!(problem, methods, indices, variables, parameters,
                 objective_jacobian_variables_variables=true,
                 equality_jacobian_variables=true,
-                equality_dual_jacobian_variables_variables=(true && options.constraint_hessian),
+                equality_dual_jacobian_variables_variables=options.constraint_hessian,
                 cone_jacobian_variables=true,
-                cone_dual_jacobian_variables_variables=(true && options.constraint_hessian),
+                cone_dual_jacobian_variables_variables=options.constraint_hessian,
             )
 
             cone!(problem, methods, indices, variables,
@@ -176,6 +200,8 @@ function solve!(solver)
 
             residual_iteration = 0
 
+            check_filter(θ̂ , M̂, filter)
+
             while M̂ > M + α * d && θ̂  > θ
                 # decrease step size 
                 α = 0.5 * α
@@ -200,10 +226,12 @@ function solve!(solver)
                     norm_type=options.constraint_norm)
 
                 residual_iteration += 1 
-                residual_iteration > options.max_residual_line_search && error("residual search failure")
+                residual_iteration > options.max_residual_line_search && (@warn "residual search failure"; break)
             end
 
             options.verbose && println("α = $α")
+
+            # augment_filter!(filter, )
 
             # update
             x .= x̂
@@ -224,23 +252,31 @@ function solve!(solver)
             options.verbose && println("")
         end
 
-        # convergence
-        residual!(data, problem, indices, variables, κ, ρ, λ)
-        res_norm = norm(data.residual, options.residual_norm) / solver.dimensions.total
+        # # convergence
+        # residual!(data, problem, indices, variables, κ, ρ, λ)
+        # res_norm = norm(data.residual, options.residual_norm) / solver.dimensions.total
         
-        if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance && res_norm <= options.residual_tolerance
-            options.verbose && println("solve success!")
-            options.differentiate && differentiate!(solver) 
-            return true 
+        # if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance && res_norm <= options.residual_tolerance
+        #     options.verbose && println("solve success!")
+        #     options.differentiate && differentiate!(solver) 
+        #     return true 
         # outer update
-        else
-            # central-path
-            κ[1] = max(options.scaling_central_path * κ[1], options.min_central_path)
-            
-            # augmented Lagrangian
-            λ .= λ + ρ[1] * r
-            ρ[1] = min(options.scaling_penalty * ρ[1], options.max_penalty) 
-        end
+        # else
+        # central-path
+        κ[1] = max(options.residual_tolerance / 10.0, min(options.central_path_scaling * κ[1], κ[1]^options.central_path_exponent))
+        # κ[1] = max(options.complementarity_tolerance / 10.0, min(options.central_path_scaling * κ[1], κ[1]^options.central_path_exponent))
+
+        # κ[1] = max(options.central_path_scaling * κ[1], options.min_central_path)
+        
+        # augmented Lagrangian
+        λ .= λ + ρ[1] * r
+        # ρ[1] = min(options.scaling_penalty * ρ[1], options.max_penalty) 
+        ρ[1] = min(max(options.scaling_penalty * ρ[1], 1.0 / κ[1]), options.max_penalty)
+
+        # reset filter 
+        empty!(filter)
+        push!(filter, (Inf, Inf))
+        # end
     end
 
     # failure

@@ -23,17 +23,28 @@
     # solve 
     solve!(solver)
     x = solver.variables[1:8]
-    @test norm(solver.data.residual, Inf) < 1.0e-3
-    @test abs(x[3]) < 1.0e-4
-    @test abs(x[7]) < 1.0e-4
-    @test abs(x[8]) < 1.0e-4
 
-    # @show x[3]
-    # @show x[6]
+    # test solution
+    opt_norm = max(
+        norm(solver.data.residual[solver.indices.variables], Inf),
+        norm(solver.data.residual[solver.indices.cone_slack], Inf),
+        # norm(λ - y, Inf),
+    )
+    @test opt_norm < solver.options.optimality_tolerance
 
-    # @show x[4]
-    # @show x[7]
+    slack_norm = max(
+                    norm(solver.data.residual[solver.indices.equality_dual], Inf),
+                    norm(solver.data.residual[solver.indices.cone_dual], Inf),
+    )
+    @test slack_norm < solver.options.slack_tolerance
 
-    # @show x[5]
-    # @show x[8]
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+
+    @test abs(x[4]) < 1.0e-4
+    @test abs(x[5]) < 1.0e-4
+    @test abs(x[6]) < 1.0e-4
+    @test abs(x[3] - 2.0) < 1.0e-4
+    @test abs(x[7] - 3.0) < 1.0e-4 
+    @test abs(x[8] - 6.0) < 1.0e-4
 end
