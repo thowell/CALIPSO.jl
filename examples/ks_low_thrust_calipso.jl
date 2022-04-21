@@ -10,33 +10,132 @@ Pkg.instantiate()
 using LinearAlgebra
 
 # ## horizon
-T = 51
 
+function L_fx(u)
+
+    return [u[1] -u[2] -u[3]  u[4];
+                     u[2]  u[1] -u[4] -u[3];
+                     u[3]  u[4]  u[1]  u[2];
+                     u[4] -u[3]  u[2] -u[1]]
+
+end
+function uprime_from_xdot(xdot,u)
+    # given a u and xdot, return u prime
+    # xdot = float(xdot)
+    # u = float(u)
+
+    u1 = u[1]
+    u2 = u[2]
+    u3 = u[3]
+    u4 = u[4]
+
+    xd1 = xdot[1]
+    xd2 = xdot[2]
+    xd3 = xdot[3]
+
+    up1 = (1/2)*( u1*xd1  +  u2*xd2  +  u3*xd3  )
+    up2 = (1/2)*(-u2*xd1  +  u1*xd2  +  u4*xd3  )
+    up3 = (1/2)*(-u3*xd1  -  u4*xd2  +  u1*xd3  )
+    up4 = (1/2)*( u4*xd1  -  u3*xd2  +  u2*xd3  )
+
+    uprime = [up1;up2;up3;up4]
+
+    return uprime
+
+    # return SVector((1/2)*( u[1]*xd[1]  +  u[2]*xd[2]  +  u[3]*xd3  ))
+
+end
+
+
+function u_from_x(x)
+    # get KS u from x, u1 is always 1
+    x = float(x)
+    r = norm(x)
+
+    u1 = .1
+    u4 = sqrt(.5*(r+x[1]) - u1^2)
+    u2 = (x[2]*u1 + x[3]*u4)/(r+x[1])
+    u3 = (x[3]*u1 - x[2]*u4)/(r+x[1])
+
+    u = [u1;u2;u3;u4]
+    return u
+end
+
+
+function x_from_u(u)
+    # gets x from u
+
+    return [ u[1]^2 - u[2]^2 - u[3]^2 + u[4]^2,
+                     2*(u[1]*u[2] - u[3]*u[4]),
+                     2*(u[1]*u[3] + u[2]*u[4])]
+
+end
+
+function xdot_from_u(u,u_prime)
+    up = u_prime;
+    u1 = u[1];u2 = u[2];u3 = u[3];u4 = u[4]
+    up1 = up[1];up2 = up[2];up3 = up[3];up4 = up[4]
+    r = dot(u,u)
+    x1d = (2/r)*(u1*up1 - u2*up2 - u3*up3 + u4*up4)
+    x2d = (2/r)*(u2*up1 + u1*up2 - u4*up3 - u3*up4)
+    x3d = (2/r)*(u3*up1 + u4*up2 + u1*up3 + u2*up4)
+
+    return [x1d;x2d;x3d]
+end
 # ## rocket
-num_state = 6
-num_action = 7 # [tx;ty;tz;g+;g-;c+;c-]
+
+num_state = 14
+num_action = 3 # [tx;ty;tz;g+;g-;c+;c-]
 num_parameter = 0
 
-function rocket(x, u, w)
-    mass = 1.0
-    gravity = -9.81
+function rocket(x, u_dot, w)
+    # unpack state
+    p = [x[1],x[2],x[3],x[4]]
+    p_prime = [x[5],x[6],x[7],x[8]]
+    h = x[9]
+    #r = x[10]
+    #z = x[11]
+    u = [x[12],x[13],x[14]]
 
-    p = x[1:3]
-    v = x[4:6]
 
-    f = u[1:3]
+    P_j2 = [u[1],u[2],u[3]]/uscale
+    # Levi-Civita transformation matrix
+    L = L_fx(p)
 
-    [
-        v;
-        [0.0; 0.0; gravity] + 1.0 / mass * f;
-    ]
+    # append 0 to end of P_j2 acceleration vector
+    P_j2 = [P_j2;0]*tscale^2/dscale
+
+    p_dp = -(h/2)*p + ((dot(p,p))/(2))*L'*P_j2
+
+    return [p_prime[1],p_prime[2],p_prime[3],p_prime[4], # 4
+                   p_dp[1],p_dp[2],p_dp[3],p_dp[4],    # 4
+                   -2*dot(p_prime,L'*P_j2),  # 1
+                   2*p'*p_prime,   # 1
+                   2*(p_prime[1]*p[3] + p[1]*p_prime[3] + p_prime[2]*p[4] + p[2]*p_prime[4]), # 1
+                   u_dot[1],u_dot[2],u_dot[3]] # 3
+
 end
+
 
 function midpoint_implicit(y, x, u, w)
-    h = 0.05 # timestep
+    h = 3e-2 # timestep
     y - (x + h * rocket(0.5 * (x + y), u, w))
 end
+dscale = 1e7 # m
+tscale = 20000 # s
+uscale = 10000.0
+μ = 3.986004418e14 *(tscale^2)/(dscale^3)
 
+# initial conditions
+r_eci = [6.578137000000001e6,0,0]
+v_eci = [0,9111.210131355681,4642.393437617197]
+R_0 = r_eci/dscale
+V_0 = v_eci*tscale/dscale
+p_0 = u_from_x(R_0)                          # u
+p_prime_0 = uprime_from_xdot(V_0,p_0)     # du/ds
+h_0 = μ/norm(R_0) - .5*norm(V_0)^2         # m^2/s^2
+t_0 = 0                                    # seconds
+x1 = [p_0; p_prime_0; h_0; norm(R_0); R_0[3];zeros(3)]
 # ## model
 dt = Dynamics(
     midpoint_implicit,
@@ -47,8 +146,8 @@ dt = Dynamics(
 dyn = [dt for t = 1:T-1]
 
 # ## initialization
-x1 = [-5.0;0;5;0;0;0]
-xT = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0]
+# x1 = [-5.0;0;5;0;0;0]
+# xT = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0]
 
 # ## objective
 ot = (x, u, w) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)]) + 0.1 * dot(u, u)

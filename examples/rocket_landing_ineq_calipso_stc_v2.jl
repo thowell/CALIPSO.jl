@@ -9,12 +9,20 @@ Pkg.activate(@__DIR__)
 Pkg.instantiate()
 using LinearAlgebra
 
+function ⊙(q1,q2)
+    s1 = q1[1]
+    v1 = q1[2:4]
+    s2 = q2[1]
+    v2 = q2[2:4]
+    [s1*s2 - dot(v1,v2);
+     s1*v2 + s2*v1 + cross(v1,v2)]
+end
 # ## horizon
-T = 51
+T = 101
 
 # ## rocket
 num_state = 6
-num_action = 7 # [tx;ty;tz;g+;g-;c+;c-]
+num_action = 11 # [tx;ty;tz;g+;g-;c+;c-]
 num_parameter = 0
 
 function rocket(x, u, w)
@@ -33,7 +41,7 @@ function rocket(x, u, w)
 end
 
 function midpoint_implicit(y, x, u, w)
-    h = 0.05 # timestep
+    h = 0.025 # timestep
     y - (x + h * rocket(0.5 * (x + y), u, w))
 end
 
@@ -81,17 +89,26 @@ Fz_max = 20.0#12.5
 
 a = -0.5
 b = 3.0
+c = 0.5
+d = 3.0
 
 function stc_con(x,u)
-    tx,ty,tz,gp,gm,cp,cm = u
+    tx,ty,tz,g1p,g1m,c1p,c1m,g2p,g2m,c2p,c2m = u
 
-    g = -x[1] + a # ≧ 0
-    c = x[3] - b  # ≧ 0
+    g1 = -x[1] + a # ≧ 0
+    c1 = x[3] - b  # ≧ 0
 
-    [gp - gm - g;
-     cp - cm - c;
-     gp*cm]
+    g2 = x[1] - c
+    c2 = x[3] - d
+
+    [g1p - g1m - g1;
+     c1p - c1m - c1;
+     g1p*c1m;
+     g2p - g2m - g2;
+     c2p - c2m - c2;
+     g2p*c2m]
 end
+
 eq1 = Constraint((x, u, w) -> x - x1, num_state, num_action)
 eqT = Constraint((x, u, w) -> x - xT, num_state, 0)
 eqSTC = Constraint((x,u,w) -> stc_con(x,u),                 # g+ ⋅ c- = 0
@@ -104,7 +121,8 @@ ineq = [[Constraint((x, u, w) ->
         u[1] - Fx_min; Fx_max - u[1];
         u[2] - Fy_min; Fy_max - u[2];
         u[3] - Fz_min; Fz_max - u[3];
-        u[4:7]                         # g+,g-,c+,c- all ≥ 0
+        u[4:7];
+        u[8:11]                         # g+,g-,c+,c- all ≥ 0
     ], num_state, num_action
 ) for t = 1:T-1]..., Constraint()]
 
@@ -122,21 +140,38 @@ end
 u_guess = [zeros(num_action) for t = 1:T-1]
 for i = 1:T-1
     u_guess[i][1:3] = [0;0;9.8]
-    g = -x_interpolation[i][1] + a
-    if g >= 0
-        u_guess[i][4] = g
+    g1 = -x_interpolation[i][1] + a
+    if g1 >= 0
+        u_guess[i][4] = g1
         u_guess[i][5] = 0
     else
         u_guess[i][4] = 0
-        u_guess[i][5] = -g
+        u_guess[i][5] = -g1
     end
-    c =  x_interpolation[i][3] - b
-    if c >= 0
-        u_guess[i][6] = c
+    c1 =  x_interpolation[i][3] - b
+    if c1 >= 0
+        u_guess[i][6] = c1
         u_guess[i][7] = 0
     else
         u_guess[i][6] = 0
-        u_guess[i][7] = -c
+        u_guess[i][7] = -c1
+    end
+
+    g2 = x_interpolation[i][1] - c
+    if g2 >= 0
+        u_guess[i][4+4] = g2
+        u_guess[i][5+4] = 0
+    else
+        u_guess[i][4+4] = 0
+        u_guess[i][5+4] = -g2
+    end
+    c2 =  x_interpolation[i][3] - d
+    if c2 >= 0
+        u_guess[i][6+4] = c2
+        u_guess[i][7+4] = 0
+    else
+        u_guess[i][6+4] = 0
+        u_guess[i][7+4] = -c2
     end
 end
 
@@ -170,12 +205,67 @@ for i = 1:$T-1
     quiver($Xm(1,i),$Xm(3,i),$Um(1,i)/s,$Um(3,i)/s,'r')
 end
 patch([-5 $a $a -5],[0 0 $b $b],'b')
+patch([$c 5 5 $c],[0 0 $d $d],'b')
 hold off
 "
 
 mat"
 figure
+title('Thrust')
 hold on
-plot($Um')
+plot($Um(1:3,:)')
 hold off
 "
+
+# # mat"
+# # figure
+# # title('Thrust')
+# # hold on
+# # plot($Um[1:3]')
+# # hold off
+# # "
+#
+# using MeshCat
+# using Meshing
+# using MeshIO
+# vis = Visualizer()
+# #
+# # include("/Users/kevintracy/devel/robot_meshes/rocket/rocket.jl")
+# # setbarge!(vis["barge"])
+# # setrocket!(vis["rocket"])
+# #
+# #
+# # setrocket!(vis; scale=1.0)
+# # setbarge!(vis; scale=1.0)
+# # setocean!(vis; dim=40)
+#
+# obj_starship = joinpath(pwd(), "/Users/kevintracy/devel/robot_meshes/starship/Starship.obj")
+# # mtl_starship = joinpath(pwd(), "/Users/kevintracy/devel/robot_meshes/starship/Starship.mtl")
+#
+# # meshfile = joinpath(@__DIR__, "space_x_booster.obj")
+# meshfile = joinpath(pwd(), "/Users/kevintracy/devel/robot_meshes/starship/Starship.obj")
+# obj = MeshFileObject(meshfile)
+# setobject!(vis["starship"], obj)
+# # scale = 1.0
+# # settransform!(vis["starship"], compose(Translation(0,0,0), LinearMap(scale*RotX(pi/2))))
+#
+#
+# # # ctm_platform = ModifiedMeshFileObject(obj_starship,mtl_starship,scale=1.0)
+# # ctm_starship = MeshFileObject(obj_starship)
+# # setobject!(vis["starship"],ctm_starship)
+#
+# anim = MeshCat.Animation(floor(Int,1/0.05))
+# q0 = UnitQuaternion([cos(pi/4);sin(pi/4);0;0])
+# θv = [atan(u_sol[k][3],u_sol[k][1]) for k = 1:(T-1)]
+# for k = 1:T-1
+#     atframe(anim,k) do
+#         # θ = atan(u_sol[k][3],u_sol[k][1]) - π/2
+#         θ = -θv[k] + π/2
+#         # θ = deg2rad(86)
+#         r = 10*x_sol[k][1:3]
+#         q = [cos(θ/2);0;sin(θ/2);0]
+#         settransform!(vis["starship"], compose(Translation(r), LinearMap(UnitQuaternion(q)*q0)))
+#     end
+# end
+# setanimation!(vis, anim)
+#
