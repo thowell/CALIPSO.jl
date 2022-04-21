@@ -48,9 +48,9 @@
     # solve 
     solve!(solver)
 
-    @test norm(solver.data.residual, Inf) < 1.0e-5
-    @test norm(solver.problem.cone_product, Inf) < 1.0e-3
+    @test norm(solver.data.residual, Inf) < solver.options.residual_tolerance
+    @test norm(solver.problem.cone_product, Inf) < solver.options.complementarity_tolerance
     @test all(solver.variables[solver.indices.cone_slack][1:2] .> -1.0e-5)
     @test norm(solver.variables[solver.indices.cone_slack][4:14]) < solver.variables[solver.indices.cone_slack][3] + 1.0e-5
-    @test norm(b - A * solver.variables[solver.indices.variables] - solver.variables[solver.indices.cone_slack], Inf) < 1.0e-5
+    @test norm(b - A * solver.variables[solver.indices.variables] - solver.variables[solver.indices.cone_slack], Inf) < solver.options.equality_tolerance
 end

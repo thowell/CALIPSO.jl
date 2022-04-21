@@ -15,5 +15,5 @@
 
     # solve 
     solve!(solver)
-    @test norm(solver.data.residual, Inf) < 1.0e-5
+    @test norm(solver.data.residual, Inf) < solver.options.residual_tolerance
 end

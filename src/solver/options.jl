@@ -1,7 +1,7 @@
 Base.@kwdef mutable struct Options{T}
     residual_norm::T=1.0
     constraint_norm::T=1.0
-    residual_tolerance::T=1.0e-6
+    residual_tolerance::T=1.0e-4
     max_outer_iterations::Int=15
     max_residual_iterations::Int=100
     scaling_line_search::T=0.5
@@ -13,11 +13,14 @@ Base.@kwdef mutable struct Options{T}
     min_iterative_refinement::Int=1
     iterative_refinement_tolerance=1.0e-8
     central_path_initial::T=1.0
-    scaling_central_path::T=0.1 
-    central_path_tolerance::T=1.0e-5
-    penalty_initial::T=1.0 
+    central_path_update_tolerance::T=10.0
+    central_path_convergence_tolerance::T=1.0e-5
+    central_path_scaling::T = 0.2
+    central_path_exponent::T = 1.5
+    penalty_initial::T=1.0
     scaling_penalty::T=10.0
     dual_initial::T=0.0
+    optimality_tolerance::T=1.0e-3
     equality_tolerance::T=1.0e-3
     complementarity_tolerance::T=1.0e-3
     min_regularization::T=1.0e-20

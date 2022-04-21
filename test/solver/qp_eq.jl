@@ -48,8 +48,8 @@
     solve!(solver)
     
     # solution
-    @test norm(solver.data.residual, Inf) < 1.0e-4
-    @test norm(A * solver.variables[solver.indices.variables] - b, Inf) < 1.0e-4
+    @test norm(solver.data.residual, Inf) < solver.options.residual_tolerance
+    @test norm(A * solver.variables[solver.indices.variables] - b, Inf) < solver.options.equality_tolerance
 
     # sensitivity
     @variables x[1:num_variables] y[1:num_equality] θ[1:num_parameters]
