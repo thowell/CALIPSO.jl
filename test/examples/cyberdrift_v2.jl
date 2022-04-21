@@ -279,7 +279,7 @@
     solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
         nonnegative_indices=idx_nn, 
         second_order_indices=idx_soc,
-        options=Options(verbose=true, penalty_initial=1.0, residual_tolerance=1.0e-4));
+        options=Options(verbose=true, penalty_initial=1.0));
     initialize_states!(solver, trajopt, x_guess);
     initialize_controls!(solver, trajopt, u_guess);
 
@@ -288,8 +288,23 @@
 
     x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 
-    @test norm(solver.problem.equality_constraint, Inf) < 1.0e-3 
-    @test norm(solver.problem.cone_product, Inf) < 1.0e-3 
+    # test solution
+    opt_norm = max(
+        norm(solver.data.residual[solver.indices.variables], Inf),
+        norm(solver.data.residual[solver.indices.cone_slack], Inf),
+        # norm(λ - y, Inf),
+    )
+    @test opt_norm < solver.options.optimality_tolerance
+
+    slack_norm = max(
+                    norm(solver.data.residual[solver.indices.equality_dual], Inf),
+                    norm(solver.data.residual[solver.indices.cone_dual], Inf),
+    )
+    @test slack_norm < solver.options.slack_tolerance
+
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+     
     @test !CALIPSO.cone_violation(solver.variables[solver.indices.cone_slack], solver.indices.cone_nonnegative, solver.indices.cone_second_order)
     @test !CALIPSO.cone_violation(solver.variables[solver.indices.cone_slack_dual], solver.indices.cone_nonnegative, solver.indices.cone_second_order)
 end

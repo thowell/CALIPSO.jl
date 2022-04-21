@@ -48,7 +48,23 @@
     # solve 
     solve!(solver)
 
-    @test norm(solver.data.residual, Inf) < solver.options.residual_tolerance
+    # test solution
+    opt_norm = max(
+        norm(solver.data.residual[solver.indices.variables], Inf),
+        norm(solver.data.residual[solver.indices.cone_slack], Inf),
+        # norm(λ - y, Inf),
+    )
+    @test opt_norm < solver.options.optimality_tolerance
+
+    slack_norm = max(
+                    norm(solver.data.residual[solver.indices.equality_dual], Inf),
+                    norm(solver.data.residual[solver.indices.cone_dual], Inf),
+    )
+    @test slack_norm < solver.options.slack_tolerance
+
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+
     @test norm(solver.problem.cone_product, Inf) < solver.options.complementarity_tolerance
     @test all(solver.variables[solver.indices.cone_slack][1:2] .> -1.0e-5)
     @test norm(solver.variables[solver.indices.cone_slack][4:14]) < solver.variables[solver.indices.cone_slack][3] + 1.0e-5

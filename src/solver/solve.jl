@@ -114,10 +114,15 @@ function solve!(solver)
                 opt_norm = max(
                                 norm(data.residual[indices.variables], Inf),
                                 norm(data.residual[indices.cone_slack], Inf),
-                                norm(λ - y, Inf),
+                                # norm(λ - y, Inf),
                 )
 
-                if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance && opt_norm < options.optimality_tolerance
+                slack_norm = max(
+                                norm(data.residual[indices.equality_dual], Inf),
+                                norm(data.residual[indices.cone_dual], Inf),
+                )
+
+                if norm(problem.equality_constraint, Inf) <= options.equality_tolerance && norm(problem.cone_product, Inf) <= options.complementarity_tolerance && slack_norm < options.slack_tolerance && opt_norm < options.optimality_tolerance
                     options.verbose && println("solve success!")
                     # differentiate
                     options.differentiate && (println("differentiating..."); differentiate!(solver))
@@ -259,12 +264,14 @@ function solve!(solver)
         # else
         # central-path
         κ[1] = max(options.residual_tolerance / 10.0, min(options.central_path_scaling * κ[1], κ[1]^options.central_path_exponent))
+        # κ[1] = max(options.complementarity_tolerance / 10.0, min(options.central_path_scaling * κ[1], κ[1]^options.central_path_exponent))
+
         # κ[1] = max(options.central_path_scaling * κ[1], options.min_central_path)
         
         # augmented Lagrangian
         λ .= λ + ρ[1] * r
         # ρ[1] = min(options.scaling_penalty * ρ[1], options.max_penalty) 
-        ρ[1] = min(1.0 / κ[1], options.max_penalty)
+        ρ[1] = min(max(options.scaling_penalty * ρ[1], 1.0 / κ[1]), options.max_penalty)
 
         # reset filter 
         empty!(filter)

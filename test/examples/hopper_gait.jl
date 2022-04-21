@@ -366,10 +366,24 @@
     # ## solution
     x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 
-    @test norm(solver.data.residual, Inf) < 5.0e-3
     @test norm((x_sol[1] - x_sol[T][1:nx])[[2; 3; 4; 6; 7; 8]], Inf) < 1.0e-3
-    @test norm(solver.problem.equality_constraint, Inf) < 1.0e-3 
-    @test norm(solver.problem.cone_product, Inf) < 1.0e-3 
+
+    # test solution
+    opt_norm = max(
+        norm(solver.data.residual[solver.indices.variables], Inf),
+        norm(solver.data.residual[solver.indices.cone_slack], Inf),
+        # norm(λ - y, Inf),
+    )
+    @test opt_norm < solver.options.optimality_tolerance
+
+    slack_norm = max(
+                    norm(solver.data.residual[solver.indices.equality_dual], Inf),
+                    norm(solver.data.residual[solver.indices.cone_dual], Inf),
+    )
+    @test slack_norm < solver.options.slack_tolerance
+
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 end
 # # # ## visualize 
 # # vis = Visualizer() 
