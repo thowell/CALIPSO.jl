@@ -22,7 +22,7 @@
 
     # solve 
     solve!(solver)
-    x = solver.variables[1:8]
+    x = solver.solution.variables[1:8]
 
     # test solution
     @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance

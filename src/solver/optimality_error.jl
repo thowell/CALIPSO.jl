@@ -1,8 +1,8 @@
-function optimality_error(variables, residual, indices)
+function optimality_error(solution, residual, indices)
     # variables 
-    y = @views variables[indices.equality_dual] 
-    z = @views variables[indices.cone_dual] 
-    t = @views variables[indices.cone_slack_dual] 
+    y = solution.equality_dual 
+    z = solution.cone_dual 
+    t = solution.cone_slack_dual 
 
     # scaling 
     sd = length(y) + length(z) > 0 ? max(100.0, (norm(y, 1) + norm(z, 1)) / (length(y) + length(z))) / 100.0 : 1.0

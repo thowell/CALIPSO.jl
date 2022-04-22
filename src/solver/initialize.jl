@@ -1,32 +1,30 @@
 # solver 
 function initialize!(solver::Solver, guess)
     # variables 
-    solver.variables[solver.indices.variables] = guess 
+    solver.solution.variables .= guess 
     return
 end
 
 function initialize_slacks!(solver)
     # set slacks to constraints
-    problem!(solver.problem, solver.methods, solver.indices, solver.variables, solver.parameters,
+    problem!(solver.problem, solver.methods, solver.indices, solver.solution, solver.parameters,
         equality_constraint=true,
         cone_constraint=true,
     )
 
     for (i, idx) in enumerate(solver.indices.equality_slack)
-        solver.variables[idx] = solver.problem.equality_constraint[i]
+        solver.solution.equality_slack[i] = solver.problem.equality_constraint[i]
     end
 
-    s = @view solver.variables[solver.indices.cone_slack]
-    initialize_cone!(s, solver.indices.cone_nonnegative, solver.indices.cone_second_order) 
+    initialize_cone!(solver.solution.cone_slack, solver.indices.cone_nonnegative, solver.indices.cone_second_order) 
 
     return 
 end
 
 function initialize_duals!(solver)
-    solver.variables[solver.indices.equality_dual] .= 0.0
-    solver.variables[solver.indices.cone_dual] .= 0.0
-    t = @view solver.variables[solver.indices.cone_slack_dual]
-    initialize_cone!(t, solver.indices.cone_nonnegative, solver.indices.cone_second_order) 
+    solver.solution.equality_dual .= 0.0
+    solver.solution.cone_dual .= 0.0
+    initialize_cone!(solver.solution.cone_slack_dual, solver.indices.cone_nonnegative, solver.indices.cone_second_order) 
     return 
 end
 

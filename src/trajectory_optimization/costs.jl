@@ -80,13 +80,12 @@ end
 
 Objective{T} = Vector{Cost{T}} where T
 
-function cost(objective::Objective, states, actions, parameters) 
-    J = 0.0
+function cost(c, objective::Objective, states, actions, parameters) 
     for (t, obj) in enumerate(objective)
         obj.cost(obj.cost_cache, states[t], actions[t], parameters[t])
-        J += obj.cost_cache[1]
+        c[1] += obj.cost_cache[1]
     end
-    return J 
+    return
 end
 
 function gradient_variables!(gradient, indices, objective::Objective, states, actions, parameters)

@@ -1,7 +1,7 @@
 # methods
 function ProblemMethods(trajopt::TrajectoryOptimizationProblem) 
     ProblemMethods(
-        (z, θ) -> objective!(trajopt, z, θ),
+        (c, z, θ) -> objective!(c, trajopt, z, θ),
         (g, z, θ) -> objective_gradient_variables!(g, trajopt, z, θ),
         (g, z, θ) -> objective_gradient_parameters!(g, trajopt, z, θ),
         (j, z, θ) -> objective_jacobian_variables_variables!(j, trajopt, z, θ),
@@ -31,18 +31,18 @@ end
 
 function initialize_states!(solver::Solver, trajopt::TrajectoryOptimizationProblem, states) 
     for (t, idx) in enumerate(trajopt.indices.states)
-        solver.variables[solver.indices.variables[idx]] = states[t]
+        solver.solution.variables[idx] = states[t]
     end
 end
 
 function initialize_controls!(solver::Solver, trajopt::TrajectoryOptimizationProblem, actions) 
     for (t, idx) in enumerate(trajopt.indices.actions)
-        solver.variables[solver.indices.variables[idx]] = actions[t]
+        solver.solution.variables[idx] = actions[t]
     end
 end
 
 function get_trajectory(solver::Solver, trajopt::TrajectoryOptimizationProblem) 
-    states = [solver.variables[solver.indices.variables[idx]] for (t, idx) in enumerate(trajopt.indices.states)]
-    actions = [solver.variables[solver.indices.variables[idx]] for (t, idx) in enumerate(trajopt.indices.actions)] 
+    states = [solver.solution.variables[idx] for (t, idx) in enumerate(trajopt.indices.states)]
+    actions = [solver.solution.variables[idx] for (t, idx) in enumerate(trajopt.indices.actions)] 
     return states, actions
 end

@@ -1,26 +1,21 @@
-# using Convex 
-# using ECOS, SCS 
-# using MathOptInterface
-
 function generate_gradients(func::Function, num_variables::Int, num_parameters::Int, mode::Symbol)
-
     @variables x[1:num_variables] θ[1:num_parameters]
 
     if mode == :scalar 
-        f = func(x, θ)
+        f = [func(x, θ)]
         
-        fx = Symbolics.gradient(f, x) 
-        fθ = Symbolics.gradient(f, θ)
+        fx = Symbolics.gradient(f[1], x)
+        fθ = Symbolics.gradient(f[1], θ)
         fxx = Symbolics.jacobian(fx, x)
         fxθ = Symbolics.jacobian(fx, θ)
 
-        f_func = eval(Symbolics.build_function(f, x, θ))
-        fx_func = eval(Symbolics.build_function(fx, x, θ)[2])
-        fθ_func = eval(Symbolics.build_function(fθ, x, θ)[2])
-        fxx_func = eval(Symbolics.build_function(fxx, x, θ)[2])
-        fxθ_func = eval(Symbolics.build_function(fxθ, x, θ)[2])
+        f_expr = eval(Symbolics.build_function(f, x, θ)[2])
+        fx_expr = eval(Symbolics.build_function(fx, x, θ)[2])
+        fθ_expr = eval(Symbolics.build_function(fθ, x, θ)[2])
+        fxx_expr = eval(Symbolics.build_function(fxx, x, θ)[2])
+        fxθ_expr = eval(Symbolics.build_function(fxθ, x, θ)[2])
 
-        return f_func, fx_func, fθ_func, fxx_func, fxθ_func
+        return f_expr, fx_expr, fθ_expr, fxx_expr, fxθ_expr
     elseif mode == :vector 
         f = func(x, θ)
         
@@ -33,17 +28,21 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
         fᵀyxx = Symbolics.jacobian(fᵀyx, x) 
         fᵀyxθ = Symbolics.jacobian(fᵀyx, θ) 
 
-        f_func = eval(Symbolics.build_function(f, x, θ)[2])
-        fx_func = eval(Symbolics.build_function(fx, x, θ)[2])
-        fθ_func = eval(Symbolics.build_function(fθ, x, θ)[2])
-        fᵀy_func = eval(Symbolics.build_function(fᵀy, x, θ, y))
-        fᵀyx_func = eval(Symbolics.build_function(fᵀyx, x, θ, y)[2])
-        fᵀyxx_func = eval(Symbolics.build_function(fᵀyxx, x, θ, y)[2])
-        fᵀyxθ_func = eval(Symbolics.build_function(fᵀyxθ, x, θ, y)[2])
+        f_expr = eval(Symbolics.build_function(f, x, θ)[2])
+        fx_expr = eval(Symbolics.build_function(fx, x, θ)[2])
+        fθ_expr = eval(Symbolics.build_function(fθ, x, θ)[2])
+        fᵀy_expr = eval(Symbolics.build_function([fᵀy], x, θ, y)[2])
+        fᵀyx_expr = eval(Symbolics.build_function(fᵀyx, x, θ, y)[2])
+        fᵀyxx_expr = eval(Symbolics.build_function(fᵀyxx, x, θ, y)[2])
+        fᵀyxθ_expr = eval(Symbolics.build_function(fᵀyxθ, x, θ, y)[2])
 
-        return f_func, fx_func, fθ_func, fᵀy_func, fᵀyx_func, fᵀyxx_func, fᵀyxθ_func
+        return f_expr, fx_expr, fθ_expr, fᵀy_expr, fᵀyx_expr, fᵀyxx_expr, fᵀyxθ_expr
     end
 end
+
+# using Convex 
+# using ECOS, SCS 
+# using MathOptInterface
 
 function generate_random_qp(num_variables, num_equality, num_cone;
     # check_feasible=true,

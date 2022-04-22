@@ -1,14 +1,12 @@
-function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ, ρ, λ)
+function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, solution::Point, κ, ρ, λ)
     # duals 
-    y = @views w[idx.equality_dual]
-    z = @views w[idx.cone_dual]
-    num_equality = length(y) 
-    num_cone = length(z)
+    y = solution.equality_dual
+    z = solution.cone_dual
 
     # slacks 
-    r = @views w[idx.equality_slack]
-    s = @views w[idx.cone_slack]
-    t = @views w[idx.cone_slack_dual]
+    r = solution.equality_slack
+    s = solution.cone_slack
+    t = solution.cone_slack_dual
 
     # reset
     res = s_data.residual 
@@ -18,18 +16,6 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, w, κ,
     res[idx.variables] = p_data.objective_gradient_variables
 
     for (i, ii) in enumerate(idx.variables)
-        cy = 0.0
-        # for j = 1:num_equality 
-        #     cy += p_data.equality_jacobian_variables[j, i] * y[j]
-        # end
-        # res[ii] += cy 
-
-        # cz = 0.0
-        # for k = 1:num_cone 
-        #     cz += p_data.cone_jacobian_variables[k, i] * z[k]
-        # end
-        # res[ii] += cz
-
         res[ii] += p_data.equality_dual_jacobian_variables[i] 
         res[ii] += p_data.cone_dual_jacobian_variables[i]
     end

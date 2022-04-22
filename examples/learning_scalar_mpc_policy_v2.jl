@@ -103,7 +103,7 @@ function ϕ_calipso(x, θ)
     solve!(solver)
 
     # control
-    return solver.variables[trajopt.indices.actions[1]]
+    return solver.solution.variables[trajopt.indices.actions[1]]
 end
 
 function ϕx_calipso(x, θ)

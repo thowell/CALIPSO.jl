@@ -1,4 +1,4 @@
-@testset "Solver: Minimum variable portfolio" begin 
+@testset "Solver: Minimum variance portfolio" begin 
     """ 
     Create a portfolio optimization problem with p dimensions 
     https://arxiv.org/pdf/1705.00772.pdf
@@ -61,7 +61,7 @@
     @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 
     @test norm(solver.problem.cone_product, Inf) < solver.options.complementarity_tolerance
-    @test all(solver.variables[solver.indices.cone_slack][1:2] .> -1.0e-5)
-    @test norm(solver.variables[solver.indices.cone_slack][4:14]) < solver.variables[solver.indices.cone_slack][3] + 1.0e-5
-    @test norm(b - A * solver.variables[solver.indices.variables] - solver.variables[solver.indices.cone_slack], Inf) < solver.options.equality_tolerance
+    @test all(solver.solution.cone_slack[1:2] .> -1.0e-5)
+    @test norm(solver.solution.cone_slack[4:14]) < solver.solution.cone_slack[3] + 1.0e-5
+    @test norm(b - A * solver.solution.variables - solver.solution.cone_slack, Inf) < solver.options.equality_tolerance
 end

@@ -50,6 +50,6 @@ function solver_status(solver, status)
     @printf "------------------------------------------------------------------------------------------------\n"
     println("solution gradients: $(solver.options.differentiate)")
     println("solve status:       $(status ? "success" : "failure")")
-    solver.dimensions.variables < 10 && println("solution:           $(round.(solver.variables[solver.indices.variables], sigdigits=3))")
+    solver.dimensions.variables < 10 && println("solution:           $(round.(solver.solution.variables, sigdigits=3))")
     @printf "------------------------------------------------------------------------------------------------\n"
 end

@@ -20,7 +20,7 @@ include("solver/maratos.jl")
 include("solver/knitro.jl")
 include("solver/wachter.jl")
 include("solver/friction_cone.jl")
-include("solver/minimum_variance_portfolio.jl")
+include("solver/portfolio.jl")
 
 # Trajectory Optimization 
 include("trajectory_optimization/objective.jl")
@@ -39,9 +39,9 @@ include("examples/hopper_gait.jl")
 include("examples/hopper_gait_soc.jl")
 include("examples/cyberdrift_v2.jl")
 include("examples/double_integrator.jl")
-# include("examples/quadruped_drop.jl")
-# include("examples/quadruped_gait.jl")
-# include("examples/quadruped_gait_soc.jl")
+include("examples/quadruped_drop.jl")
+include("examples/quadruped_gait.jl")
+include("examples/quadruped_gait_soc.jl")
 
 
 

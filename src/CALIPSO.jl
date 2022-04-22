@@ -4,6 +4,7 @@ using LinearAlgebra
 using Symbolics
 using SparseArrays
 using Scratch
+using JLD2
 using QDLDL
 
 using Printf
@@ -13,12 +14,13 @@ using Crayons
 include("solver/codegen.jl")
 include("solver/indices.jl")
 include("solver/methods.jl")
+include("solver/dimensions.jl")
+include("solver/point.jl")
 include("solver/problem_data.jl")
 include("solver/solver_data.jl")
 include("solver/cones/nonnegative.jl")
 include("solver/cones/second_order.jl")
 include("solver/cones/cone.jl")
-include("solver/dimensions.jl")
 include("solver/inertia.jl")
 include("solver/qdldl.jl")
 include("solver/options.jl")

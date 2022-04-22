@@ -168,8 +168,8 @@ Lzθ_func = eval(Symbolics.build_function(Lzθ, zv, θv)[2])
 Lzz0 = zeros(nz, nz)
 Lzθ0 = zeros(nz, nθ)
 
-Lzz_func(Lzz0, [solver.variables[solver.indices.variables]; solver.variables[solver.indices.equality_dual]], solver.parameters)
-Lzθ_func(Lzθ0, [solver.variables[solver.indices.variables]; solver.variables[solver.indices.equality_dual]], solver.parameters)
+Lzz_func(Lzz0, [solver.solution.variables; solver.solution.equality_dual], solver.parameters)
+Lzθ_func(Lzθ0, [solver.solution.variables; solver.solution.equality_dual], solver.parameters)
 
 sensitivity = -1.0 * Lzz0 \ Lzθ0
 

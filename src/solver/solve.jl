@@ -9,22 +9,22 @@ function solve!(solver)
     indices = solver.indices
 
     # variables
-    variables = solver.variables
-    x = @views variables[indices.variables]
-    r = @views variables[indices.equality_slack]
-    s = @views variables[indices.cone_slack]
-    y = @views variables[indices.equality_dual]
-    z = @views variables[indices.cone_dual]
-    t = @views variables[indices.cone_slack_dual]
+    solution = solver.solution
+    x = solution.variables
+    r = solution.equality_slack
+    s = solution.cone_slack
+    y = solution.equality_dual
+    z = solution.cone_dual
+    t = solution.cone_slack_dual
 
     # candidate
     candidate = solver.candidate
-    x̂ = @views candidate[indices.variables]
-    r̂ = @views candidate[indices.equality_slack]
-    ŝ = @views candidate[indices.cone_slack]
-    # ŷ = @views candidate[indices.equality_dual]
-    # ẑ = @views candidate[indices.cone_dual]
-    t̂ = @views candidate[indices.cone_slack_dual]
+    x̂ = candidate.variables
+    r̂ = candidate.equality_slack
+    ŝ = candidate.cone_slack
+    # ŷ = candidate.equality_dual
+    # ẑ = candidate.cone_dual
+    t̂ = candidate.cone_slack_dual
 
     # parameters
     parameters = solver.parameters
@@ -65,7 +65,7 @@ function solve!(solver)
     options.verbose && solver_info(solver)
 
     # evaluate
-    problem!(problem, methods, indices, variables, parameters,
+    problem!(problem, methods, indices, solution, parameters,
         objective=true,
         equality_constraint=true,
         equality_jacobian_variables=true,
@@ -76,7 +76,7 @@ function solve!(solver)
     equality_violation = norm(problem.equality_constraint, Inf) 
     cone_product_violation = norm(problem.cone_product, Inf) 
 
-    cone!(problem, methods, indices, variables,
+    cone!(problem, methods, indices, solution,
         product=true,
         target=true
     )
@@ -91,7 +91,7 @@ function solve!(solver)
             # options.verbose && println("iter: ($j, $i, $total_iterations)")
 
             # evaluate
-            problem!(problem, methods, indices, variables, parameters,
+            problem!(problem, methods, indices, solution, parameters,
                 objective_gradient_variables=true,
                 # equality_jacobian_variables=true,
                 equality_dual_jacobian_variables=true,
@@ -111,11 +111,11 @@ function solve!(solver)
                 indices)...)
 
             # residual
-            residual!(data, problem, indices, variables, κ, ρ, λ)
+            residual!(data, problem, indices, solution, κ, ρ, λ)
 
             # violations
             residual_violation = norm(data.residual, options.residual_norm) / solver.dimensions.total
-            optimality_violation = optimality_error(variables, data.residual, indices)
+            optimality_violation = optimality_error(solution, data.residual, indices)
             slack_violation = max(
                             norm(data.residual[indices.equality_dual], Inf),
                             norm(data.residual[indices.cone_dual], Inf),
@@ -155,7 +155,7 @@ function solve!(solver)
                 norm_type=options.constraint_norm)
             
             # search direction
-            problem!(problem, methods, indices, variables, parameters,
+            problem!(problem, methods, indices, solution, parameters,
                 objective_jacobian_variables_variables=true,
                 equality_jacobian_variables=true,
                 equality_dual_jacobian_variables_variables=options.constraint_hessian,
@@ -163,7 +163,7 @@ function solve!(solver)
                 cone_dual_jacobian_variables_variables=options.constraint_hessian,
             )
 
-            cone!(problem, methods, indices, variables,
+            cone!(problem, methods, indices, solution,
                 jacobian=true,
             )
 
@@ -260,7 +260,7 @@ function solve!(solver)
             z .= z - α * Δz
             t .= t̂
 
-            cone!(problem, methods, indices, variables,
+            cone!(problem, methods, indices, solution,
                 product=true,
             )
 

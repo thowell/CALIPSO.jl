@@ -79,7 +79,7 @@ function ϕ_calipso(x, θ)
     solver.parameters[n .+ (1:n^2)] = vec(θ)
     # solve 
     solve!(solver)
-    return solver.variables[1:m] 
+    return solver.solution.variables[1:m] 
 end
 
 function ϕx_calipso(x, θ)

@@ -2,8 +2,8 @@ mutable struct Solver{T}
     problem::ProblemData{T} 
     methods::ProblemMethods 
     data::SolverData{T}
-    variables::Vector{T} 
-    candidate::Vector{T}
+    solution::Point{T} 
+    candidate::Point{T}
     parameters::Vector{T}
     indices::Indices
     dimensions::Dimensions
@@ -43,9 +43,9 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         nonnegative=length(nonnegative_indices),
         second_order=[length(idx_soc) for idx_soc in second_order_indices])
 
-    # variables 
-    variables = zeros(dim.total) 
-    candidate = zeros(dim.total)
+    # points 
+    solution = Point(dim, idx)
+    candidate = Point(dim, idx)
 
     # interior-point 
     central_path = [0.1] 
@@ -56,8 +56,9 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     dual = zeros(num_equality) 
 
     # linear solver TODO: constructor
-    random_variables = randn(dim.total)
-    problem!(p_data, methods, idx, random_variables, parameters,
+    random_solution = Point(dim, idx)
+    random_solution.all .= randn(dim.total)
+    problem!(p_data, methods, idx, random_solution, parameters,
         # objective=true,
         # objective_gradient_variables=true,
         objective_jacobian_variables_variables=true,
@@ -68,7 +69,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         cone_jacobian_variables=true,
         cone_dual_jacobian_variables_variables=true,
     )
-    cone!(p_data, methods, idx, random_variables,
+    cone!(p_data, methods, idx, random_solution,
         # product=true, 
         jacobian=true,
         # target=true
@@ -89,7 +90,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         p_data, 
         methods, 
         s_data,
-        variables,
+        solution,
         candidate, 
         parameters,
         idx, 

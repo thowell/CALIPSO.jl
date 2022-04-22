@@ -5,15 +5,26 @@
     num_cone = 5
     num_parameters = 0 
 
-    # variables
-    x = randn(num_variables)
-    r = rand(num_equality)
-    s = rand(num_cone)
-    y = randn(num_equality)
-    z = randn(num_cone)
-    t = rand(num_cone) 
+    dims = Dimensions(num_variables, num_parameters, num_equality, num_cone)
+    idx = Indices(num_variables, num_parameters, num_equality, num_cone) 
 
-    w = [x; r; s; y; z; t]
+    # variables
+    solution = Point(dims, idx)
+    solution.variables .= randn(num_variables)
+    solution.equality_slack .= rand(num_equality)
+    solution.cone_slack .= rand(num_cone)
+    solution.equality_dual .= randn(num_equality)
+    solution.cone_dual .= randn(num_cone)
+    solution.cone_slack_dual .= rand(num_cone) 
+
+    w = solution.all 
+    x = solution.variables
+    r = solution.equality_slack
+    s = solution.cone_slack
+    y = solution.equality_dual
+    z = solution.cone_dual
+    t = solution.cone_slack_dual
+
     θ = zeros(num_parameters)
 
     κ = [1.0]
@@ -39,7 +50,7 @@
     methods = ProblemMethods(num_variables, num_parameters, objective, equality, inequality)
     solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
 
-    CALIPSO.problem!(solver.problem, solver.methods, solver.indices, w, θ,
+    CALIPSO.problem!(solver.problem, solver.methods, solver.indices, solution, θ,
         objective=true,
         objective_gradient_variables=true,
         objective_jacobian_variables_variables=true,
@@ -53,7 +64,7 @@
         cone_dual_jacobian_variables_variables=true,
     )
 
-    CALIPSO.cone!(solver.problem, solver.methods, solver.indices, w,
+    CALIPSO.cone!(solver.problem, solver.methods, solver.indices, solution,
         product=true,
         jacobian=true,
         target=true,
@@ -66,7 +77,6 @@
     CALIPSO.residual_jacobian_variables_symmetric!(solver.data.jacobian_variables_symmetric, solver.data.jacobian_variables, solver.indices)
 
     rank(solver.data.jacobian_variables_symmetric)
-
 
     CALIPSO.residual!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
 

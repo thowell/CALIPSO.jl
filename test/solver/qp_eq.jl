@@ -60,7 +60,7 @@
     @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
     @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
     
-    @test norm(A * solver.variables[solver.indices.variables] - b, Inf) < solver.options.equality_tolerance
+    @test norm(A * solver.solution.variables - b, Inf) < solver.options.equality_tolerance
 
     # sensitivity
     @variables x[1:num_variables] y[1:num_equality] θ[1:num_parameters]
@@ -91,9 +91,9 @@
     Aᵀyθ = zeros(num_variables, num_parameters) 
     Axbθ = zeros(num_equality, num_parameters)
 
-    f1θ_func(Pxpθ, solver.variables[solver.indices.variables], parameters)
-    f2θ_func(Axbθ, solver.variables[solver.indices.variables], parameters)
-    f3θ_func(Aᵀyθ, solver.variables[solver.indices.equality_dual], parameters)
+    f1θ_func(Pxpθ, solver.solution.variables, parameters)
+    f2θ_func(Axbθ, solver.solution.variables, parameters)
+    f3θ_func(Aᵀyθ, solver.solution.equality_dual, parameters)
 
     @test norm(solver.problem.objective_jacobian_variables_parameters[:, 1:num_variables] - Pxpθ[:, 1:num_variables], Inf) < 1.0e-4
     @test norm(solver.problem.equality_dual_jacobian_variables_parameters - Aᵀyθ, Inf) < 1.0e-4

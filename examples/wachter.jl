@@ -28,4 +28,4 @@ initialize!(solver, x0)
 solve!(solver)
 
 norm(solver.data.residual, Inf) < 1.0e-3
-norm(solver.variables[1:3] - [1.0; 0.0; 0.5], Inf) < 1.0e-3
+norm(solver.solution.variables[1:3] - [1.0; 0.0; 0.5], Inf) < 1.0e-3

@@ -126,7 +126,7 @@ solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.
 
 function ϕ_calipso(x, θ)
     # initialize
-    fill!(solver.variables, 0.0)
+    fill!(solver.solution.variables, 0.0)
     x_guess = [x for t = 1:H]
     u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, trajopt, x_guess) 
@@ -136,12 +136,12 @@ function ϕ_calipso(x, θ)
     # solve
     solve!(solver)
 
-    return solver.variables[trajopt.indices.actions[1]]
+    return solver.solution.variables[trajopt.indices.actions[1]]
 end
 
 function ϕx_calipso(x, θ)
     # initialize
-    fill!(solver.variables, 0.0)
+    fill!(solver.solution.variables, 0.0)
 
     x_guess = [x for t = 1:H]
     u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]
@@ -157,7 +157,7 @@ end
 
 function ϕθ_calipso(x, θ)
     # initialize
-    fill!(solver.variables, 0.0)
+    fill!(solver.solution.variables, 0.0)
 
     x_guess = [x for t = 1:H]
     u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]

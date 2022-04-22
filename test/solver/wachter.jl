@@ -29,5 +29,5 @@
     @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
     @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 
-    @test norm(solver.variables[1:3] - [1.0; 0.0; 0.5], Inf) < 1.0e-3
+    @test norm(solver.solution.variables[1:3] - [1.0; 0.0; 0.5], Inf) < 1.0e-3
 end

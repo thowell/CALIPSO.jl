@@ -1,4 +1,5 @@
-function objective!(trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
+function objective!(obj, trajopt::TrajectoryOptimizationProblem{T}, variables, parameters) where T
+    fill!(obj, 0.0)
     trajectory!(
         trajopt.data.states, 
         trajopt.data.actions, 
@@ -9,6 +10,7 @@ function objective!(trajopt::TrajectoryOptimizationProblem{T}, variables, parame
         parameters, 
         trajopt.indices.parameters)
     cost(
+        obj,
         trajopt.data.objective, 
         trajopt.data.states, 
         trajopt.data.actions, 

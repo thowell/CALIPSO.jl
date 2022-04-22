@@ -50,13 +50,13 @@
                 @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
                 @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 
-                @test !CALIPSO.cone_violation(solver.variables, zero(solver.variables), 0.0,
+                @test !CALIPSO.cone_violation(solver.solution.all, zero(solver.solution.all), 0.0,
                     solver.indices.cone_nonnegative, solver.indices.cone_second_order)
                 if norm(v[2:3]) > 0.0 && γ > 0.0 && μ > 0.0
                     v_dir = v[2:3] ./ norm(v[2:3]) 
-                    b_dir = solver.variables[2:3] ./ norm(solver.variables[2:3])
+                    b_dir = solver.solution.variables[2:3] ./ norm(solver.solution.variables[2:3])
                     @test norm(v_dir + b_dir, Inf) < 1.0e-3
-                    @test norm(solver.variables[2:3]) <= μ * γ 
+                    @test norm(solver.solution.variables[2:3]) <= μ * γ 
                 end
             end
         end

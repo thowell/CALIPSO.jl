@@ -80,7 +80,7 @@ function ProblemData(num_variables, num_parameters, num_equality, num_cone)
     )
 end
 
-function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T}, parameters::Vector{T};
+function problem!(problem::ProblemData{T}, methods::ProblemMethods{O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP}, idx::Indices, solution::Point{T}, parameters::Vector{T};
     objective=false,
     objective_gradient_variables=false,
     objective_gradient_parameters=false,
@@ -100,25 +100,25 @@ function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices
     cone_dual_jacobian_variables=false,
     cone_dual_jacobian_variables_variables=false,
     cone_dual_jacobian_variables_parameters=false,
-    ) where T
+    ) where {T,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP}
 
-    x = @views variables[idx.variables]
-    y = @views variables[idx.equality_dual]
-    z = @views variables[idx.cone_dual]
+    x = solution.variables
+    y = solution.equality_dual
+    z = solution.cone_dual
     θ = parameters
 
-    # objective
-    objective && (problem.objective[1] = methods.objective(x, θ))
+    # # objective
+    objective && methods.objective(problem.objective, x, θ)
     objective_gradient_variables && methods.objective_gradient_variables(problem.objective_gradient_variables, x, θ)
     objective_gradient_parameters && methods.objective_gradient_parameters(problem.objective_gradient_parameters, x, θ)
     objective_jacobian_variables_variables && methods.objective_jacobian_variables_variables(problem.objective_jacobian_variables_variables, x, θ)
     objective_jacobian_variables_parameters && methods.objective_jacobian_variables_parameters(problem.objective_jacobian_variables_parameters, x, θ)
-
+    
     # equality
     equality_constraint && methods.equality_constraint(problem.equality_constraint, x, θ)
     equality_jacobian_variables && methods.equality_jacobian_variables(problem.equality_jacobian_variables, x, θ)
     equality_jacobian_parameters && methods.equality_jacobian_parameters(problem.equality_jacobian_parameters, x, θ)
-    equality_dual && (problem.equality_dual[1] = methods.equality_dual(x, θ, y))
+    equality_dual && methods.equality_dual(problem.equality_dual, x, θ, y)
     equality_dual_jacobian_variables && methods.equality_dual_jacobian_variables(problem.equality_dual_jacobian_variables, x, θ, y)
     equality_dual_jacobian_variables_variables && methods.equality_dual_jacobian_variables_variables(problem.equality_dual_jacobian_variables_variables, x, θ, y)
     equality_dual_jacobian_variables_parameters && methods.equality_dual_jacobian_variables_parameters(problem.equality_dual_jacobian_variables_parameters, x, θ, y)
@@ -127,7 +127,7 @@ function problem!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices
     cone_constraint && methods.cone_constraint(problem.cone_constraint, x, θ)
     cone_jacobian_variables && methods.cone_jacobian_variables(problem.cone_jacobian_variables, x, θ)
     cone_jacobian_parameters && methods.cone_jacobian_parameters(problem.cone_jacobian_parameters, x, θ)
-    cone_dual && (problem.cone_dual[1] = methods.cone_dual(x, θ, z))
+    cone_dual && methods.cone_dual(problem.cone_dual, x, θ, z)
     cone_dual_jacobian_variables && methods.cone_dual_jacobian_variables(problem.cone_dual_jacobian_variables, x, θ, z)
     cone_dual_jacobian_variables_variables && methods.cone_dual_jacobian_variables_variables(problem.cone_dual_jacobian_variables_variables, x, θ, z)
     cone_dual_jacobian_variables_parameters && methods.cone_dual_jacobian_variables_parameters(problem.cone_dual_jacobian_variables_parameters, x, θ, z)

@@ -303,8 +303,8 @@
     @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
     @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
         
-    @test !CALIPSO.cone_violation(solver.variables[solver.indices.cone_slack], zero(solver.variables[solver.indices.cone_slack]), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
-    @test !CALIPSO.cone_violation(solver.variables[solver.indices.cone_slack_dual], zero(solver.variables[solver.indices.cone_slack_dual]), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
+    @test !CALIPSO.cone_violation(solver.solution.cone_slack, zero(solver.solution.cone_slack), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
+    @test !CALIPSO.cone_violation(solver.cone_slack_dual, zero(solver.cone_slack_dual), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
 end
 # # plot
 # using Plots

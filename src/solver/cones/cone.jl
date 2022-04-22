@@ -68,14 +68,14 @@ function cone_violation(x̂, x, τ, idx_ineq, idx_soc)
 end
 
 # evalute
-function cone!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, variables::Vector{T};
+function cone!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, solution::Point{T};
     product=false,
     jacobian=false,
     target=false,
     ) where T
 
-    s = @views variables[idx.cone_slack]
-    t = @views variables[idx.cone_slack_dual]
+    s = solution.cone_slack
+    t = solution.cone_slack_dual
 
     product && (problem.cone_product .= cone_product(s, t, idx.cone_nonnegative, idx.cone_second_order))
     jacobian && (problem.cone_product_jacobian_primal .= cone_product_jacobian(s, t, idx.cone_nonnegative, idx.cone_second_order))
