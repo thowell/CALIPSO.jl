@@ -6,6 +6,7 @@ struct Point{T}
     equality_dual::SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}
     cone_dual::SubArray{T,1,Vector{T},Tuple{Vector{Int}},false} 
     cone_slack_dual::SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}
+    primals::SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}
 end
 
 function Point(dims::Dimensions, idx::Indices)
@@ -16,7 +17,8 @@ function Point(dims::Dimensions, idx::Indices)
     y = @views w[idx.equality_dual]
     z = @views w[idx.cone_dual]
     t = @views w[idx.cone_slack_dual]
-    return Point(w, x, r, s, y, z, t)
+    p = @views w[idx.primals]
+    return Point(w, x, r, s, y, z, t, p)
 end
 
 

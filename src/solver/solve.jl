@@ -34,13 +34,13 @@ function solve!(solver)
 
     # search direction
     step = data.step
-    Δx = @views step[indices.variables]
-    Δr = @views step[indices.equality_slack]
-    Δs = @views step[indices.cone_slack]
-    Δy = @views step[indices.equality_dual]
-    Δz = @views step[indices.cone_dual]
-    Δt = @views step[indices.cone_slack_dual]
-    Δp = @views step[indices.primals]
+    Δx = @views step.all[indices.variables]
+    Δr = @views step.all[indices.equality_slack]
+    Δs = @views step.all[indices.cone_slack]
+    Δy = @views step.all[indices.equality_dual]
+    Δz = @views step.all[indices.cone_dual]
+    Δt = @views step.all[indices.cone_slack_dual]
+    Δp = @views step.all[indices.primals]
 
     # constraints
     constraint_violation = solver.data.constraint_violation
@@ -70,7 +70,6 @@ function solve!(solver)
         equality_constraint=true,
         equality_jacobian_variables=true,
         cone_constraint=true,
-        # cone_jacobian_variables=true,
     )
 
     equality_violation = norm(problem.equality_constraint, Inf) 
@@ -87,16 +86,12 @@ function solve!(solver)
 
     for j = 1:options.max_outer_iterations
         for i = 1:options.max_residual_iterations
-            # iterations
-            # options.verbose && println("iter: ($j, $i, $total_iterations)")
-
+            
             # evaluate
             problem!(problem, methods, indices, solution, parameters,
                 objective_gradient_variables=true,
-                # equality_jacobian_variables=true,
                 equality_dual_jacobian_variables=true,
                 cone_dual_jacobian_variables=true,
-                # cone_jacobian_variables=true,
             )
 
             # merit
@@ -114,11 +109,11 @@ function solve!(solver)
             residual!(data, problem, indices, solution, κ, ρ, λ)
 
             # violations
-            residual_violation = norm(data.residual, options.residual_norm) / solver.dimensions.total
+            residual_violation = norm(data.residual.all, options.residual_norm) / solver.dimensions.total
             optimality_violation = optimality_error(solution, data.residual, indices)
             slack_violation = max(
-                            norm(data.residual[indices.equality_dual], Inf),
-                            norm(data.residual[indices.cone_dual], Inf),
+                            norm(data.residual.all[indices.equality_dual], Inf),
+                            norm(data.residual.all[indices.cone_dual], Inf),
             )
             
             # check outer convergence

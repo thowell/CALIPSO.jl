@@ -14,13 +14,9 @@ end
 
 function search_direction_symmetric!(step, residual, matrix, step_symmetric, residual_symmetric, matrix_symmetric, idx::Indices, solver::LinearSolver;
     update=true)
-    # reset
-    # fill!(step, 0.0) 
-    # fill!(step_symmetric, 0.0)
-    
+   
     # solve symmetric system
     residual_symmetric!(residual_symmetric, residual, matrix, idx) 
-    # residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx) 
     
     linear_solve!(solver, step_symmetric, matrix_symmetric, residual_symmetric;
         update=update)
@@ -29,17 +25,17 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
     Δx = @views step_symmetric[idx.variables]
     Δy = @views step_symmetric[idx.symmetric_equality]
     Δz = @views step_symmetric[idx.symmetric_cone]
-    step[idx.variables] = Δx
-    step[idx.equality_dual] = Δy
-    step[idx.cone_dual] = Δz
+    step.all[idx.variables] = Δx
+    step.all[idx.equality_dual] = Δy
+    step.all[idx.cone_dual] = Δz
 
     # recover Δr, Δs, Δt
-    Δr = @views step[idx.equality_slack]
-    Δs = @views step[idx.cone_slack]
-    Δt = @views step[idx.cone_slack_dual]
-    rr = @views residual[idx.equality_slack] 
-    rs = @views residual[idx.cone_slack] 
-    rt = @views residual[idx.cone_slack_dual]
+    Δr = @views step.all[idx.equality_slack]
+    Δs = @views step.all[idx.cone_slack]
+    Δt = @views step.all[idx.cone_slack_dual]
+    rr = @views residual.all[idx.equality_slack] 
+    rs = @views residual.all[idx.cone_slack] 
+    rt = @views residual.all[idx.cone_slack_dual]
 
     # Δr 
     for (i, ii) in enumerate(idx.equality_slack)
@@ -75,6 +71,6 @@ end
 
 function search_direction_nonsymmetric!(step, data::SolverData)
     # fill!(step, 0.0)
-    step .= data.jacobian_variables \ data.residual
+    step.all .= data.jacobian_variables \ data.residual.all
     return 
 end

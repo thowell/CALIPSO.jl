@@ -27,12 +27,6 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     second_order_indices=[collect(1:0)],
     options=Options())
 
-    # problem data
-    p_data = ProblemData(num_variables, num_parameters, num_equality, num_cone)
-
-    # solver data
-    s_data = SolverData(num_variables, num_parameters, num_equality, num_cone)
-
     # indices
     idx = Indices(num_variables, num_parameters, num_equality, num_cone;
         nonnegative=nonnegative_indices,
@@ -42,6 +36,12 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     dim = Dimensions(num_variables, num_parameters, num_equality, num_cone;
         nonnegative=length(nonnegative_indices),
         second_order=[length(idx_soc) for idx_soc in second_order_indices])
+
+    # problem data
+    p_data = ProblemData(num_variables, num_parameters, num_equality, num_cone)
+
+    # solver data
+    s_data = SolverData(dim, idx)
 
     # points 
     solution = Point(dim, idx)

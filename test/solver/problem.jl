@@ -134,37 +134,37 @@
         - Diagonal(-1.0 * (s .- ϵd) ./ (t + (s .- ϵd) * ϵp) .- ϵd)) < 1.0e-6
 
     # residual 
-    @test norm(solver.data.residual[solver.indices.variables] 
+    @test norm(solver.data.residual.all[solver.indices.variables] 
         - (solver.problem.objective_gradient_variables + solver.problem.equality_jacobian_variables' * solver.solution.equality_dual + solver.problem.cone_jacobian_variables' * solver.solution.cone_dual)) < 1.0e-6
 
-    @test norm(solver.data.residual[solver.indices.equality_slack] 
+    @test norm(solver.data.residual.all[solver.indices.equality_slack] 
         - (λ + ρ[1] * solver.solution.equality_slack - solver.solution.equality_dual)) < 1.0e-6
 
-    @test norm(solver.data.residual[solver.indices.cone_slack] 
+    @test norm(solver.data.residual.all[solver.indices.cone_slack] 
     - (-solver.solution.cone_dual - solver.solution.cone_slack_dual)) < 1.0e-6
 
-    @test norm(solver.data.residual[solver.indices.equality_dual] 
+    @test norm(solver.data.residual.all[solver.indices.equality_dual] 
         - (solver.problem.equality_constraint - solver.solution.equality_slack)) < 1.0e-6
 
-    @test norm(solver.data.residual[solver.indices.cone_dual] 
+    @test norm(solver.data.residual.all[solver.indices.cone_dual] 
         - (solver.problem.cone_constraint - solver.solution.cone_slack)) < 1.0e-6
 
-    @test norm(solver.data.residual[solver.indices.cone_slack_dual] 
+    @test norm(solver.data.residual.all[solver.indices.cone_slack_dual] 
         - (solver.solution.cone_slack .* solver.solution.cone_slack_dual .- κ[1])) < 1.0e-6
 
     # residual symmetric
-    rs = solver.data.residual[solver.indices.cone_slack]
-    rt = solver.data.residual[solver.indices.cone_slack_dual]
+    rs = solver.data.residual.all[solver.indices.cone_slack]
+    rt = solver.data.residual.all[solver.indices.cone_slack_dual]
 
     @test norm(solver.data.residual_symmetric[solver.indices.variables] 
         - (solver.problem.objective_gradient_variables + solver.problem.equality_jacobian_variables' * solver.solution.equality_dual + solver.problem.cone_jacobian_variables' * solver.solution.cone_dual)) < 1.0e-6
     @test norm(solver.data.residual_symmetric[solver.indices.symmetric_equality] 
-        - (solver.problem.equality_constraint - solver.solution.equality_slack + solver.data.residual[solver.indices.equality_slack] ./ (ρ[1] + ϵp))) < 1.0e-6
+        - (solver.problem.equality_constraint - solver.solution.equality_slack + solver.data.residual.all[solver.indices.equality_slack] ./ (ρ[1] + ϵp))) < 1.0e-6
     @test norm(solver.data.residual_symmetric[solver.indices.symmetric_cone] 
         - (solver.problem.cone_constraint - solver.solution.cone_slack + (rt + (s .- ϵd) .* rs) ./ (t + (s .- ϵd) * ϵp))) < 1.0e-6
 
     # step
-    fill!(solver.data.residual, 0.0)
+    fill!(solver.data.residual.all, 0.0)
     CALIPSO.residual!(solver.data, solver.problem, solver.indices, solver.solution, κ, ρ, λ)
     CALIPSO.search_direction_nonsymmetric!(solver.data.step, solver.data)
     Δ = deepcopy(solver.data.step)
@@ -174,11 +174,12 @@
         solver.indices, solver.linear_solver)
     Δ_symmetric = deepcopy(solver.data.step)
 
-    @test norm(Δ - Δ_symmetric) < 1.0e-6
+    @test norm(Δ.all - Δ_symmetric.all) < 1.0e-6
 
     # iterative refinement
-    noisy_step = solver.data.step + randn(length(solver.data.step))
-    # @show norm(solver.data.residual - solver.data.jacobian_variables * noisy_step)
+    noisy_step = deepcopy(solver.data.step)
+    noisy_step.all .= solver.data.step.all + randn(length(solver.data.step.all))
+    # @show norm(solver.data.residual.all - solver.data.jacobian_variables * noisy_step)
     CALIPSO.iterative_refinement!(noisy_step, solver)
-    @test norm(solver.data.residual - solver.data.jacobian_variables * noisy_step) < solver.options.iterative_refinement_tolerance
+    @test norm(solver.data.residual.all - solver.data.jacobian_variables * noisy_step.all) < solver.options.iterative_refinement_tolerance
 end

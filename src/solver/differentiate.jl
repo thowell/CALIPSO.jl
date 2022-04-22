@@ -23,18 +23,19 @@ function differentiate!(solver)
 
     # compute solution sensitivities
     fill!(solver.data.solution_sensitivity, 0.0)
-    for i in solver.indices.parameters 
-        ∂z∂pi = @views solver.data.solution_sensitivity[:, i]
-        Rpi   = @views solver.data.jacobian_parameters[:, i]
-        search_direction_symmetric!(∂z∂pi, Rpi, 
-            solver.data.jacobian_variables, 
-            solver.data.step_symmetric, 
-            solver.data.residual_symmetric, 
-            solver.data.jacobian_variables_symmetric, 
-            solver.indices, 
-            solver.linear_solver)
-        ∂z∂pi .*= -1.0
-    end
+    @warn "diff disabled"
+    # for i in solver.indices.parameters 
+    #     ∂z∂pi = @views solver.data.solution_sensitivity[:, i]
+    #     Rpi   = @views solver.data.jacobian_parameters[:, i]
+    #     search_direction_symmetric!(∂z∂pi, Rpi, 
+    #         solver.data.jacobian_variables, 
+    #         solver.data.step_symmetric, 
+    #         solver.data.residual_symmetric, 
+    #         solver.data.jacobian_variables_symmetric, 
+    #         solver.indices, 
+    #         solver.linear_solver)
+    #     ∂z∂pi .*= -1.0
+    # end
 
     return 
 end

@@ -9,14 +9,14 @@ function optimality_error(solution, residual, indices)
     sc = length(t) > 0 ? max(100.0, norm(t, 1) / length(t)) / 100.0 : 1.0
 
     # Lagrangian gradient 
-    lag_grad = @views residual[indices.primals] 
+    lag_grad = residual.primals
 
     # constraint slack 
-    equality = @views residual[indices.equality_dual] 
-    cone     = @views residual[indices.cone_dual]
+    equality = residual.equality_dual
+    cone     = residual.cone_dual
 
     # complementarity 
-    comp = @views residual[indices.cone_slack_dual]
+    comp = residual.cone_slack_dual
 
     return max(
                 norm(lag_grad, Inf) / sd,

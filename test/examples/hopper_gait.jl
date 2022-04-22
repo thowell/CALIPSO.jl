@@ -375,11 +375,11 @@
     @test norm((x_sol[1] - x_sol[T][1:nx])[[2; 3; 4; 6; 7; 8]], Inf) < 1.0e-3
 
     # test solution
-    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
+    @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
-                    norm(solver.data.residual[solver.indices.equality_dual], Inf),
-                    norm(solver.data.residual[solver.indices.cone_dual], Inf),
+                    norm(solver.data.residual.equality_dual, Inf),
+                    norm(solver.data.residual.cone_dual, Inf),
     )
     @test slack_norm < solver.options.slack_tolerance
 

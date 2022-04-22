@@ -9,7 +9,7 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, soluti
     t = solution.cone_slack_dual
 
     # reset
-    res = s_data.residual 
+    res = s_data.residual.all 
     fill!(res, 0.0)
 
     # gradient of Lagrangian 
@@ -54,12 +54,12 @@ function residual_symmetric!(residual_symmetric, residual, matrix, idx::Indices)
     # reset
     fill!(residual_symmetric, 0.0)
 
-    rx = @views residual[idx.variables]
-    rr = @views residual[idx.equality_slack]
-    rs = @views residual[idx.cone_slack]
-    ry = @views residual[idx.equality_dual]
-    rz = @views residual[idx.cone_dual]
-    rt = @views residual[idx.cone_slack_dual]
+    rx = @views residual.all[idx.variables]
+    rr = @views residual.all[idx.equality_slack]
+    rs = @views residual.all[idx.cone_slack]
+    ry = @views residual.all[idx.equality_dual]
+    rz = @views residual.all[idx.cone_dual]
+    rt = @views residual.all[idx.cone_slack_dual]
 
     residual_symmetric[idx.variables] = rx
     residual_symmetric[idx.symmetric_equality] = ry

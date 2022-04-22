@@ -49,11 +49,11 @@
     solve!(solver)
 
     # test solution
-    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
+    @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
-                    norm(solver.data.residual[solver.indices.equality_dual], Inf),
-                    norm(solver.data.residual[solver.indices.cone_dual], Inf),
+                    norm(solver.data.residual.equality_dual, Inf),
+                    norm(solver.data.residual.cone_dual, Inf),
     )
     @test slack_norm < solver.options.slack_tolerance
 
