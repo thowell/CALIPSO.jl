@@ -3,35 +3,42 @@
     num_variables = 10 
     num_equality = 5 
     num_cone = 5
-    num_parameters = 0 
+    num_parameters = 0
 
-    dims = Dimensions(num_variables, num_parameters, num_equality, num_cone)
-    idx = Indices(num_variables, num_parameters, num_equality, num_cone) 
+    # methods
+    objective, equality, inequality, flag = CALIPSO.generate_random_qp(num_variables, num_equality, num_cone);
 
-    # variables
-    solution = Point(dims, idx)
-    solution.variables .= randn(num_variables)
-    solution.equality_slack .= rand(num_equality)
-    solution.cone_slack .= rand(num_cone)
-    solution.equality_dual .= randn(num_equality)
-    solution.cone_dual .= randn(num_cone)
-    solution.cone_slack_dual .= rand(num_cone) 
+    # solver
+    methods = ProblemMethods(num_variables, num_parameters, objective, equality, inequality)
+    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
 
-    w = solution.all 
-    x = solution.variables
-    r = solution.equality_slack
-    s = solution.cone_slack
-    y = solution.equality_dual
-    z = solution.cone_dual
-    t = solution.cone_slack_dual
+    solver.solution.variables .= randn(num_variables)
+    solver.solution.equality_slack .= rand(num_equality)
+    solver.solution.cone_slack .= rand(num_cone)
+    solver.solution.equality_dual .= randn(num_equality)
+    solver.solution.cone_dual .= randn(num_cone)
+    solver.solution.cone_slack_dual .= rand(num_cone) 
 
-    θ = zeros(num_parameters)
+    w = solver.solution.all 
+    x = solver.solution.variables
+    r = solver.solution.equality_slack
+    s = solver.solution.cone_slack
+    y = solver.solution.equality_dual
+    z = solver.solution.cone_dual
+    t = solver.solution.cone_slack_dual
 
-    κ = [1.0]
-    ρ = [1.0]
+    θ = solver.parameters
+
+    κ = [0.17]
+    ρ = [52.0]
     λ = randn(num_equality)
-    ϵp = 0.12 #1.0e-5 
-    ϵd = 0.21 #1.0e-6 
+    ϵp = 0.12
+    ϵd = 0.21
+    solver.central_path .= κ 
+    solver.penalty .= ρ
+    solver.dual .= λ
+    solver.primal_regularization = ϵp 
+    solver.dual_regularization = ϵd 
 
     reg = [
             ϵp * ones(num_variables);
@@ -43,14 +50,8 @@
         ]
 
 
-    # methods
-    objective, equality, inequality, flag = CALIPSO.generate_random_qp(num_variables, num_equality, num_cone);
 
-    # solver
-    methods = ProblemMethods(num_variables, num_parameters, objective, equality, inequality)
-    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
-
-    CALIPSO.problem!(solver.problem, solver.methods, solver.indices, solution, θ,
+    CALIPSO.problem!(solver.problem, solver.methods, solver.indices, solver.solution, solver.parameters,
         objective=true,
         objective_gradient_variables=true,
         objective_jacobian_variables_variables=true,
@@ -64,7 +65,7 @@
         cone_dual_jacobian_variables_variables=true,
     )
 
-    CALIPSO.cone!(solver.problem, solver.methods, solver.indices, solution,
+    CALIPSO.cone!(solver.problem, solver.methods, solver.indices, solver.solution,
         product=true,
         jacobian=true,
         target=true,
@@ -78,7 +79,7 @@
 
     rank(solver.data.jacobian_variables_symmetric)
 
-    CALIPSO.residual!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
+    CALIPSO.residual!(solver.data, solver.problem, solver.indices, solver.solution, κ, ρ, λ)
 
     CALIPSO.residual_symmetric!(solver.data.residual_symmetric, solver.data.residual, solver.data.jacobian_variables, solver.indices)
 
@@ -103,9 +104,9 @@
     @test norm(solver.data.jacobian_variables[solver.indices.cone_slack, solver.indices.cone_slack_dual] 
         + I(num_cone)) < 1.0e-6
     @test norm(solver.data.jacobian_variables[solver.indices.cone_slack_dual, solver.indices.cone_slack] 
-        - Diagonal(w[solver.indices.cone_slack_dual])) < 1.0e-6
+        - Diagonal(solver.solution.cone_slack_dual)) < 1.0e-6
     @test norm(solver.data.jacobian_variables[solver.indices.cone_slack_dual, solver.indices.cone_slack_dual] 
-        - (Diagonal(w[solver.indices.cone_slack]) -ϵd * I)) < 1.0e-6
+        - (Diagonal(solver.solution.cone_slack) -ϵd * I)) < 1.0e-6
     @test norm(solver.data.jacobian_variables[solver.indices.equality_slack, solver.indices.equality_dual] 
         + I) < 1.0e-6
     @test norm(solver.data.jacobian_variables[solver.indices.equality_dual, solver.indices.equality_slack] 
@@ -134,37 +135,37 @@
 
     # residual 
     @test norm(solver.data.residual[solver.indices.variables] 
-        - (solver.problem.objective_gradient_variables + solver.problem.equality_jacobian_variables' * w[solver.indices.equality_dual] + solver.problem.cone_jacobian_variables' * w[solver.indices.cone_dual])) < 1.0e-6
+        - (solver.problem.objective_gradient_variables + solver.problem.equality_jacobian_variables' * solver.solution.equality_dual + solver.problem.cone_jacobian_variables' * solver.solution.cone_dual)) < 1.0e-6
 
     @test norm(solver.data.residual[solver.indices.equality_slack] 
-        - (λ + ρ[1] * w[solver.indices.equality_slack] - w[solver.indices.equality_dual])) < 1.0e-6
+        - (λ + ρ[1] * solver.solution.equality_slack - solver.solution.equality_dual)) < 1.0e-6
 
     @test norm(solver.data.residual[solver.indices.cone_slack] 
-    - (-w[solver.indices.cone_dual] - w[solver.indices.cone_slack_dual])) < 1.0e-6
+    - (-solver.solution.cone_dual - solver.solution.cone_slack_dual)) < 1.0e-6
 
     @test norm(solver.data.residual[solver.indices.equality_dual] 
-        - (solver.problem.equality_constraint - w[solver.indices.equality_slack])) < 1.0e-6
+        - (solver.problem.equality_constraint - solver.solution.equality_slack)) < 1.0e-6
 
     @test norm(solver.data.residual[solver.indices.cone_dual] 
-        - (solver.problem.cone_constraint - w[solver.indices.cone_slack])) < 1.0e-6
+        - (solver.problem.cone_constraint - solver.solution.cone_slack)) < 1.0e-6
 
     @test norm(solver.data.residual[solver.indices.cone_slack_dual] 
-        - (w[solver.indices.cone_slack] .* w[solver.indices.cone_slack_dual] .- κ[1])) < 1.0e-6
+        - (solver.solution.cone_slack .* solver.solution.cone_slack_dual .- κ[1])) < 1.0e-6
 
     # residual symmetric
     rs = solver.data.residual[solver.indices.cone_slack]
     rt = solver.data.residual[solver.indices.cone_slack_dual]
 
     @test norm(solver.data.residual_symmetric[solver.indices.variables] 
-        - (solver.problem.objective_gradient_variables + solver.problem.equality_jacobian_variables' * w[solver.indices.equality_dual] + solver.problem.cone_jacobian_variables' * w[solver.indices.cone_dual])) < 1.0e-6
+        - (solver.problem.objective_gradient_variables + solver.problem.equality_jacobian_variables' * solver.solution.equality_dual + solver.problem.cone_jacobian_variables' * solver.solution.cone_dual)) < 1.0e-6
     @test norm(solver.data.residual_symmetric[solver.indices.symmetric_equality] 
-        - (solver.problem.equality_constraint - w[solver.indices.equality_slack] + solver.data.residual[solver.indices.equality_slack] ./ (ρ[1] + ϵp))) < 1.0e-6
+        - (solver.problem.equality_constraint - solver.solution.equality_slack + solver.data.residual[solver.indices.equality_slack] ./ (ρ[1] + ϵp))) < 1.0e-6
     @test norm(solver.data.residual_symmetric[solver.indices.symmetric_cone] 
-        - (solver.problem.cone_constraint - w[solver.indices.cone_slack] + (rt + (s .- ϵd) .* rs) ./ (t + (s .- ϵd) * ϵp))) < 1.0e-6
+        - (solver.problem.cone_constraint - solver.solution.cone_slack + (rt + (s .- ϵd) .* rs) ./ (t + (s .- ϵd) * ϵp))) < 1.0e-6
 
     # step
     fill!(solver.data.residual, 0.0)
-    CALIPSO.residual!(solver.data, solver.problem, solver.indices, w, κ, ρ, λ)
+    CALIPSO.residual!(solver.data, solver.problem, solver.indices, solver.solution, κ, ρ, λ)
     CALIPSO.search_direction_nonsymmetric!(solver.data.step, solver.data)
     Δ = deepcopy(solver.data.step)
 
