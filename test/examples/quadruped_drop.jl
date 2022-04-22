@@ -194,7 +194,7 @@
     nu = RoboDojo.quadruped.nu + nc + 8 + nc + 8
     nw = RoboDojo.quadruped.nw
 
-    RoboDojo.quadruped.friction_joint .*= 0.001
+    # RoboDojo.quadruped.friction_joint .*= 0.001
 
     # ## time 
     T = 6
@@ -226,7 +226,7 @@
         q = x[RoboDojo.quadruped.nq .+ (1:RoboDojo.quadruped.nq)]
 
         J = 0.0 
-        J += 1.0e-2 * dot(u_ctrl, u_ctrl)
+        J += 1.0 * dot(u_ctrl, u_ctrl)
         J += 1.0 * dot(q - qT, q - qT)
         return J
     end
@@ -238,7 +238,7 @@
             q = x[RoboDojo.quadruped.nq .+ (1:RoboDojo.quadruped.nq)]
 
             J = 0.0 
-            J += 1.0e-2 * dot(u_ctrl, u_ctrl)
+            J += 1.0 * dot(u_ctrl, u_ctrl)
             J += 1.0 * dot(q - qT, q - qT)
             return J
         end
@@ -249,7 +249,7 @@
         q = x[RoboDojo.quadruped.nq .+ (1:RoboDojo.quadruped.nq)]
 
         J = 0.0 
-        J += 1.0e-3 * dot(q - qT, q - qT)
+        J += 1.0 * dot(q - qT, q - qT)
 
         return J
     end
@@ -311,10 +311,10 @@
     so = [[Constraint()] for t = 1:T]
 
     # ## initialize
-    q_interp = CALIPSO.linear_interpolation(q1, qT, T+1)
+    q_interp = CALIPSO.linear_interpolation(q1, q1, T+1)
     x_interp = [[q_interp[t]; q_interp[t+1]] for t = 1:T]
-    u_guess = [max.(0.0, 1.0e-2 * randn(nu)) for t = 1:T-1] # may need to run more than once to get good trajectory
-    x_guess = [t == 1 ? x_interp[1] : [x_interp[t]; max.(0.0, 1.0e-2 * randn(nc))] for t = 1:T]
+    u_guess = [max.(0.0, 1.0e-3 * randn(nu)) for t = 1:T-1] # may need to run more than once to get good trajectory
+    x_guess = [t == 1 ? x_interp[1] : [x_interp[t]; max.(0.0, 1.0e-3 * randn(nc))] for t = 1:T]
 
     # ## problem
     # println("solver")
@@ -329,9 +329,9 @@
         options=Options(
             verbose=true,        
             constraint_hessian=false,
-            residual_tolerance=1.0e-3, 
-            equality_tolerance=1.0e-2,
-            complementarity_tolerance=1.0e-2,
+            # residual_tolerance=1.0e-3, 
+            # equality_tolerance=1.0e-2,
+            # complementarity_tolerance=1.0e-2,
             update_factorization=false,
             penalty_initial=1.0, 
     ));
@@ -348,12 +348,7 @@
     x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 
     # test solution
-    opt_norm = max(
-        norm(solver.data.residual[solver.indices.variables], Inf),
-        norm(solver.data.residual[solver.indices.cone_slack], Inf),
-        # norm(λ - y, Inf),
-    )
-    @test opt_norm < solver.options.optimality_tolerance
+    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
                     norm(solver.data.residual[solver.indices.equality_dual], Inf),

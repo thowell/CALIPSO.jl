@@ -59,10 +59,10 @@ function cone_target(idx_ineq, idx_soc)
 end
 
 # violation 
-function cone_violation(x, idx_ineq, idx_soc) 
-    length(idx_ineq) > 0 && (nonnegative_violation(x[idx_ineq]) && (return true))
+function cone_violation(x̂, x, τ, idx_ineq, idx_soc) 
+    length(idx_ineq) > 0 && (nonnegative_violation(x̂[idx_ineq], x[idx_ineq], τ[1]) && (return true))
     for idx in idx_soc 
-        length(idx) > 0 && (second_order_violation(x[idx]) && (return true))
+        length(idx) > 0 && (second_order_violation(x̂[idx], x[idx], τ[1]) && (return true))
     end
     return false
 end

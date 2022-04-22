@@ -32,6 +32,7 @@ end
 
 function initialize_interior_point!(solver)
     solver.central_path[1] = solver.options.central_path_initial
+    solver.fraction_to_boundary[1] = max(0.99, 1.0 - solver.central_path[1])
     return 
 end
 

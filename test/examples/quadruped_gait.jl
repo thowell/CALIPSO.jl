@@ -473,9 +473,9 @@
             penalty_initial=1.0, 
             constraint_hessian=false,
             update_factorization=false,
-            residual_tolerance=1.0e-3, 
-            equality_tolerance=1.0e-2,
-            complementarity_tolerance=1.0e-2,
+            # residual_tolerance=1.0e-3, 
+            # equality_tolerance=1.0e-2,
+            # complementarity_tolerance=1.0e-2,
     ));
 
     initialize_states!(solver, trajopt, x_guess);
@@ -489,12 +489,7 @@
     x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
 
     # test solution
-    opt_norm = max(
-        norm(solver.data.residual[solver.indices.variables], Inf),
-        norm(solver.data.residual[solver.indices.cone_slack], Inf),
-        # norm(λ - y, Inf),
-    )
-    @test opt_norm < solver.options.optimality_tolerance
+    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
                     norm(solver.data.residual[solver.indices.equality_dual], Inf),
@@ -509,7 +504,7 @@ end
 # # ## visualize 
 # vis = Visualizer() 
 # open(vis)
-# q_vis = [x_sol[1][1:RoboDojo.quadruped.nq], [x[RoboDojo.quadruped.11 .+ (1:RoboDojo.quadruped.nq)] for x in x_sol]...]
+# q_vis = [x_sol[1][1:RoboDojo.quadruped.nq], [x[RoboDojo.quadruped.nq .+ (1:RoboDojo.quadruped.nq)] for x in x_sol]...]
 # for i = 1:3
 #     T = length(q_vis) - 1
 #     q_vis = mirror_gait(q_vis, T)
