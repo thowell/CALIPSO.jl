@@ -61,6 +61,9 @@ function solve!(solver)
     # counter
     total_iterations = 1
 
+    # info
+    options.verbose && solver_info(solver)
+
     # evaluate
     problem!(problem, methods, indices, variables, parameters,
         objective=true,
@@ -69,6 +72,9 @@ function solve!(solver)
         cone_constraint=true,
         # cone_jacobian_variables=true,
     )
+
+    equality_violation = norm(problem.equality_constraint, Inf) 
+    cone_product_violation = norm(problem.cone_product, Inf) 
 
     cone!(problem, methods, indices, variables,
         product=true,
@@ -106,61 +112,41 @@ function solve!(solver)
 
             # residual
             residual!(data, problem, indices, variables, κ, ρ, λ)
-            res_norm = norm(data.residual, options.residual_norm) / solver.dimensions.total
-            # options.verbose && println("res: $(res_norm)")
 
-            # check outer convergence
-            slack_norm = max(
+            # violations
+            residual_violation = norm(data.residual, options.residual_norm) / solver.dimensions.total
+            optimality_violation = optimality_error(variables, data.residual, indices)
+            slack_violation = max(
                             norm(data.residual[indices.equality_dual], Inf),
                             norm(data.residual[indices.cone_dual], Inf),
             )
-            options.verbose && println("slack_norm: $(slack_norm)")
-            options.verbose && println("eq norm: $(norm(problem.equality_constraint, Inf))")
-            options.verbose && println("cone norm: $(norm(problem.cone_product, Inf))")
-            options.verbose && println("eq: $(norm(problem.equality_constraint, Inf))")
-            options.verbose && println("central path: $(κ[1])")
-            options.verbose && println("frac to bound.: $(τ[1])")
-            options.verbose && println("penalty: $(ρ[1])")
-            options.verbose && println("opt. error: $(optimality_error(variables, data.residual, indices))")
-
-            # check inner convergence
-            if optimality_error(variables, data.residual, indices) <= max(options.central_path_update_tolerance * κ[1], options.optimality_tolerance) #|| res_norm < options.residual_tolerance
-                println("checking!")
-                # check outer convergence
-
-                slack_norm = max(
-                                norm(data.residual[indices.equality_dual], Inf),
-                                norm(data.residual[indices.cone_dual], Inf),
+            
+            # check outer convergence
+            if (
+                residual_violation < options.residual_tolerance &&
+                slack_violation < options.slack_tolerance && 
+                equality_violation <= options.equality_tolerance && 
+                cone_product_violation <= options.complementarity_tolerance
                 )
-
-                if (norm(problem.equality_constraint, Inf) <= options.equality_tolerance && 
-                    norm(problem.cone_product, Inf) <= options.complementarity_tolerance && 
-                    slack_norm < options.slack_tolerance && 
-                    # opt_norm < options.optimality_tolerance
-                    res_norm < options.residual_tolerance
-                    )
-                    
-                    options.verbose && println("solve success!")
-                    # differentiate
-                    options.differentiate && (println("differentiating..."); differentiate!(solver))
-                    return true
-                # perform outer update
-                else
-                    break
-                end
-            end
-
-            if (norm(problem.equality_constraint, Inf) <= options.equality_tolerance && 
-                norm(problem.cone_product, Inf) <= options.complementarity_tolerance && 
-                slack_norm < options.slack_tolerance && 
-                # opt_norm < options.optimality_tolerance
-                res_norm < options.residual_tolerance
-                )
-                
-                options.verbose && println("solve success!")
                 # differentiate
-                options.differentiate && (println("differentiating..."); differentiate!(solver))
-                return true 
+                options.differentiate && differentiate!(solver)
+                # status 
+                options.verbose && iteration_status(
+                    total_iterations, 
+                    j, 
+                    i, 
+                    residual_violation, 
+                    equality_violation, 
+                    cone_product_violation, 
+                    slack_violation, 
+                    κ[1], 
+                    ρ[1], 
+                    1.0) 
+                options.verbose && solver_status(solver, true)
+                return true
+            # check inner convergence
+            elseif optimality_violation <= max(options.central_path_update_tolerance * κ[1], options.optimality_tolerance)
+                break
             end
 
             # violation
@@ -227,7 +213,8 @@ function solve!(solver)
 
             residual_iteration = 0
 
-            while α > 1.0e-8
+            while residual_iteration < options.max_residual_line_search
+                # filter check
                 if check_filter(θ̂ , M̂, filter)
                     if θ <= options.slack_tolerance && switching_condition(α, Δp, merit_grad, options.merit_exponent, θ, options.violation_exponent, 1.0) && 
                         armijo(M, M̂, merit_grad, Δp, α, options.armijo_tolerance, options.machine_tolerance) && break
@@ -262,8 +249,7 @@ function solve!(solver)
                 residual_iteration > options.max_residual_line_search && (@warn "residual search failure"; break)
             end
 
-            # options.verbose && println("α = $α")
-
+            # update filter
             augment_filter!(solver, M, M̂, merit_grad, θ, α, Δp)
 
             # update
@@ -277,21 +263,23 @@ function solve!(solver)
             cone!(problem, methods, indices, variables,
                 product=true,
             )
+
+            equality_violation = norm(problem.equality_constraint, Inf) 
+            cone_product_violation = norm(problem.cone_product, Inf) 
             
-            total_iterations += 1
-            # options.verbose && println("con: $(norm(solver.problem.equality_constraint, Inf))")
-            # options.verbose && println("comp: $(norm(solver.problem.cone_product, Inf))")
-
-            if options.verbose
-                if rem(total_iterations-1,5) == 0
-                    @printf "iters  outer  inner     res         |eq|       |ineq|        κ           ρ          α      \n"
-                    @printf "-------------------------------------------------------------------------------------------\n"
-                end
-                ceq = norm(solver.problem.equality_constraint, Inf)
-                cin = norm(solver.problem.cone_product, Inf)
-                @printf("%3d     %2d    %3d    %9.2e   %9.2e   %9.2e   %9.2e   %9.2e   %9.2e\n",total_iterations,j,i,res_norm, ceq, cin, κ[1],ρ[1],α)
-            end
-
+            # status
+            options.verbose && iteration_status(
+                total_iterations, 
+                j, 
+                i, 
+                residual_violation, 
+                equality_violation, 
+                cone_product_violation, 
+                slack_violation, 
+                κ[1], 
+                ρ[1], 
+                α) 
+            
             total_iterations += 1
         end
 
@@ -311,5 +299,6 @@ function solve!(solver)
     end
 
     # failure
+    options.verbose && solver_status(solver, false)
     return false
 end

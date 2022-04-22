@@ -5,7 +5,9 @@ using Symbolics
 using SparseArrays
 using Scratch
 using QDLDL
+
 using Printf
+using Crayons
 
 # Solver
 include("solver/codegen.jl")
@@ -20,6 +22,7 @@ include("solver/dimensions.jl")
 include("solver/inertia.jl")
 include("solver/qdldl.jl")
 include("solver/options.jl")
+include("solver/print.jl")
 include("solver/residual.jl")
 include("solver/residual_jacobian_variables.jl")
 include("solver/residual_jacobian_parameters.jl")
