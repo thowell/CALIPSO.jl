@@ -245,7 +245,9 @@
     solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
         nonnegative_indices=idx_nn, 
         second_order_indices=idx_soc,
-        options=Options(verbose=true));
+        options=Options(
+            verbose=true
+        ));
     initialize_states!(solver, trajopt, x_guess);
     initialize_controls!(solver, trajopt, u_guess);
     
@@ -255,12 +257,7 @@
     x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
     
     # test solution
-    opt_norm = max(
-        norm(solver.data.residual[solver.indices.variables], Inf),
-        norm(solver.data.residual[solver.indices.cone_slack], Inf),
-        # norm(λ - y, Inf),
-    )
-    @test opt_norm < solver.options.optimality_tolerance
+    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
                     norm(solver.data.residual[solver.indices.equality_dual], Inf),

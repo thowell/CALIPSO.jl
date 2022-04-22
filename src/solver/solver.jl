@@ -9,6 +9,7 @@ mutable struct Solver{T}
     dimensions::Dimensions
     linear_solver::LinearSolver
     central_path::Vector{T} 
+    fraction_to_boundary::Vector{T}
     penalty::Vector{T}
     dual::Vector{T} 
 
@@ -47,10 +48,11 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     candidate = zeros(dim.total)
 
     # interior-point 
-    central_path = [1.0] 
+    central_path = [0.1] 
+    fraction_to_boundary = [max(0.99, 1.0 - central_path[1])]
 
     # augmented Lagrangian 
-    penalty = [1.0] 
+    penalty = [10.0] 
     dual = zeros(num_equality) 
 
     # linear solver TODO: constructor
@@ -93,7 +95,8 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         idx, 
         dim,
         linear_solver,
-        central_path, 
+        central_path,
+        fraction_to_boundary,
         penalty, 
         dual,
         regularization, 

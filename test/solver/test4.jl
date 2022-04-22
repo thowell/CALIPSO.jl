@@ -17,12 +17,7 @@
     solve!(solver)
 
     # test solution
-    opt_norm = max(
-        norm(solver.data.residual[solver.indices.variables], Inf),
-        norm(solver.data.residual[solver.indices.cone_slack], Inf),
-        # norm(λ - y, Inf),
-    )
-    @test opt_norm < solver.options.optimality_tolerance
+    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
                     norm(solver.data.residual[solver.indices.equality_dual], Inf),

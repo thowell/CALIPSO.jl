@@ -11,15 +11,15 @@ Base.@kwdef mutable struct Options{T}
     max_iterative_refinement::Int=10
     min_iterative_refinement::Int=1
     iterative_refinement_tolerance=1.0e-10
-    central_path_initial::T=1.0
+    central_path_initial::T=1.0e-1
     central_path_update_tolerance::T=10.0
     central_path_convergence_tolerance::T=1.0e-5
-    central_path_scaling::T = 0.2
-    central_path_exponent::T = 1.5
+    central_path_scaling::T=0.2
+    central_path_exponent::T=1.5
     penalty_initial::T=1.0
-    scaling_penalty::T=10.0
+    penalty_scaling::T=10.0
     dual_initial::T=0.0
-    residual_tolerance::T=1.0e-6
+    residual_tolerance::T=1.0e-4
     optimality_tolerance::T=1.0e-4
     slack_tolerance::T=1.0e-4
     equality_tolerance::T=1.0e-4
@@ -33,10 +33,17 @@ Base.@kwdef mutable struct Options{T}
     scaling_regularization_last::T=(1.0 / 3.0)
     min_central_path::T=1.0e-8
     max_penalty::T=1.0e8
-    armijo_tolerance::T=1.0e-4
     constraint_hessian::Bool=true
     linear_solver::Symbol=:QDLDL
     update_factorization::Bool=true
+
+    violation_tolerance::T=1.0e-5 
+    violation_exponent::T=1.1
+    merit_tolerance::T=1.0e-5
+    merit_exponent::T=2.3 
+    armijo_tolerance::T=1.0e-4
+    machine_tolerance::T=1.0e-16
+
     differentiate::Bool=true
     verbose::Bool=true
 end

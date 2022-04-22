@@ -38,9 +38,6 @@
     solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         parameters=parameters,
         options=Options(
-            # residual_tolerance=1.0e-8, 
-            # equality_tolerance=1.0e-6,
-            # complementarity_tolerance=1.0e-6,
             differentiate=true))
     initialize!(solver, x0)
 
@@ -48,12 +45,7 @@
     solve!(solver)
 
     # solution
-    opt_norm = max(
-        norm(solver.data.residual[solver.indices.variables], Inf),
-        norm(solver.data.residual[solver.indices.cone_slack], Inf),
-        # norm(λ - y, Inf),
-    )
-    @test opt_norm < solver.options.optimality_tolerance
+    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
                     norm(solver.data.residual[solver.indices.equality_dual], Inf),

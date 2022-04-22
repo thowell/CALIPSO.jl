@@ -5,7 +5,7 @@
     num_cone = 2
     x0 = rand(num_variables)
 
-    obj(x, θ) = -x[1]*x[2] + 2/(3*sqrt(3))
+    obj(x, θ) = -x[1] * x[2] + 2.0 / (3.0 * sqrt(3))
     eq(x, θ) = zeros(0)
     cone(x, θ) = [-x[1] - x[2]^2 + 1.0;
                 x[1] + x[2]]
@@ -19,12 +19,7 @@
     solve!(solver)
 
     # test solution
-    opt_norm = max(
-        norm(solver.data.residual[solver.indices.variables], Inf),
-        norm(solver.data.residual[solver.indices.cone_slack], Inf),
-        # norm(λ - y, Inf),
-    )
-    @test opt_norm < solver.options.optimality_tolerance
+    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
                     norm(solver.data.residual[solver.indices.equality_dual], Inf),

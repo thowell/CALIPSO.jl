@@ -228,15 +228,15 @@
     # ## objective
     function obj1(x, u, w)
         J = 0.0 
-        J += 0.5 * transpose(x - x_ref) * Diagonal([1.0; 10.0; 1.0; 10.0; 1.0; 10.0; 1.0; 10.0]) * (x - x_ref) 
-        J += 0.5 * transpose(u) * Diagonal([r_cost * ones(RoboDojo.hopper.nu); zeros(nu - RoboDojo.hopper.nu)]) * u
+        J += 0.5 * transpose(x - x_ref) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x - x_ref) 
+        J += 0.5 * transpose(u) * Diagonal([r_cost * ones(RoboDojo.hopper.nu); 1.0e-5 * ones(nu - RoboDojo.hopper.nu)]) * u
         return J
     end
 
     function objt(x, u, w)
         J = 0.0 
-        J += 0.5 * transpose(x[1:nx] - x_ref) * Diagonal(q_cost * [1.0; 10.0; 1.0; 10.0; 1.0; 10.0; 1.0; 10.0]) * (x[1:nx] - x_ref)
-        J += 0.5 * transpose(u) * Diagonal([r_cost * ones(RoboDojo.hopper.nu); zeros(nu - RoboDojo.hopper.nu)]) * u
+        J += 0.5 * transpose(x[1:nx] - x_ref) * Diagonal(q_cost * [1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x[1:nx] - x_ref)
+        J += 0.5 * transpose(u) * Diagonal([r_cost * ones(RoboDojo.hopper.nu); 1.0e-5 * ones(nu - RoboDojo.hopper.nu)]) * u
         return J
     end
 
@@ -356,7 +356,13 @@
     solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
         nonnegative_indices=idx_nn, 
         second_order_indices=idx_soc,
-        options=Options(verbose=true))
+        options=Options(
+            verbose=true,
+            # optimality_tolerance=1.0e-3,
+            # equality_tolerance=1.0e-3, 
+            # slack_tolerance=1.0e-3, 
+            # complementarity_tolerance=1.0e-3,
+        ));
     initialize_states!(solver, trajopt, x_interpolation)
     initialize_controls!(solver, trajopt, u_guess)
 
@@ -369,12 +375,7 @@
     @test norm((x_sol[1] - x_sol[T][1:nx])[[2; 3; 4; 6; 7; 8]], Inf) < 1.0e-3
 
     # test solution
-    opt_norm = max(
-        norm(solver.data.residual[solver.indices.variables], Inf),
-        norm(solver.data.residual[solver.indices.cone_slack], Inf),
-        # norm(λ - y, Inf),
-    )
-    @test opt_norm < solver.options.optimality_tolerance
+    @test norm(solver.data.residual, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
                     norm(solver.data.residual[solver.indices.equality_dual], Inf),
