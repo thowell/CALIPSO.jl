@@ -85,7 +85,6 @@ function solve!(solver)
     filter = solver.data.filter
     reset!(filter) 
 
-    # return 
     for j = 1:options.max_outer_iterations
         for i = 1:options.max_residual_iterations
             # evaluate
@@ -95,16 +94,33 @@ function solve!(solver)
                 cone_dual_jacobian_variables=true,
             )
 
+            cone!(problem, cone_methods, indices, solution,
+                barrier=true,
+                barrier_gradient=true,
+            )
+
             # merit
             M = merit(
                 problem.objective[1],
-                r, s, κ[1], λ, ρ[1],
+                r, 
+                problem.barrier[1],
+                κ[1], λ, ρ[1],
                 indices)
 
-            merit_grad = vcat(merit_gradient(
-                problem.objective_gradient_variables,
-                r, s, κ[1], λ, ρ[1],
-                indices)...)
+            # merit_grad = vcat(merit_gradient(
+            #     problem.objective_gradient_variables,
+            #     r, s, κ[1], λ, ρ[1],
+            #     indices)...)
+
+            merit_gradient!(
+                    data.merit_gradient,
+                    problem.objective_gradient_variables,
+                    r, 
+                    problem.barrier_gradient, 
+                    κ[1], λ, ρ[1],
+                    indices)
+
+            # return
 
             # residual
             residual!(data, problem, indices, solution, κ, ρ, λ)
@@ -201,10 +217,18 @@ function solve!(solver)
                 cone_constraint=true,
             )
 
+            cone!(problem, cone_methods, indices, candidate,
+                barrier=true,
+                barrier_gradient=true,
+            )
+
             M̂ = merit(
                 problem.objective[1],
-                r̂, ŝ, κ[1], λ, ρ[1],
+                r̂, 
+                problem.barrier[1], 
+                κ[1], λ, ρ[1],
                 indices)
+
             θ̂  = constraint_violation!(constraint_violation,
                 problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
                 norm_type=options.constraint_norm)
@@ -214,8 +238,8 @@ function solve!(solver)
             while residual_iteration < options.max_residual_line_search
                 # filter check
                 if check_filter(θ̂ , M̂, filter)
-                    if θ <= options.slack_tolerance && switching_condition(α, Δp, merit_grad, options.merit_exponent, θ, options.violation_exponent, 1.0) && 
-                        armijo(M, M̂, merit_grad, Δp, α, options.armijo_tolerance, options.machine_tolerance) && break
+                    if θ <= options.slack_tolerance && switching_condition(α, Δp, data.merit_gradient, options.merit_exponent, θ, options.violation_exponent, 1.0) && 
+                        armijo(M, M̂, data.merit_gradient, Δp, α, options.armijo_tolerance, options.machine_tolerance) && break
                     elseif sufficient_progress(θ, θ̂ , M, M̂, options.violation_tolerance, options.merit_tolerance, options.machine_tolerance)
                         break
                     end                     
@@ -235,9 +259,15 @@ function solve!(solver)
                     cone_constraint=true,
                 )
 
+                cone!(problem, cone_methods, indices, solution,
+                    barrier=true,
+                    barrier_gradient=true,
+                )
                 M̂ = merit(
                     problem.objective[1],
-                    r̂, ŝ, κ[1], λ, ρ[1],
+                    r̂, 
+                    problem.barrier[1], 
+                    κ[1], λ, ρ[1],
                     indices)
                 θ̂  = constraint_violation!(constraint_violation,
                     problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
@@ -248,7 +278,7 @@ function solve!(solver)
             end
 
             # update filter
-            augment_filter!(solver, M, M̂, merit_grad, θ, α, Δp)
+            augment_filter!(solver, M, M̂, data.merit_gradient, θ, α, Δp)
 
             # update
             x .= x̂

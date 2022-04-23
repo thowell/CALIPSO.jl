@@ -59,6 +59,5 @@ parameters = solver.parameters
 # solve 
 @benchmark solve!($solver)
 
-
 @code_warntype initialize_slacks!(solver)
 solve!(solver)
