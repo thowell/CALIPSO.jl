@@ -81,12 +81,11 @@ function solve!(solver)
         target=true
     )
 
-    # return 
-
     # initialize filter
     filter = solver.data.filter
-    push!(filter, (Inf, Inf))
+    reset!(filter) 
 
+    # return 
     for j = 1:options.max_outer_iterations
         for i = 1:options.max_residual_iterations
             # evaluate
@@ -293,8 +292,7 @@ function solve!(solver)
         ρ[1] = min(max(options.penalty_scaling * ρ[1], 1.0 / κ[1]), options.max_penalty)
 
         # reset filter
-        empty!(filter)
-        push!(filter, (Inf, Inf))
+        reset!(filter)
     end
 
     # failure

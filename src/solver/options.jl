@@ -44,6 +44,7 @@ Base.@kwdef mutable struct Options{T}
     merit_exponent::T=2.3 
     armijo_tolerance::T=1.0e-4
     machine_tolerance::T=1.0e-16
+    max_filter::Int=1000
 
     differentiate::Bool=true
     verbose::Bool=true

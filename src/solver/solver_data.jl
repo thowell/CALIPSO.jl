@@ -12,12 +12,13 @@ struct SolverData{T}
     merit::Vector{T} 
     merit_gradient::Vector{T} 
     constraint_violation::Vector{T}
-    filter::Vector{Tuple{T,T}}
+    filter::Filter{T}
     solution_sensitivity::Matrix{T}
     solution_sensitivity_vectors::Vector{Point{T}}
 end
 
 function SolverData(dims::Dimensions, idx::Indices;
+    max_filter=1000,
     T=Float64)
 
     num_variables = dims.variables 
@@ -47,7 +48,7 @@ function SolverData(dims::Dimensions, idx::Indices;
 
     constraint_violation = zeros(num_equality + num_cone) 
 
-    filter = Tuple{T,T}[]
+    filter = Filter(; max_length=max_filter)
     
     solution_sensitivity = zeros(num_total, num_parameters)
     solution_sensitivity_vectors = [Point(dims, idx) for i = 1:num_parameters]

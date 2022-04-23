@@ -48,7 +48,8 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     p_data = ProblemData(num_variables, num_parameters, num_equality, num_cone)
 
     # solver data
-    s_data = SolverData(dim, idx)
+    s_data = SolverData(dim, idx,
+        max_filter=options.max_filter)
 
     # points 
     solution = Point(dim, idx)
