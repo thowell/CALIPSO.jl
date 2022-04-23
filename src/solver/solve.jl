@@ -48,6 +48,7 @@ function solve!(solver)
     # problem
     problem = solver.problem
     methods = solver.methods
+    cone_methods = solver.cone_methods
 
     # barrier + augmented Lagrangian 
     κ = solver.central_path 
@@ -62,7 +63,7 @@ function solve!(solver)
     total_iterations = 1
 
     # info
-    options.verbose && solver_info(solver)
+    # options.verbose && solver_info(solver)
 
     # evaluate
     problem!(problem, methods, indices, solution, parameters,
@@ -75,10 +76,12 @@ function solve!(solver)
     equality_violation = norm(problem.equality_constraint, Inf) 
     cone_product_violation = norm(problem.cone_product, Inf) 
 
-    cone!(problem, methods, indices, solution,
+    cone!(problem, cone_methods, indices, solution,
         product=true,
         target=true
     )
+
+    # return 
 
     # initialize filter
     filter = solver.data.filter
@@ -159,7 +162,7 @@ function solve!(solver)
                 cone_dual_jacobian_variables_variables=options.constraint_hessian,
             )
 
-            cone!(problem, methods, indices, solution,
+            cone!(problem, cone_methods, indices, solution,
                 jacobian=true,
             )
 
@@ -256,7 +259,7 @@ function solve!(solver)
             z .= z - α * Δz
             t .= t̂
 
-            cone!(problem, methods, indices, solution,
+            cone!(problem, cone_methods, indices, solution,
                 product=true,
             )
 

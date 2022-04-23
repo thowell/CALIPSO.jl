@@ -46,8 +46,8 @@ end
 
 function cone_product_jacobian_inverse(a, b, idx_ineq, idx_soc) 
     cat(
-        length(idx_ineq) > 0 ? inv(nonnegative_product_jacobian(a[idx_ineq], b[idx_ineq])) : zeros(0, 0),
-        [length(idx) > 0 ? inv(second_order_product_jacobian(a[idx], b[idx])) : zeros(0, 0) for idx in idx_soc]..., 
+        length(idx_ineq) > 0 ? nonnegative_product_jacobian_inverse(a[idx_ineq], b[idx_ineq]) : zeros(0, 0),
+        [length(idx) > 0 ? second_order_product_jacobian_inverse(a[idx], b[idx]) : zeros(0, 0) for idx in idx_soc]..., 
     dims=(1, 2))
 end
 
@@ -68,7 +68,9 @@ function cone_violation(x̂, x, τ, idx_ineq, idx_soc)
 end
 
 # evalute
-function cone!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, solution::Point{T};
+function cone!(problem::ProblemData{T}, methods::ConeMethods, idx::Indices, solution::Point{T};
+    barrier=false, 
+    barrier_gradient=false,
     product=false,
     jacobian=false,
     target=false,
@@ -77,10 +79,15 @@ function cone!(problem::ProblemData{T}, methods::ProblemMethods, idx::Indices, s
     s = solution.cone_slack
     t = solution.cone_slack_dual
 
-    product && (problem.cone_product .= cone_product(s, t, idx.cone_nonnegative, idx.cone_second_order))
-    jacobian && (problem.cone_product_jacobian_primal .= cone_product_jacobian(s, t, idx.cone_nonnegative, idx.cone_second_order))
-    jacobian && (problem.cone_product_jacobian_dual .= cone_product_jacobian(t, s, idx.cone_nonnegative, idx.cone_second_order))
-    target && (problem.cone_target .= cone_target(idx.cone_nonnegative, idx.cone_second_order))
+    # barrier 
+    barrier && methods.barrier(problem.barrier, s) 
+    barrier_gradient && methods.barrier_gradient(problem.barrier_gradient, s)
+
+    # cone
+    product && methods.product(problem.cone_product, s, t)
+    jacobian && methods.product_jacobian(problem.cone_product_jacobian_primal, s, t)
+    jacobian && methods.product_jacobian(problem.cone_product_jacobian_dual, t, s)
+    target && methods.target(problem.cone_target, s, t)
 
     return
 end

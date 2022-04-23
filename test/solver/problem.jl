@@ -65,7 +65,7 @@
         cone_dual_jacobian_variables_variables=true,
     )
 
-    CALIPSO.cone!(solver.problem, solver.methods, solver.indices, solver.solution,
+    CALIPSO.cone!(solver.problem, solver.cone_methods, solver.indices, solver.solution,
         product=true,
         jacobian=true,
         target=true,

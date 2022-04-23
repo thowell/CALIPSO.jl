@@ -23,6 +23,8 @@ struct ProblemData{T}
     cone_product_jacobian_primal::Matrix{T} 
     cone_product_jacobian_dual::Matrix{T} 
     cone_target::Vector{T}
+    barrier::Vector{T} 
+    barrier_gradient::Vector{T}
 end
 
 function ProblemData(num_variables, num_parameters, num_equality, num_cone)
@@ -53,6 +55,9 @@ function ProblemData(num_variables, num_parameters, num_equality, num_cone)
     cone_product_jacobian_dual = zeros(num_cone, num_cone) 
     cone_target = zeros(num_cone)
 
+    barrier = zeros(1) 
+    barrier_gradient = zeros(num_variables + num_equality + num_cone)
+
     ProblemData(
         objective,                        
         objective_gradient_variables,
@@ -77,6 +82,8 @@ function ProblemData(num_variables, num_parameters, num_equality, num_cone)
         cone_product_jacobian_primal,
         cone_product_jacobian_dual,
         cone_target,
+        barrier, 
+        barrier_gradient,
     )
 end
 

@@ -9,11 +9,11 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
         fxx = Symbolics.jacobian(fx, x)
         fxθ = Symbolics.jacobian(fx, θ)
 
-        f_expr = eval(Symbolics.build_function(f, x, θ)[2])
-        fx_expr = eval(Symbolics.build_function(fx, x, θ)[2])
-        fθ_expr = eval(Symbolics.build_function(fθ, x, θ)[2])
-        fxx_expr = eval(Symbolics.build_function(fxx, x, θ)[2])
-        fxθ_expr = eval(Symbolics.build_function(fxθ, x, θ)[2])
+        f_expr = Symbolics.build_function(f, x, θ, expression=Val{false})[2]
+        fx_expr = Symbolics.build_function(fx, x, θ, expression=Val{false})[2]
+        fθ_expr = Symbolics.build_function(fθ, x, θ, expression=Val{false})[2]
+        fxx_expr = Symbolics.build_function(fxx, x, θ, expression=Val{false})[2]
+        fxθ_expr = Symbolics.build_function(fxθ, x, θ, expression=Val{false})[2]
 
         return f_expr, fx_expr, fθ_expr, fxx_expr, fxθ_expr
     elseif mode == :vector 
@@ -28,13 +28,13 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
         fᵀyxx = Symbolics.jacobian(fᵀyx, x) 
         fᵀyxθ = Symbolics.jacobian(fᵀyx, θ) 
 
-        f_expr = eval(Symbolics.build_function(f, x, θ)[2])
-        fx_expr = eval(Symbolics.build_function(fx, x, θ)[2])
-        fθ_expr = eval(Symbolics.build_function(fθ, x, θ)[2])
-        fᵀy_expr = eval(Symbolics.build_function([fᵀy], x, θ, y)[2])
-        fᵀyx_expr = eval(Symbolics.build_function(fᵀyx, x, θ, y)[2])
-        fᵀyxx_expr = eval(Symbolics.build_function(fᵀyxx, x, θ, y)[2])
-        fᵀyxθ_expr = eval(Symbolics.build_function(fᵀyxθ, x, θ, y)[2])
+        f_expr = Symbolics.build_function(f, x, θ, expression=Val{false})[2]
+        fx_expr = Symbolics.build_function(fx, x, θ, expression=Val{false})[2]
+        fθ_expr = Symbolics.build_function(fθ, x, θ, expression=Val{false})[2]
+        fᵀy_expr = Symbolics.build_function([fᵀy], x, θ, y, expression=Val{false})[2]
+        fᵀyx_expr = Symbolics.build_function(fᵀyx, x, θ, y, expression=Val{false})[2]
+        fᵀyxx_expr = Symbolics.build_function(fᵀyxx, x, θ, y, expression=Val{false})[2]
+        fᵀyxθ_expr = Symbolics.build_function(fᵀyxθ, x, θ, y, expression=Val{false})[2]
 
         return f_expr, fx_expr, fθ_expr, fᵀy_expr, fᵀyx_expr, fᵀyxx_expr, fᵀyxθ_expr
     end

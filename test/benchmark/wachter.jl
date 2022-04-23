@@ -1,20 +1,20 @@
 using BenchmarkTools 
 using InteractiveUtils
 
-# num_variables = 3
-# num_parameters = 0
-# num_equality = 2
-# num_cone = 2
-# x0 = [-2.0, 3.0, 1.0]
+num_variables = 3
+num_parameters = 0
+num_equality = 2
+num_cone = 2
+x0 = [-2.0, 3.0, 1.0]
 
-# obj(x, θ) = x[1]
-# eq(x, θ) = [x[1]^2 - x[2] - 1.0; x[1] - x[3] - 0.5]
-# cone(x, θ) = x[2:3]
+obj(x, θ) = x[1]
+eq(x, θ) = [x[1]^2 - x[2] - 1.0; x[1] - x[3] - 0.5]
+cone(x, θ) = x[2:3]
 
-# # solver
-# method = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-# solver = Solver(method, num_variables, num_parameters, num_equality, num_cone)
-# initialize!(solver, x0)
+# solver
+method = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
+solver = Solver(method, num_variables, num_parameters, num_equality, num_cone)
+initialize!(solver, x0)
 
 problem = solver.problem 
 method = solver.methods 
@@ -59,4 +59,6 @@ parameters = solver.parameters
 # solve 
 @benchmark solve!($solver)
 
+
+@code_warntype initialize_slacks!(solver)
 solve!(solver)

@@ -15,7 +15,11 @@ nonnegative_barrier_gradient(x) = 1.0 ./ x
 nonnegative_product(a, b) = a .* b 
 
 function nonnegative_product_jacobian(a, b) 
-    Diagonal(b) 
+    Array(Diagonal(b)) 
+end
+
+function nonnegative_product_jacobian_inverse(a, b) 
+    Array(Diagonal(1.0 ./ b)) 
 end
 
 # target 

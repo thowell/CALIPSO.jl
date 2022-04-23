@@ -1,6 +1,7 @@
-struct Solver{T}
+struct Solver{T,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP,B,BX,P,PX,PXI,K}
     problem::ProblemData{T} 
-    methods::ProblemMethods 
+    methods::ProblemMethods{O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP} 
+    cone_methods::ConeMethods{B,BX,P,PX,PXI,K}
     data::SolverData{T}
     
     solution::Point{T} 
@@ -40,6 +41,9 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         nonnegative=length(nonnegative_indices),
         second_order=[length(idx_soc) for idx_soc in second_order_indices])
 
+    # cone methods 
+    cone_methods = ConeMethods(num_cone, nonnegative_indices, second_order_indices)
+    
     # problem data
     p_data = ProblemData(num_variables, num_parameters, num_equality, num_cone)
 
@@ -72,7 +76,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         cone_jacobian_variables=true,
         cone_dual_jacobian_variables_variables=true,
     )
-    cone!(p_data, methods, idx, random_solution,
+    cone!(p_data, cone_methods, idx, random_solution,
         # product=true, 
         jacobian=true,
         # target=true
@@ -90,7 +94,8 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
 
     Solver(
         p_data, 
-        methods, 
+        methods,
+        cone_methods,
         s_data,
         solution,
         candidate, 
