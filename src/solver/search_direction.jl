@@ -25,17 +25,17 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
     Δx = @views step_symmetric[idx.variables]
     Δy = @views step_symmetric[idx.symmetric_equality]
     Δz = @views step_symmetric[idx.symmetric_cone]
-    step.all[idx.variables] = Δx
-    step.all[idx.equality_dual] = Δy
-    step.all[idx.cone_dual] = Δz
+    step.variables .= Δx
+    step.equality_dual .= Δy
+    step.cone_dual .= Δz
 
     # recover Δr, Δs, Δt
-    Δr = @views step.all[idx.equality_slack]
-    Δs = @views step.all[idx.cone_slack]
-    Δt = @views step.all[idx.cone_slack_dual]
-    rr = @views residual.all[idx.equality_slack] 
-    rs = @views residual.all[idx.cone_slack] 
-    rt = @views residual.all[idx.cone_slack_dual]
+    Δr = step.equality_slack
+    Δs = step.cone_slack
+    Δt = step.cone_slack_dual
+    rr = residual.equality_slack 
+    rs = residual.cone_slack 
+    rt = residual.cone_slack_dual
 
     # Δr 
     for (i, ii) in enumerate(idx.equality_slack)

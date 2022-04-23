@@ -34,13 +34,13 @@ function solve!(solver)
 
     # search direction
     step = data.step
-    Δx = @views step.all[indices.variables]
-    Δr = @views step.all[indices.equality_slack]
-    Δs = @views step.all[indices.cone_slack]
-    Δy = @views step.all[indices.equality_dual]
-    Δz = @views step.all[indices.cone_dual]
-    Δt = @views step.all[indices.cone_slack_dual]
-    Δp = @views step.all[indices.primals]
+    Δx = step.variables
+    Δr = step.equality_slack
+    Δs = step.cone_slack
+    Δy = step.equality_dual
+    Δz = step.cone_dual
+    Δt = step.cone_slack_dual
+    Δp = step.primals
 
     # constraints
     constraint_violation = solver.data.constraint_violation
@@ -86,7 +86,6 @@ function solve!(solver)
 
     for j = 1:options.max_outer_iterations
         for i = 1:options.max_residual_iterations
-            
             # evaluate
             problem!(problem, methods, indices, solution, parameters,
                 objective_gradient_variables=true,
@@ -112,8 +111,8 @@ function solve!(solver)
             residual_violation = norm(data.residual.all, options.residual_norm) / solver.dimensions.total
             optimality_violation = optimality_error(solution, data.residual, indices)
             slack_violation = max(
-                            norm(data.residual.all[indices.equality_dual], Inf),
-                            norm(data.residual.all[indices.cone_dual], Inf),
+                            norm(data.residual.equality_dual, Inf),
+                            norm(data.residual.cone_dual, Inf),
             )
             
             # check outer convergence
@@ -125,6 +124,7 @@ function solve!(solver)
                 )
                 # differentiate
                 options.differentiate && differentiate!(solver)
+                
                 # status 
                 options.verbose && iteration_status(
                     total_iterations, 
@@ -138,6 +138,7 @@ function solve!(solver)
                     ρ[1], 
                     1.0) 
                 options.verbose && solver_status(solver, true)
+                
                 return true
             # check inner convergence
             elseif optimality_violation <= max(options.central_path_update_tolerance * κ[1], options.optimality_tolerance)

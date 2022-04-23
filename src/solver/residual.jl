@@ -1,4 +1,4 @@
-function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, solution::Point, κ, ρ, λ)
+function residual!(data::SolverData, problem::ProblemData, idx::Indices, solution::Point, κ, ρ, λ)
     # duals 
     y = solution.equality_dual
     z = solution.cone_dual
@@ -9,15 +9,15 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, soluti
     t = solution.cone_slack_dual
 
     # reset
-    res = s_data.residual.all 
+    res = data.residual.all 
     fill!(res, 0.0)
 
     # gradient of Lagrangian 
-    res[idx.variables] = p_data.objective_gradient_variables
+    data.residual.variables .= problem.objective_gradient_variables
 
     for (i, ii) in enumerate(idx.variables)
-        res[ii] += p_data.equality_dual_jacobian_variables[i] 
-        res[ii] += p_data.cone_dual_jacobian_variables[i]
+        res[ii] += problem.equality_dual_jacobian_variables[i] 
+        res[ii] += problem.cone_dual_jacobian_variables[i]
     end
     
     # λ + ρr - y 
@@ -31,20 +31,20 @@ function residual!(s_data::SolverData, p_data::ProblemData, idx::Indices, soluti
     end
 
     # equality 
-    res[idx.equality_dual] = p_data.equality_constraint
+    data.residual.equality_dual .= problem.equality_constraint
     for (i, ii) in enumerate(idx.equality_dual)
         res[ii] -= r[i]
     end
 
     # cone 
-    res[idx.cone_dual] = p_data.cone_constraint 
+    data.residual.cone_dual .= problem.cone_constraint 
     for (i, ii) in enumerate(idx.cone_dual) 
         res[ii] -= s[i]
     end
 
     # s ∘ t - κ e
     for (i, ii) in enumerate(idx.cone_slack_dual) 
-        res[ii] = p_data.cone_product[i] - κ[1] * p_data.cone_target[i]
+        res[ii] = problem.cone_product[i] - κ[1] * problem.cone_target[i]
     end
 
     return 
@@ -54,12 +54,12 @@ function residual_symmetric!(residual_symmetric, residual, matrix, idx::Indices)
     # reset
     fill!(residual_symmetric, 0.0)
 
-    rx = @views residual.all[idx.variables]
-    rr = @views residual.all[idx.equality_slack]
-    rs = @views residual.all[idx.cone_slack]
-    ry = @views residual.all[idx.equality_dual]
-    rz = @views residual.all[idx.cone_dual]
-    rt = @views residual.all[idx.cone_slack_dual]
+    rx = residual.variables
+    rr = residual.equality_slack
+    rs = residual.cone_slack
+    ry = residual.equality_dual
+    rz = residual.cone_dual
+    rt = residual.cone_slack_dual
 
     residual_symmetric[idx.variables] = rx
     residual_symmetric[idx.symmetric_equality] = ry

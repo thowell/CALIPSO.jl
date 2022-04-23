@@ -1,4 +1,4 @@
-mutable struct Solver{T}
+struct Solver{T}
     problem::ProblemData{T} 
     methods::ProblemMethods 
     data::SolverData{T}
