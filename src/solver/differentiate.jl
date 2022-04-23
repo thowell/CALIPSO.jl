@@ -23,19 +23,32 @@ function differentiate!(solver)
 
     # compute solution sensitivities
     fill!(solver.data.solution_sensitivity, 0.0)
-    @warn "diff disabled"
-    # for i in solver.indices.parameters 
-    #     ∂z∂pi = @views solver.data.solution_sensitivity[:, i]
-    #     Rpi   = @views solver.data.jacobian_parameters[:, i]
-    #     search_direction_symmetric!(∂z∂pi, Rpi, 
-    #         solver.data.jacobian_variables, 
-    #         solver.data.step_symmetric, 
-    #         solver.data.residual_symmetric, 
-    #         solver.data.jacobian_variables_symmetric, 
-    #         solver.indices, 
-    #         solver.linear_solver)
-    #     ∂z∂pi .*= -1.0
-    # end
+
+    #TODO parallelize, make more efficient
+    for i in solver.indices.parameters 
+        # for (k, s) in enumerate(solver.data.solution_sensitivity[:, i]) 
+        #     solver.data.solution_sensitivity_vectors[i].all[k] = s 
+        # end
+        fill!(solver.data.solution_sensitivity_vectors[i].all, 0.0)
+
+        for (k, p) in enumerate(solver.data.jacobian_parameters[:, i]) 
+            solver.data.jacobian_parameters_vectors[i].all[k] = p 
+        end
+
+        search_direction_symmetric!(
+            solver.data.solution_sensitivity_vectors[i],
+            solver.data.jacobian_parameters_vectors[i],
+            solver.data.jacobian_variables, 
+            solver.data.step_symmetric, 
+            solver.data.residual_symmetric, 
+            solver.data.jacobian_variables_symmetric, 
+            solver.indices, 
+            solver.linear_solver)
+
+        for (k, s) in enumerate(solver.data.solution_sensitivity_vectors[i].all) 
+            solver.data.solution_sensitivity[k, i] = -1.0 * s
+        end
+    end
 
     return 
 end

@@ -3,6 +3,7 @@ struct SolverData{T}
     residual_error::Point{T}
     jacobian_variables::SparseMatrixCSC{T,Int}
     jacobian_parameters::Matrix{T}
+    jacobian_parameters_vectors::Vector{Point{T}}
     residual_symmetric::Vector{T} 
     jacobian_variables_symmetric::SparseMatrixCSC{T,Int}
     step::Point{T}
@@ -13,6 +14,7 @@ struct SolverData{T}
     constraint_violation::Vector{T}
     filter::Vector{Tuple{T,T}}
     solution_sensitivity::Matrix{T}
+    solution_sensitivity_vectors::Vector{Point{T}}
 end
 
 function SolverData(dims::Dimensions, idx::Indices;
@@ -31,6 +33,7 @@ function SolverData(dims::Dimensions, idx::Indices;
 
     jacobian_variables = spzeros(num_total, num_total)
     jacobian_parameters = zeros(num_total, num_parameters)
+    jacobian_parameters_vectors = [Point(dims, idx) for i = 1:num_parameters]
 
     residual_symmetric = zeros(num_symmetric)
     jacobian_variables_symmetric = spzeros(num_symmetric, num_symmetric)
@@ -47,12 +50,14 @@ function SolverData(dims::Dimensions, idx::Indices;
     filter = Tuple{T,T}[]
     
     solution_sensitivity = zeros(num_total, num_parameters)
+    solution_sensitivity_vectors = [Point(dims, idx) for i = 1:num_parameters]
 
     SolverData(
         residual, 
         residual_error,
         jacobian_variables,
         jacobian_parameters,
+        jacobian_parameters_vectors,
         residual_symmetric,
         jacobian_variables_symmetric,
         step,
@@ -63,5 +68,6 @@ function SolverData(dims::Dimensions, idx::Indices;
         constraint_violation,
         filter,
         solution_sensitivity,
+        solution_sensitivity_vectors,
     )
 end
