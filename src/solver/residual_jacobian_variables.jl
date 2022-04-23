@@ -3,7 +3,7 @@ function residual_jacobian_variables!(data::SolverData, problem::ProblemData, id
      
     # reset
     H = data.jacobian_variables 
-    fill!(H, 0.0)
+    fill!(H.nzval, 0.0)
 
     # Hessian of Lagrangian
     for i in idx.variables 
@@ -108,7 +108,7 @@ end
 
 function residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx::Indices)
     # reset
-    fill!(matrix_symmetric, 0.0)
+    fill!(matrix_symmetric.nzval, 0.0)
 
     # Hessian of Lagrangian
     for i in idx.variables 

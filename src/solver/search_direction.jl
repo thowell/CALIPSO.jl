@@ -1,13 +1,14 @@
 function search_direction!(solver) 
     # correct inertia
     inertia_correction!(solver)
-    # return
+    
     # compute search direction
     search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 
         solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
         solver.indices, solver.linear_solver;
         update=solver.options.update_factorization)
 
+    # return 
     # refine search direction
     solver.options.iterative_refinement && iterative_refinement!(solver.data.step, solver)
 end
@@ -17,14 +18,14 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
    
     # solve symmetric system
     residual_symmetric!(residual_symmetric, residual, matrix, idx) 
-    
-    linear_solve!(solver, step_symmetric, matrix_symmetric, residual_symmetric;
+    # return 
+    linear_solve!(solver, step_symmetric.all, matrix_symmetric, residual_symmetric.all;
         update=update)
     
     # set Δx, Δy, Δz
-    Δx = @views step_symmetric[idx.variables]
-    Δy = @views step_symmetric[idx.symmetric_equality]
-    Δz = @views step_symmetric[idx.symmetric_cone]
+    Δx = step_symmetric.variables
+    Δy = step_symmetric.equality
+    Δz = step_symmetric.cone
     step.variables .= Δx
     step.equality_dual .= Δy
     step.cone_dual .= Δz
@@ -54,16 +55,18 @@ function search_direction_symmetric!(step, residual, matrix, step_symmetric, res
 
     # Δs, Δt (second-order)
     for idx_soc in idx.cone_second_order
-        C̄t = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
-        Cs = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
-        P  = matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
-        rs_soc = @views rs[idx_soc] 
-        rt_soc = @views rt[idx_soc] 
-        Δz_soc = @views Δz[idx_soc] 
-        Δs_soc = @views Δs[idx_soc]
+        if !isempty(idx_soc)
+            C̄t = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
+            Cs = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
+            P  = matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
+            rs_soc = @views rs[idx_soc] 
+            rt_soc = @views rt[idx_soc] 
+            Δz_soc = @views Δz[idx_soc] 
+            Δs_soc = @views Δs[idx_soc]
 
-        Δs[idx_soc] = (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
-        Δt[idx_soc] = C̄t \ (rt_soc - Cs * Δs_soc)
+            Δs[idx_soc] = (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
+            Δt[idx_soc] = C̄t \ (rt_soc - Cs * Δs_soc)
+        end
     end
     
     return 

@@ -173,7 +173,7 @@ function solve!(solver)
             cone!(problem, cone_methods, indices, solution,
                 jacobian=true,
             )
-
+            # return 
             search_direction!(solver)
             # return 
             # line search

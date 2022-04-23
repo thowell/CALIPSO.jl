@@ -21,4 +21,18 @@ function Point(dims::Dimensions, idx::Indices)
     return Point(w, x, r, s, y, z, t, p)
 end
 
+struct PointSymmetric{T} 
+    all::Vector{T} 
+    variables::SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}
+    equality::SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}
+    cone::SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}
+end
+
+function PointSymmetric(dims::Dimensions, idx::Indices)
+    w = zeros(dims.symmetric)
+    x = @views w[idx.variables]
+    e = @views w[idx.symmetric_equality]
+    c = @views w[idx.symmetric_cone]
+    return PointSymmetric(w, x, e, c)
+end
 

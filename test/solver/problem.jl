@@ -156,11 +156,11 @@
     rs = solver.data.residual.all[solver.indices.cone_slack]
     rt = solver.data.residual.all[solver.indices.cone_slack_dual]
 
-    @test norm(solver.data.residual_symmetric[solver.indices.variables] 
+    @test norm(solver.data.residual_symmetric.variables 
         - (solver.problem.objective_gradient_variables + solver.problem.equality_jacobian_variables' * solver.solution.equality_dual + solver.problem.cone_jacobian_variables' * solver.solution.cone_dual)) < 1.0e-6
-    @test norm(solver.data.residual_symmetric[solver.indices.symmetric_equality] 
+    @test norm(solver.data.residual_symmetric.equality 
         - (solver.problem.equality_constraint - solver.solution.equality_slack + solver.data.residual.all[solver.indices.equality_slack] ./ (ρ[1] + ϵp))) < 1.0e-6
-    @test norm(solver.data.residual_symmetric[solver.indices.symmetric_cone] 
+    @test norm(solver.data.residual_symmetric.cone 
         - (solver.problem.cone_constraint - solver.solution.cone_slack + (rt + (s .- ϵd) .* rs) ./ (t + (s .- ϵd) * ϵp))) < 1.0e-6
 
     # step

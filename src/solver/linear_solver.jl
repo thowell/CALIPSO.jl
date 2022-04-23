@@ -35,8 +35,14 @@ end
 
 function compute_inertia!(ls::LDLSolver)
     ls.inertia.positive = ls.F.workspace.positive_inertia.x 
-    ls.inertia.negative = count(ls.F.workspace.D .<= 0.0)
-    ls.inertia.zero = count(ls.F.workspace.D .== 0.0)
+    n = 0 
+    z = 0
+    for d in ls.F.workspace.D 
+        d <= 0.0 && (n += 1) 
+        d == 0.0 && (z += 1)
+    end
+    ls.inertia.negative = n
+    ls.inertia.zero = z
     return nothing
 end
 

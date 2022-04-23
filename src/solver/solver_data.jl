@@ -4,11 +4,11 @@ struct SolverData{T}
     jacobian_variables::SparseMatrixCSC{T,Int}
     jacobian_parameters::Matrix{T}
     jacobian_parameters_vectors::Vector{Point{T}}
-    residual_symmetric::Vector{T} 
+    residual_symmetric::PointSymmetric{T} 
     jacobian_variables_symmetric::SparseMatrixCSC{T,Int}
     step::Point{T}
     step_correction::Point{T}
-    step_symmetric::Vector{T}
+    step_symmetric::PointSymmetric{T}
     merit::Vector{T} 
     merit_gradient::Vector{T} 
     constraint_violation::Vector{T}
@@ -36,12 +36,12 @@ function SolverData(dims::Dimensions, idx::Indices;
     jacobian_parameters = zeros(num_total, num_parameters)
     jacobian_parameters_vectors = [Point(dims, idx) for i = 1:num_parameters]
 
-    residual_symmetric = zeros(num_symmetric)
+    residual_symmetric = PointSymmetric(dims, idx)
     jacobian_variables_symmetric = spzeros(num_symmetric, num_symmetric)
 
     step = Point(dims, idx)
     step_correction = Point(dims, idx)
-    step_symmetric = zeros(num_symmetric)
+    step_symmetric = PointSymmetric(dims, idx)
 
     merit = zeros(1) 
     merit_gradient = zeros(num_variables + num_equality + num_cone)
