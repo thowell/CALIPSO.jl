@@ -2,21 +2,24 @@ mutable struct Solver{T}
     problem::ProblemData{T} 
     methods::ProblemMethods 
     data::SolverData{T}
+    
     solution::Point{T} 
     candidate::Point{T}
     parameters::Vector{T}
+
     indices::Indices
     dimensions::Dimensions
+
     linear_solver::LinearSolver
+
     central_path::Vector{T} 
     fraction_to_boundary::Vector{T}
     penalty::Vector{T}
     dual::Vector{T} 
 
-    regularization::Vector{T}
-    primal_regularization::T 
-    primal_regularization_last::T
-    dual_regularization::T
+    primal_regularization::Vector{T} 
+    primal_regularization_last::Vector{T}
+    dual_regularization::Vector{T}
 
     options::Options{T}
 end
@@ -81,10 +84,9 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     linear_solver = ldl_solver(s_data.jacobian_variables_symmetric)
 
     # regularization 
-    regularization = zeros(dim.total)
-    primal_regularization = 0.0 
-    primal_regularization_last = 0.0 
-    dual_regularization = 0.0
+    primal_regularization = [0.0] 
+    primal_regularization_last = [0.0] 
+    dual_regularization = [0.0]
 
     Solver(
         p_data, 
@@ -100,7 +102,6 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         fraction_to_boundary,
         penalty, 
         dual,
-        regularization, 
         primal_regularization, 
         primal_regularization_last,
         dual_regularization,

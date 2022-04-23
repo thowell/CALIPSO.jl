@@ -37,8 +37,8 @@
     solver.central_path .= κ 
     solver.penalty .= ρ
     solver.dual .= λ
-    solver.primal_regularization = ϵp 
-    solver.dual_regularization = ϵd 
+    solver.primal_regularization[1] = ϵp 
+    solver.dual_regularization[1] = ϵd 
 
     reg = [
             ϵp * ones(num_variables);

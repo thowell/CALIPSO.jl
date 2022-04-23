@@ -77,27 +77,27 @@ function residual_jacobian_variables!(data::SolverData, problem::ProblemData, id
 
     # regularization 
     for i in idx.variables 
-        H[i, i] += ϵp 
+        H[i, i] += ϵp[1] 
     end
 
     for i in idx.equality_slack
-        H[i, i] += ϵp
+        H[i, i] += ϵp[1]
     end 
 
     for i in idx.cone_slack
-        H[i, i] += ϵp
+        H[i, i] += ϵp[1]
     end 
 
     for i in idx.equality_dual
-        H[i, i] -= ϵd
+        H[i, i] -= ϵd[1]
     end
 
     for i in idx.cone_dual
-        H[i, i] -= ϵd 
+        H[i, i] -= ϵd[1] 
     end
 
     for i in idx.cone_slack_dual 
-        H[i, i] -= ϵd 
+        H[i, i] -= ϵd[1] 
     end 
 
     return
