@@ -1,7 +1,7 @@
 function search_direction!(solver) 
     # correct inertia
     inertia_correction!(solver)
-
+    # return
     # compute search direction
     search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 
         solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 

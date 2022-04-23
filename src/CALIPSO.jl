@@ -5,7 +5,8 @@ using Symbolics
 using SparseArrays
 using Scratch
 using JLD2
-using QDLDL
+# using QDLDL
+using AMD
 
 using Printf
 using Crayons
@@ -26,6 +27,7 @@ include("solver/cones/cone.jl")
 include("solver/cones/codegen.jl")
 include("solver/inertia.jl")
 include("solver/qdldl.jl")
+include("solver/linear_solver.jl")
 include("solver/options.jl")
 include("solver/print.jl")
 include("solver/residual.jl")

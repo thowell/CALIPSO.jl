@@ -1,10 +1,13 @@
 function constraint_violation!(c, g, r, h, s, idx; 
     norm_type=1.0)
 
-    c[idx.violation_equality] = g 
-    c[idx.violation_equality] -= r 
-    c[idx.violation_cone] = h 
-    c[idx.violation_cone] -= s
+    for (i, ii) in enumerate(idx.violation_equality) 
+        c[ii] = g[i] - r[i] 
+    end 
+
+    for (j, jj) in enumerate(idx.violation_cone) 
+        c[jj] = h[j] - s[j] 
+    end
 
     return norm(c, norm_type)
 end

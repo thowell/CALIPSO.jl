@@ -107,11 +107,6 @@ function solve!(solver)
                 κ[1], λ, ρ[1],
                 indices)
 
-            # merit_grad = vcat(merit_gradient(
-            #     problem.objective_gradient_variables,
-            #     r, s, κ[1], λ, ρ[1],
-            #     indices)...)
-
             merit_gradient!(
                     data.merit_gradient,
                     problem.objective_gradient_variables,
@@ -119,8 +114,6 @@ function solve!(solver)
                     problem.barrier_gradient, 
                     κ[1], λ, ρ[1],
                     indices)
-
-            # return
 
             # residual
             residual!(data, problem, indices, solution, κ, ρ, λ)
@@ -182,14 +175,21 @@ function solve!(solver)
             )
 
             search_direction!(solver)
-
+            # return 
             # line search
             α = 1.0
             αt = 1.0
 
             # cone search
-            ŝ .= s - α * Δs
-            t̂ .= t - αt * Δt
+            # ŝ .= s - α * Δs
+            # t̂ .= t - αt * Δt
+            for i = 1:solver.dimensions.cone_slack 
+                ŝ[i] = s[i] - α * Δs[i] 
+            end 
+
+            for i = 1:solver.dimensions.cone_slack_dual 
+                t̂[i] = t[i] - αt * Δt[i]
+            end
 
             cone_iteration = 0
             while cone_violation(ŝ, s, τ, indices.cone_nonnegative, indices.cone_second_order)

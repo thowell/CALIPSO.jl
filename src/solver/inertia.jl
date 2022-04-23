@@ -15,11 +15,12 @@ function factorize_regularized_residual_jacobian_variables!(s)
         s.central_path, s.penalty, s.dual,
         s.primal_regularization, s.dual_regularization,
         constraint_hessian=s.options.constraint_hessian)
-
+     
     residual_jacobian_variables_symmetric!(s.data.jacobian_variables_symmetric, s.data.jacobian_variables, s.indices) 
-
+     
     factorize!(s.linear_solver, s.data.jacobian_variables_symmetric;
         update=s.options.update_factorization)
+    # return 
     compute_inertia!(s.linear_solver)
 
     return nothing
@@ -33,6 +34,7 @@ function inertia_correction!(s)
     # IC-1
     factorize_regularized_residual_jacobian_variables!(s)
 
+    return 
     if inertia(s)
         return nothing
     end
