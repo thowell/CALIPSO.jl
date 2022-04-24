@@ -60,9 +60,9 @@ end
 
 # violation 
 function cone_violation(x̂, x, τ, idx_ineq, idx_soc) 
-    length(idx_ineq) > 0 && (nonnegative_violation(x̂[idx_ineq], x[idx_ineq], τ[1]) && (return true))
+    length(idx_ineq) > 0 && (nonnegative_violation(x̂, x, τ[1], idx_ineq) && (return true))
     for idx in idx_soc 
-        length(idx) > 0 && (second_order_violation(x̂[idx], x[idx], τ[1]) && (return true))
+        length(idx) > 0 && (second_order_violation(x̂, x, τ[1], idx) && (return true))
     end
     return false
 end

@@ -26,9 +26,9 @@ end
 nonnegative_target(x) = ones(length(x))
 
 # violation 
-function nonnegative_violation(x̂, x, τ)
-    for (i, xi) in enumerate(x̂) 
-        xi <= (1.0 - τ) * x[i] && (return true)
+function nonnegative_violation(x̂, x, τ, idx)
+    for i in idx
+        x̂[i] <= (1.0 - τ) * x[i] && (return true)
     end 
     return false 
 end

@@ -1,21 +1,63 @@
 using BenchmarkTools 
 using InteractiveUtils
 
-num_variables = 3
-num_parameters = 0
-num_equality = 2
-num_cone = 2
-x0 = [-2.0, 3.0, 1.0]
+num_variables = 10
+num_equality = 5
+num_cone = num_variables
+num_parameters = num_variables + num_variables + num_equality * num_variables + num_equality
 
-obj(x, θ) = x[1]
-eq(x, θ) = [x[1]^2 - x[2] - 1.0; x[1] - x[3] - 0.5]
-cone(x, θ) = x[2:3]
+x̂ = max.(0.0, randn(num_variables))
+Q = rand(num_variables, num_variables) 
+P = Diagonal(diag(Q' * Q))
+p = randn(num_variables)
+A = rand(num_equality, num_variables)
+b = A * x̂
+
+parameters = [diag(P); p; vec(A); b]
+
+function obj(x, θ) 
+    Pθ = Diagonal(θ[1:num_variables])
+    pθ = θ[num_variables .+ (1:num_variables)]
+    
+    J = 0.0
+    J += 0.5 * transpose(x) * Pθ * x 
+    J += transpose(pθ) * x
+
+    return J 
+end
+
+function eq(x, θ)
+    Aθ = reshape(θ[num_variables + num_variables .+ (1:(num_equality * num_variables))], num_equality, num_variables)
+    bθ = θ[num_variables + num_variables + num_equality * num_variables .+ (1:num_equality)]
+    return Aθ * x - bθ
+end
+
+cone(x, θ) = x
+
+# solver
+x0 = randn(num_variables)
+
+# num_variables = 3
+# num_parameters = 0
+# num_equality = 2
+# num_cone = 2
+# x0 = [-2.0, 3.0, 1.0]
+
+# obj(x, θ) = x[1]
+# eq(x, θ) = [x[1]^2 - x[2] - 1.0; x[1] - x[3] - 0.5]
+# cone(x, θ) = x[2:3]
 
 # solver
 method = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-solver = Solver(method, num_variables, num_parameters, num_equality, num_cone)
+solver = Solver(method, num_variables, num_parameters, num_equality, num_cone; 
+    options=Options(
+            verbose=false, 
+            differentiate=false
+    ))
 initialize!(solver, x0)
+solve!(solver)
 @benchmark solve!($solver)
+@code_warntype solve!(solver)
 
 # @code_warntype iterative_refinement!(solver.data.step, solver)
 

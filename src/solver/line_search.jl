@@ -1,7 +1,8 @@
 #TODO: add reference
 function switching_condition(step_size, search_direction, merit_gradient, merit_exponent, violation, violation_exponent, regularization)
-    return (merit_gradient' * search_direction < 0.0 &&
-            step_size * (-merit_gradient' * search_direction)^merit_exponent > regularization * violation^violation_exponent)
+    d = dot(merit_gradient, search_direction)
+    return (d < 0.0 &&
+            step_size * (-d)^merit_exponent > regularization * violation^violation_exponent)
 end
 
 # TODO: add reference
@@ -12,5 +13,6 @@ end
 
 # TODO: add reference
 function armijo(merit, merit_candidate, merit_gradient, search_direction, step_size, armijo_tolerance, machine_tolerance)
-    return (merit_candidate - merit - 10.0 * machine_tolerance * abs(merit) <= armijo_tolerance * step_size * merit_gradient' * search_direction)
+    d = dot(merit_gradient, search_direction)
+    return (merit_candidate - merit - 10.0 * machine_tolerance * abs(merit) <= armijo_tolerance * step_size * d)
 end

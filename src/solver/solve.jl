@@ -63,7 +63,7 @@ function solve!(solver)
     total_iterations = 1
 
     # info
-    # options.verbose && solver_info(solver)
+    options.verbose && solver_info(solver)
 
     # evaluate
     problem!(problem, methods, indices, solution, parameters,
@@ -114,7 +114,7 @@ function solve!(solver)
                     problem.barrier_gradient, 
                     κ[1], λ, ρ[1],
                     indices)
-
+             
             # residual
             residual!(data, problem, indices, solution, κ, ρ, λ)
 
@@ -133,6 +133,7 @@ function solve!(solver)
                 equality_violation <= options.equality_tolerance && 
                 cone_product_violation <= options.complementarity_tolerance
                 )
+
                 # differentiate
                 options.differentiate && differentiate!(solver)
                 
@@ -173,19 +174,14 @@ function solve!(solver)
             cone!(problem, cone_methods, indices, solution,
                 jacobian=true,
             )
-
-            search_direction!(solver)
-            # return
-            ### allocation-free through here ###
-            
+         
+            search_direction!(solver)        
 
             # line search
             α = 1.0
             αt = 1.0
 
             # cone search
-            # ŝ .= s - α * Δs
-            # t̂ .= t - αt * Δt
             for i = 1:solver.dimensions.cone_slack 
                 ŝ[i] = s[i] - α * Δs[i] 
             end 
@@ -195,9 +191,12 @@ function solve!(solver)
             end
 
             cone_iteration = 0
+
             while cone_violation(ŝ, s, τ, indices.cone_nonnegative, indices.cone_second_order)
                 α = 0.5 * α 
-                ŝ .= s - α * Δs
+                for i = 1:solver.dimensions.cone_slack 
+                    ŝ[i] = s[i] - α * Δs[i] 
+                end 
                 cone_iteration += 1
                 cone_iteration > options.max_cone_line_search && error("cone search failure")
             end
@@ -205,14 +204,20 @@ function solve!(solver)
             cone_iteration = 0
             while cone_violation(t̂, t, τ, indices.cone_nonnegative, indices.cone_second_order)
                 αt = 0.5 * αt
-                t̂ .= t - αt * Δt
+                for i = 1:solver.dimensions.cone_slack_dual 
+                    t̂[i] = t[i] - αt * Δt[i]
+                end
                 cone_iteration += 1
                 cone_iteration > options.max_cone_line_search && error("cone search failure")
-            end
+            end 
 
             # decrease search
-            x̂ .= x - α * Δx
-            r̂ .= r - α * Δr
+            for i = 1:solver.dimensions.variables
+                x̂[i] = x[i] - α * Δx[i] 
+            end
+            for i = 1:solver.dimensions.equality_slack 
+                r̂[i] = r[i] - α * Δr[i] 
+            end
 
             problem!(problem, methods, indices, candidate, parameters,
                 objective=true,
@@ -237,7 +242,7 @@ function solve!(solver)
                 norm_type=options.constraint_norm)
 
             residual_iteration = 0
-
+  
             while residual_iteration < options.max_residual_line_search
                 # filter check
                 if check_filter(θ̂ , M̂, filter)
@@ -252,9 +257,15 @@ function solve!(solver)
                 α = 0.5 * α
 
                 # update candidate
-                x̂ .= x - α * Δx
-                r̂ .= r - α * Δr
-                ŝ .= s - α * Δs
+                for i = 1:solver.dimensions.variables
+                    x̂[i] = x[i] - α * Δx[i] 
+                end
+                for i = 1:solver.dimensions.equality_slack 
+                    r̂[i] = r[i] - α * Δr[i] 
+                end
+                for i = 1:solver.dimensions.cone_slack 
+                    ŝ[i] = s[i] - α * Δs[i] 
+                end
 
                 problem!(problem, methods, indices, candidate, parameters,
                     objective=true,
@@ -276,20 +287,34 @@ function solve!(solver)
                     problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
                     norm_type=options.constraint_norm)
 
+ 
                 residual_iteration += 1
-                residual_iteration > options.max_residual_line_search && (@warn "residual search failure"; break)
+                residual_iteration > options.max_residual_line_search && break
             end
-
+ 
+             
             # update filter
             augment_filter!(solver, M, M̂, data.merit_gradient, θ, α, Δp)
-
+             
             # update
-            x .= x̂
-            r .= r̂
-            s .= ŝ
-            y .= y - α * Δy
-            z .= z - α * Δz
-            t .= t̂
+            for i = 1:solver.dimensions.variables
+                x[i] = x̂[i]
+            end
+            for i = 1:solver.dimensions.equality_slack
+                r[i] = r̂[i]
+            end
+            for i = 1:solver.dimensions.cone_slack
+                s[i] = ŝ[i] 
+            end   
+            for i = 1:solver.dimensions.equality_dual
+                y[i] = y[i] - α * Δy[i] 
+            end
+            for i = 1:solver.dimensions.cone_dual
+                z[i] = z[i] - α * Δz[i] 
+            end
+            for i = 1:solver.dimensions.cone_slack_dual
+                t[i] = t̂[i] 
+            end
 
             cone!(problem, cone_methods, indices, solution,
                 product=true,
@@ -321,7 +346,9 @@ function solve!(solver)
         τ[1] = max(0.99, 1.0 - κ[1])
 
         # augmented Lagrangian
-        λ .= λ + ρ[1] * r
+        for i = 1:solver.dimensions.equality_slack 
+            λ[i] = λ[i] + ρ[1] * r[i] 
+        end
         ρ[1] = min(max(options.penalty_scaling * ρ[1], 1.0 / κ[1]), options.max_penalty)
 
         # reset filter

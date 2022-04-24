@@ -42,8 +42,8 @@ end
 second_order_target(x) = [1.0; zeros(length(x) - 1)] 
 
 # violation 
-function second_order_violation(x̂, x, τ) 
-    x̂[1] - (1.0 - τ) * x[1] <= norm(x̂[2:end] - (1.0 - τ) * x[2:end])
+function second_order_violation(x̂, x, τ, idx) 
+    x̂[idx[1]] - (1.0 - τ) * x[idx[1]] <= norm(x̂[idx[2:end]] - (1.0 - τ) * x[idx[2:end]])
 end
 
 
