@@ -16,7 +16,9 @@ function factorize_regularized_residual_jacobian_variables!(s)
         s.primal_regularization, s.dual_regularization,
         constraint_hessian=s.options.constraint_hessian)
     
-    residual_jacobian_variables_symmetric!(s.data.jacobian_variables_symmetric, s.data.jacobian_variables, s.indices) 
+    residual_jacobian_variables_symmetric!(s.data.jacobian_variables_symmetric, s.data.jacobian_variables, s.indices, 
+        s.problem.second_order_jacobians,
+        s.problem.second_order_jacobians_inverse) 
     
     factorize!(s.linear_solver, s.data.jacobian_variables_symmetric;
         update=s.options.update_factorization)

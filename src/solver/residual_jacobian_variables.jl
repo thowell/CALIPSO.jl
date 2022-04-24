@@ -70,11 +70,12 @@ function residual_jacobian_variables!(data::SolverData, problem::ProblemData, id
     # cone block (second-order)
     for idx_soc in idx.cone_second_order
         if !isempty(idx_soc)
-            @warn "soc cone jacobian allocating"
-            Cs = @views problem.cone_product_jacobian_primal[idx_soc, idx_soc] 
-            Ct = @views problem.cone_product_jacobian_dual[idx_soc, idx_soc] 
-            H[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]] = Cs 
-            H[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] = Ct 
+            for i in idx_soc 
+                for j in idx_soc 
+                    H[idx.cone_slack_dual[i], idx.cone_slack[j]] = problem.cone_product_jacobian_primal[i, j]
+                    H[idx.cone_slack_dual[i], idx.cone_slack_dual[j]] = problem.cone_product_jacobian_dual[i, j] 
+                end 
+            end
         end
     end
 
@@ -106,7 +107,7 @@ function residual_jacobian_variables!(data::SolverData, problem::ProblemData, id
     return
 end
 
-function residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx::Indices)
+function residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx::Indices, second_order_jacobians, second_order_jacobians_inverse)
     # reset
     fill!(matrix_symmetric.nzval, 0.0)
 
@@ -148,14 +149,14 @@ function residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx::I
     end
 
     # cone correction (second-order)
-    for idx_soc in idx.cone_second_order
+    for (i, idx_soc) in enumerate(idx.cone_second_order)
         if !isempty(idx_soc)
             @warn "soc cone jacobian allocating"
             C̄t = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
             Cs = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
             P = @views matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
             D = @views matrix[idx.cone_dual[idx_soc], idx.cone_dual[idx_soc]]
-            matrix_symmetric[idx.symmetric_cone[idx_soc], idx.symmetric_cone[idx_soc]] += -1.0 * (Cs + C̄t * P) \ C̄t  + D
+            matrix_symmetric[idx.symmetric_cone[idx_soc], idx.symmetric_cone[idx_soc]] += -1.0 * (Cs + C̄t * P) \ C̄t + D
         end
     end
 

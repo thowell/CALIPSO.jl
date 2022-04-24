@@ -23,11 +23,16 @@ struct ProblemData{T}
     cone_product_jacobian_primal::Matrix{T} 
     cone_product_jacobian_dual::Matrix{T} 
     cone_target::Vector{T}
+    second_order_jacobians::Vector{Matrix{T}}
+    second_order_jacobians_inverse::Vector{Matrix{T}}
     barrier::Vector{T} 
     barrier_gradient::Vector{T}
 end
 
-function ProblemData(num_variables, num_parameters, num_equality, num_cone)
+function ProblemData(num_variables, num_parameters, num_equality, num_cone; 
+    nonnegative_indices=collect(1:num_cone),
+    second_order_indices=[collect(1:0)])
+
     objective = zeros(1)
     objective_gradient_variables = zeros(num_variables)
     objective_gradient_parameters = zeros(num_parameters)
@@ -54,6 +59,8 @@ function ProblemData(num_variables, num_parameters, num_equality, num_cone)
     cone_product_jacobian_primal = zeros(num_cone, num_cone) 
     cone_product_jacobian_dual = zeros(num_cone, num_cone) 
     cone_target = zeros(num_cone)
+    second_order_jacobians = [zeros(length(idx), length(idx)) for idx in second_order_indices]
+    second_order_jacobians_inverse = [zeros(length(idx), length(idx)) for idx in second_order_indices]
 
     barrier = zeros(1) 
     barrier_gradient = zeros(num_variables + num_equality + num_cone)
@@ -82,6 +89,8 @@ function ProblemData(num_variables, num_parameters, num_equality, num_cone)
         cone_product_jacobian_primal,
         cone_product_jacobian_dual,
         cone_target,
+        second_order_jacobians,
+        second_order_jacobians_inverse,
         barrier, 
         barrier_gradient,
     )

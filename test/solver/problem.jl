@@ -75,7 +75,8 @@
 
     rank(solver.data.jacobian_variables)
 
-    CALIPSO.residual_jacobian_variables_symmetric!(solver.data.jacobian_variables_symmetric, solver.data.jacobian_variables, solver.indices)
+    CALIPSO.residual_jacobian_variables_symmetric!(solver.data.jacobian_variables_symmetric, solver.data.jacobian_variables, solver.indices, 
+        solver.problem.second_order_jacobians, solver.problem.second_order_jacobians_inverse)
 
     rank(solver.data.jacobian_variables_symmetric)
 

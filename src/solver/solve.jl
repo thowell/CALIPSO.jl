@@ -104,8 +104,7 @@ function solve!(solver)
                 problem.objective[1],
                 r, 
                 problem.barrier[1],
-                κ[1], λ, ρ[1],
-                indices)
+                κ[1], λ, ρ[1])
 
             merit_gradient!(
                     data.merit_gradient,
@@ -234,8 +233,7 @@ function solve!(solver)
                 problem.objective[1],
                 r̂, 
                 problem.barrier[1], 
-                κ[1], λ, ρ[1],
-                indices)
+                κ[1], λ, ρ[1])
 
             θ̂  = constraint_violation!(constraint_violation,
                 problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
@@ -281,8 +279,7 @@ function solve!(solver)
                     problem.objective[1],
                     r̂, 
                     problem.barrier[1], 
-                    κ[1], λ, ρ[1],
-                    indices)
+                    κ[1], λ, ρ[1])
                 θ̂  = constraint_violation!(constraint_violation,
                     problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
                     norm_type=options.constraint_norm)

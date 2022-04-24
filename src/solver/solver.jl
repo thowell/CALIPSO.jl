@@ -45,7 +45,9 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     cone_methods = ConeMethods(num_cone, nonnegative_indices, second_order_indices)
     
     # problem data
-    p_data = ProblemData(num_variables, num_parameters, num_equality, num_cone)
+    p_data = ProblemData(num_variables, num_parameters, num_equality, num_cone;
+        nonnegative_indices=nonnegative_indices,
+        second_order_indices=second_order_indices)
 
     # solver data
     s_data = SolverData(dim, idx,
@@ -68,24 +70,19 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     random_solution.all .= randn(dim.total)
 
     problem!(p_data, methods, idx, random_solution, parameters,
-        # objective=true,
-        # objective_gradient_variables=true,
         objective_jacobian_variables_variables=true,
-        # equality_constraint=true,
         equality_jacobian_variables=true,
         equality_dual_jacobian_variables_variables=true,
-        # cone_constraint=true,
         cone_jacobian_variables=true,
         cone_dual_jacobian_variables_variables=true,
     )
     cone!(p_data, cone_methods, idx, random_solution,
-        # product=true, 
         jacobian=true,
-        # target=true
     )
     residual_jacobian_variables!(s_data, p_data, idx, rand(1), rand(1), randn(num_equality), 1.0e-5, 1.0e-5,
         constraint_hessian=options.constraint_hessian)
-    residual_jacobian_variables_symmetric!(s_data.jacobian_variables_symmetric, s_data.jacobian_variables, idx)
+    residual_jacobian_variables_symmetric!(s_data.jacobian_variables_symmetric, s_data.jacobian_variables, idx, 
+        p_data.second_order_jacobians, p_data.second_order_jacobians)
 
     linear_solver = ldl_solver(s_data.jacobian_variables_symmetric)
 

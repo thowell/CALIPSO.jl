@@ -14,7 +14,8 @@ function differentiate!(solver)
         solver.central_path, solver.penalty, solver.dual,
         solver.primal_regularization, solver.dual_regularization,
         constraint_hessian=solver.options.constraint_hessian)
-    residual_jacobian_variables_symmetric!(solver.data.jacobian_variables_symmetric, solver.data.jacobian_variables, solver.indices) 
+    residual_jacobian_variables_symmetric!(solver.data.jacobian_variables_symmetric, solver.data.jacobian_variables, solver.indices, 
+        solver.problem.second_order_jacobians, solver.problem.second_order_jacobians_inverse) 
     factorize!(solver.linear_solver, solver.data.jacobian_variables_symmetric; 
         update=solver.options.update_factorization)
  

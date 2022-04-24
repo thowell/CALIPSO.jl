@@ -1,5 +1,5 @@
 # merit 
-function merit(f, r, Φ, κ, λ, ρ, indices)
+function merit(f, r, Φ, κ, λ, ρ)
     M = 0.0
     
     # objective
@@ -15,9 +15,6 @@ function merit(f, r, Φ, κ, λ, ρ, indices)
 end
 
 function merit_gradient!(grad, fx, r, Φs, κ, λ, ρ, indices)
-    # Mx = fx
-    # Mr = λ + ρ[1] * r 
-    # Ms = - κ[1] * Φs
     for i in indices.variables 
         grad[i] = fx[i] 
     end 
