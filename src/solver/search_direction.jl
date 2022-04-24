@@ -9,7 +9,7 @@ function search_direction!(solver)
         update=solver.options.update_factorization)
  
     # refine search direction
-    # solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data))
+    solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data))
 end
 
 function search_direction_symmetric!(

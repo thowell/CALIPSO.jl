@@ -35,13 +35,13 @@ include("examples/acrobot.jl")
 include("examples/rocket_landing.jl")
 include("examples/box_move.jl")
 include("examples/box_move_soc.jl")
-include("examples/hopper_gait.jl")
-include("examples/hopper_gait_soc.jl")
+# include("examples/hopper_gait.jl")
+# include("examples/hopper_gait_soc.jl")
 include("examples/cyberdrift_v2.jl")
 include("examples/double_integrator.jl")
-include("examples/quadruped_drop.jl")
-include("examples/quadruped_gait.jl")
-include("examples/quadruped_gait_soc.jl")
+# include("examples/quadruped_drop.jl")
+# include("examples/quadruped_gait.jl")
+# include("examples/quadruped_gait_soc.jl")
 
 
 

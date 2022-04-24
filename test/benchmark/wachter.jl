@@ -52,7 +52,7 @@ method = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
 solver = Solver(method, num_variables, num_parameters, num_equality, num_cone; 
     options=Options(
             verbose=false, 
-            differentiate=false
+            differentiate=true,
     ))
 initialize!(solver, x0)
 solve!(solver)

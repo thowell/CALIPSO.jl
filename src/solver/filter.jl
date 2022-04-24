@@ -1,4 +1,3 @@
-
 struct Filter{T}
     pairs::Vector{Tuple{T,T}}
     cache::Vector{Tuple{T,T}}
@@ -96,16 +95,11 @@ end
     Check current step, and add to the filter if necessary, adding some padding to the points
     to ensure sufficient decrease (Eq. 18).
 """
-function augment_filter!(solver, merit, merit_candidate, merit_gradient, violation, step_size, search_direction) 
-    s = switching_condition(step_size, search_direction, merit_gradient, solver.options.merit_exponent, violation, solver.options.violation_exponent, 1.0) 
-    a = armijo(merit, merit_candidate, merit_gradient, search_direction, step_size, solver.options.armijo_tolerance, solver.options.machine_tolerance)
-    if !s || !a
-        M̂ = merit - solver.options.merit_tolerance * violation
-        θ̂ = 1.0 - solver.options.violation_tolerance * violation
+function augment_filter!(solver, merit, merit_candidate, merit_gradient, violation, step_size, search_direction)
+    if !switching_condition(step_size, search_direction, merit_gradient, solver.options.merit_exponent, violation, solver.options.violation_exponent, 1.0) || !armijo(merit, merit_candidate, merit_gradient, search_direction, step_size, solver.options.armijo_tolerance, solver.options.machine_tolerance)
         augment_filter!(
-            θ̂,
-            M̂, 
-            solver.data.filter,
+            (1.0 - solver.options.violation_tolerance) * violation, 
+            merit - solver.options.merit_tolerance * violation, solver.data.filter
         )
     end
     return nothing

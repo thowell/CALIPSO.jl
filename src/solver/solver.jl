@@ -66,6 +66,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     # linear solver TODO: constructor
     random_solution = Point(dim, idx)
     random_solution.all .= randn(dim.total)
+
     problem!(p_data, methods, idx, random_solution, parameters,
         # objective=true,
         # objective_gradient_variables=true,

@@ -17,7 +17,7 @@
     h = [zeros(p); 1.0] 
     q = [zeros(p); 1.0] 
     z = 1.0 
-    
+
     G2 = [ones(1, p) 0.0] 
     G3 = [-ones(1, p) 0.0] 
 
@@ -36,9 +36,12 @@
     eq(x, θ) = zeros(0)
     cone(x, θ) = b - A * x
 
+
+    # methods.cone_jacobian_variables(zeros(num_cone), x0, zeros(num_parameters))
+    # methods.cone_jacobian_variables(problem.cone_jacobian_variables, x, θ)
     # solver
-    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone;
+    method = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
+    solver = Solver(method, num_variables, num_parameters, num_equality, num_cone;
         nonnegative_indices=idx_ineq,
         second_order_indices=idx_soc,)
 
