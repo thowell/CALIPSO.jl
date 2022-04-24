@@ -10,7 +10,7 @@ Base.@kwdef mutable struct Options{T}
     iterative_refinement::Bool=true
     max_iterative_refinement::Int=10
     min_iterative_refinement::Int=1
-    iterative_refinement_tolerance=1.0e-10
+    iterative_refinement_tolerance::T=1.0e-10
     central_path_initial::T=1.0e-1
     central_path_update_tolerance::T=10.0
     central_path_convergence_tolerance::T=1.0e-5

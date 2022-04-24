@@ -56,7 +56,6 @@ end
 ldl_solver(A::Array{T, 2}) where T = ldl_solver(sparse(A))
 
 function linear_solve!(solver::LDLSolver{Tv,Ti}, x::Vector{Tv}, A::SparseMatrixCSC{Tv,Ti}, b::Vector{Tv};
-    reg=0.0, 
     fact=true,
     update=true) where {Tv<:AbstractFloat,Ti<:Integer}
 
@@ -66,28 +65,25 @@ function linear_solve!(solver::LDLSolver{Tv,Ti}, x::Vector{Tv}, A::SparseMatrixC
     solve!(solver.F, x) # solve
 end
 
-function linear_solve!(solver::LDLSolver{Tv,Ti}, x::Vector{Tv}, A::AbstractMatrix{Tv}, b::Vector{Tv};
-    reg=0.0, 
-    fact=true,
-    update=true) where {Tv<:AbstractFloat,Ti<:Integer}
+# function linear_solve!(solver::LDLSolver{Tv,Ti}, x::Vector{Tv}, A::AbstractMatrix{Tv}, b::Vector{Tv};
+#     fact=true,
+#     update=true) where {Tv<:AbstractFloat,Ti<:Integer}
+
+#     # fill sparse_matrix
+#     n, m = size(A) 
+#     for i = 1:n 
+#         for j = 1:m 
+#             solver.A_sparse[i, j] = A[i, j]
+#         end
+#     end
     
-    # fill sparse_matrix
-    n, m = size(A) 
-    for i = 1:n 
-        for j = 1:m 
-            solver.A_sparse[i, j] = A[i, j]
-        end
-    end
-    
-    linear_solve!(solver, x, solver.A_sparse, b, 
-        reg=reg, 
-        fact=fact,
-        update=update)
-end
+#     linear_solve!(solver, x, solver.A_sparse, b, 
+#         fact=fact,
+#         update=update)
+# end
 
 function linear_solve!(s::LDLSolver{T}, x::Matrix{T}, A::Matrix{T},
     b::Matrix{T}; 
-    reg::T = 0.0, 
     fact=true,
     update=true) where T
 

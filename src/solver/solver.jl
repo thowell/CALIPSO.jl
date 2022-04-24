@@ -11,7 +11,7 @@ struct Solver{T,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDX
     indices::Indices
     dimensions::Dimensions
 
-    linear_solver::LinearSolver
+    linear_solver::LDLSolver{T,Int}
 
     central_path::Vector{T} 
     fraction_to_boundary::Vector{T}
