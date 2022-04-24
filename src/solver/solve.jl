@@ -84,7 +84,7 @@ function solve!(solver)
     # initialize filter
     filter = solver.data.filter
     reset!(filter) 
-
+    
     for j = 1:options.max_outer_iterations
         for i = 1:options.max_residual_iterations
             # evaluate
@@ -98,7 +98,7 @@ function solve!(solver)
                 barrier=true,
                 barrier_gradient=true,
             )
-
+            
             # merit
             M = merit(
                 problem.objective[1],
@@ -173,9 +173,12 @@ function solve!(solver)
             cone!(problem, cone_methods, indices, solution,
                 jacobian=true,
             )
-            # return 
+
             search_direction!(solver)
-            # return 
+            # return
+            ### allocation-free through here ###
+            
+
             # line search
             α = 1.0
             αt = 1.0

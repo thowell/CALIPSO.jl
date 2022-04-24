@@ -1,15 +1,15 @@
 function search_direction!(solver) 
     # correct inertia
     inertia_correction!(solver)
- 
+
     # compute search direction
     search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 
         solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
         solver.indices, solver.linear_solver;
         update=solver.options.update_factorization)
-
+ 
     # refine search direction
-    solver.options.iterative_refinement && iterative_refinement!(solver.data.step, solver)
+    solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data))
 end
 
 function search_direction_symmetric!(

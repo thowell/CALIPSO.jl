@@ -15,11 +15,11 @@ cone(x, θ) = x[2:3]
 method = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
 solver = Solver(method, num_variables, num_parameters, num_equality, num_cone)
 initialize!(solver, x0)
+@benchmark solve!($solver)
 
 # @code_warntype iterative_refinement!(solver.data.step, solver)
 
 # @benchmark iterative_refinement!($solver.data.step, $solver)
-@benchmark solve!($solver)
 
 linear_solve!(solver.linear_solver, solver.data.residual_symmetric.all, solver.data.jacobian_variables_symmetric, solver.data.residual_symmetric.all)
 @code_warntype linear_solve!(solver.linear_solver, solver.data.residual_symmetric.all, solver.data.jacobian_variables_symmetric, solver.data.residual_symmetric.all)
