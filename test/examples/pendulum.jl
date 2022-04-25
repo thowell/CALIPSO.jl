@@ -69,6 +69,7 @@
     solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
         nonnegative_indices=idx_nn, 
         second_order_indices=idx_soc,
+        custom=trajopt,
         options=Options(verbose=true))
     initialize_states!(solver, trajopt, x_interpolation) 
     initialize_controls!(solver, trajopt, u_guess)

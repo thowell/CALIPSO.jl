@@ -1,5 +1,5 @@
 # problem data 
-struct ProblemData{T}
+struct ProblemData{T,X}
     objective::Vector{T}
     objective_gradient_variables::Vector{T}
     objective_gradient_parameters::Vector{T}
@@ -27,11 +27,13 @@ struct ProblemData{T}
     second_order_jacobians_inverse::Vector{Matrix{T}}
     barrier::Vector{T} 
     barrier_gradient::Vector{T}
+    custom::X
 end
 
 function ProblemData(num_variables, num_parameters, num_equality, num_cone; 
     nonnegative_indices=collect(1:num_cone),
-    second_order_indices=[collect(1:0)])
+    second_order_indices=[collect(1:0)],
+    custom=nothing)
 
     objective = zeros(1)
     objective_gradient_variables = zeros(num_variables)
@@ -93,6 +95,7 @@ function ProblemData(num_variables, num_parameters, num_equality, num_cone;
         second_order_jacobians_inverse,
         barrier, 
         barrier_gradient,
+        custom,
     )
 end
 

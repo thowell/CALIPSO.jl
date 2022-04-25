@@ -33,20 +33,20 @@ struct TrajectoryOptimizationIndices
 end
 
 function indices(
-    objective::Objective{T}, 
-    dynamics::Vector{Dynamics{T}}, 
-    equality::Constraints{T},
-    nonnegative::Constraints{T}, 
-    second_order::Vector{Constraints{T}},
+    objective, 
+    dynamics, 
+    equality,
+    nonnegative, 
+    second_order,
     jacobian_variables_variables_key::Vector{Tuple{Int,Int}}, 
     jacobian_variables_parameters_key::Vector{Tuple{Int,Int}}, 
     num_state::Vector{Int}, 
     num_action::Vector{Int}, 
     num_parameter::Vector{Int},
-    num_trajectory::Int) where T 
+    num_trajectory::Int) 
     
     # parameters 
-    parameters = [sum(num_parameter[1:(t-1)]) .+ (1:num_parameter[t]) for t = 1:length(num_parameter)]
+    parameters = [sum(num_parameter[1:(t-1)]) .+ collect(1:num_parameter[t]) for t = 1:length(num_parameter)]
 
     # dynamics
     dynamics_constraints = constraint_indices(dynamics, 

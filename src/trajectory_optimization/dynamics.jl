@@ -1,12 +1,12 @@
 struct Dynamics{T}
-    constraint::Any
-    jacobian_variables::Any
-    jacobian_parameters::Any
-    constraint_dual::Any
-    constraint_dual_jacobian_variables::Any
-    constraint_dual_jacobian_parameters::Any
-    constraint_dual_jacobian_variables_variables::Any
-    constraint_dual_jacobian_variables_parameters::Any
+    constraint::Function
+    jacobian_variables::Function
+    jacobian_parameters::Function
+    constraint_dual::Function
+    constraint_dual_jacobian_variables::Function
+    constraint_dual_jacobian_parameters::Function
+    constraint_dual_jacobian_variables_variables::Function
+    constraint_dual_jacobian_variables_parameters::Function
     num_next_state::Int 
     num_state::Int 
     num_action::Int
@@ -37,9 +37,9 @@ function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_a
     dz = Symbolics.sparsejacobian(d, [x; u; y]);
     dw = Symbolics.sparsejacobian(d, w);
 
-    d_func = eval(Symbolics.build_function(d, y, x, u, w)[2]);
-    dz_func = eval(Symbolics.build_function(dz.nzval, y, x, u, w)[2]);
-    dw_func = eval(Symbolics.build_function(dw.nzval, y, x, u, w)[2]);
+    d_func = Symbolics.build_function(d, y, x, u, w, expression=Val{false})[2];
+    dz_func = Symbolics.build_function(dz.nzval, y, x, u, w, expression=Val{false})[2];
+    dw_func = Symbolics.build_function(dw.nzval, y, x, u, w, expression=Val{false})[2];
 
     num_jacobian_variables = length(dz.nzval)
     num_jacobian_parameters = length(dw.nzval)
@@ -52,17 +52,16 @@ function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_a
     dᵀλz = Symbolics.gradient(dᵀλ, [x; u; y])
     dᵀλw = Symbolics.gradient(dᵀλ, w)
 
-
-    dᵀλ_func = eval(Symbolics.build_function(dᵀλ, y, x, u, w, λ)) 
-    dᵀλz_func = eval(Symbolics.build_function(dᵀλz, y, x, u, w, λ)[2])
-    dᵀλw_func = eval(Symbolics.build_function(dᵀλw, y, x, u, w, λ)[2])
+    dᵀλ_func = Symbolics.build_function([dᵀλ], y, x, u, w, λ, expression=Val{false})[2]
+    dᵀλz_func = Symbolics.build_function(dᵀλz, y, x, u, w, λ, expression=Val{false})[2]
+    dᵀλw_func = Symbolics.build_function(dᵀλw, y, x, u, w, λ, expression=Val{false})[2]
 
     if evaluate_hessian
         dᵀλzz = Symbolics.sparsejacobian(dᵀλz, [x; u; y])
         dᵀλzw = Symbolics.sparsejacobian(dᵀλz, w)
 
-        dᵀλzz_func = eval(Symbolics.build_function(dᵀλzz.nzval, y, x, u, w, λ)[2])
-        dᵀλzw_func = eval(Symbolics.build_function(dᵀλzw.nzval, y, x, u, w, λ)[2])
+        dᵀλzz_func = Symbolics.build_function(dᵀλzz.nzval, y, x, u, w, λ, expression=Val{false})[2]
+        dᵀλzw_func = Symbolics.build_function(dᵀλzw.nzval, y, x, u, w, λ, expression=Val{false})[2]
 
         jacobian_variables_variables_sparsity = [findnz(dᵀλzz)[1:2]...]
         jacobian_variables_parameters_sparsity = [findnz(dᵀλzw)[1:2]...]

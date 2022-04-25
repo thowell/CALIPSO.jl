@@ -1,12 +1,12 @@
 struct Constraint{T}
-    constraint::Any 
-    jacobian_variables::Any 
-    jacobian_parameters::Any 
-    constraint_dual::Any 
-    constraint_dual_jacobian_variables::Any 
-    constraint_dual_jacobian_parameters::Any 
-    constraint_dual_jacobian_variables_variables::Any 
-    constraint_dual_jacobian_variables_parameters::Any
+    constraint::Function
+    jacobian_variables::Function
+    jacobian_parameters::Function
+    constraint_dual::Function
+    constraint_dual_jacobian_variables::Function
+    constraint_dual_jacobian_parameters::Function
+    constraint_dual_jacobian_variables_variables::Function 
+    constraint_dual_jacobian_variables_parameters::Function
     num_state::Int 
     num_action::Int 
     num_parameter::Int
@@ -46,12 +46,12 @@ function Constraint(constraint::Function, num_state::Int, num_action::Int;
     cᵀyz = Symbolics.gradient(cᵀy, [x; u]) 
     cᵀyw = Symbolics.gradient(cᵀy, w) 
   
-    c_func = eval(Symbolics.build_function(c, x, u, w)[2])
-    cz_func = eval(Symbolics.build_function(cz.nzval, x, u, w)[2])
-    cw_func = eval(Symbolics.build_function(cw.nzval, x, u, w)[2])
-    cᵀy_func = eval(Symbolics.build_function(cᵀy, x, u, w, y)) 
-    cᵀyz_func = eval(Symbolics.build_function(cᵀyz, x, u, w, y)[2])
-    cᵀyw_func = eval(Symbolics.build_function(cᵀyw, x, u, w, y)[2])
+    c_func = Symbolics.build_function(c, x, u, w, expression=Val{false})[2]
+    cz_func = Symbolics.build_function(cz.nzval, x, u, w, expression=Val{false})[2]
+    cw_func = Symbolics.build_function(cw.nzval, x, u, w, expression=Val{false})[2]
+    cᵀy_func = Symbolics.build_function([cᵀy], x, u, w, y, expression=Val{false})[2]
+    cᵀyz_func = Symbolics.build_function(cᵀyz, x, u, w, y, expression=Val{false})[2]
+    cᵀyw_func = Symbolics.build_function(cᵀyw, x, u, w, y, expression=Val{false})[2]
 
     num_jacobian_variables = length(cz.nzval)
     num_jacobian_parameters = length(cw.nzval)
@@ -64,8 +64,8 @@ function Constraint(constraint::Function, num_state::Int, num_action::Int;
         cᵀyzw = Symbolics.sparsejacobian(cᵀyz, w)
         num_jacobian_variables_variables = length(cᵀyzz.nzval)
         num_jacobian_variables_parameters = length(cᵀyzw.nzval)
-        cᵀyzz_func = eval(Symbolics.build_function(cᵀyzz.nzval, x, u, w, y)[2])
-        cᵀyzw_func = eval(Symbolics.build_function(cᵀyzw.nzval, x, u, w, y)[2])
+        cᵀyzz_func = Symbolics.build_function(cᵀyzz.nzval, x, u, w, y, expression=Val{false})[2]
+        cᵀyzw_func = Symbolics.build_function(cᵀyzw.nzval, x, u, w, y, expression=Val{false})[2]
         jacobian_variables_variables_sparsity = [findnz(cᵀyzz)[1:2]...]
         jacobian_variables_parameters_sparsity = [findnz(cᵀyzw)[1:2]...]
     else      

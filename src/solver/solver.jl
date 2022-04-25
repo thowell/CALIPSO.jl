@@ -1,5 +1,5 @@
-struct Solver{T,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP,B,BX,P,PX,PXI,K}
-    problem::ProblemData{T} 
+struct Solver{T,X,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP,B,BX,P,PX,PXI,K}
+    problem::ProblemData{T,X} 
     methods::ProblemMethods{O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP} 
     cone_methods::ConeMethods{B,BX,P,PX,PXI,K}
     data::SolverData{T}
@@ -29,6 +29,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     parameters=zeros(num_parameters),
     nonnegative_indices=collect(1:num_cone),
     second_order_indices=[collect(1:0)],
+    custom=nothing,
     options=Options())
 
     # indices
@@ -47,7 +48,8 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     # problem data
     p_data = ProblemData(num_variables, num_parameters, num_equality, num_cone;
         nonnegative_indices=nonnegative_indices,
-        second_order_indices=second_order_indices)
+        second_order_indices=second_order_indices,
+        custom=custom)
 
     # solver data
     s_data = SolverData(dim, idx,

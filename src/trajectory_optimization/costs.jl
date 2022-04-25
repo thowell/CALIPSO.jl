@@ -1,9 +1,9 @@
 struct Cost{T}
-    cost::Any
-    gradient_variables::Any
-    gradient_parameters::Any
-    jacobian_variables_variables::Any
-    jacobian_variables_parameters::Any
+    cost::Function
+    gradient_variables::Function
+    gradient_parameters::Function
+    jacobian_variables_variables::Function
+    jacobian_variables_parameters::Function
     num_gradient_variables::Int 
     num_gradient_parameters::Int 
     num_jacobian_variables_variables::Int
@@ -31,16 +31,16 @@ function Cost(cost::Function, num_state::Int, num_action::Int;
     num_gradient_variables = num_state + num_action
     num_gradient_parameters = num_parameter
 
-    cost_func = eval(Symbolics.build_function([c], x, u, w)[2])
-    gradient_variables_func = eval(Symbolics.build_function(gz, x, u, w)[2])
-    gradient_parameters_func = eval(Symbolics.build_function(gw, x, u, w)[2])
+    cost_func = Symbolics.build_function([c], x, u, w, expression=Val{false})[2]
+    gradient_variables_func = Symbolics.build_function(gz, x, u, w, expression=Val{false})[2]
+    gradient_parameters_func = Symbolics.build_function(gw, x, u, w, expression=Val{false})[2]
 
     if evaluate_hessian 
         jacobian_variables_variables = Symbolics.sparsejacobian(gz, [x; u])
         jacobian_variables_parameters = Symbolics.sparsejacobian(gz, w)
 
-        jacobian_variables_variables_func = eval(Symbolics.build_function(jacobian_variables_variables.nzval, x, u, w)[2])
-        jacobian_variables_parameters_func = eval(Symbolics.build_function(jacobian_variables_parameters.nzval, x, u, w)[2])
+        jacobian_variables_variables_func = Symbolics.build_function(jacobian_variables_variables.nzval, x, u, w, expression=Val{false})[2]
+        jacobian_variables_parameters_func = Symbolics.build_function(jacobian_variables_parameters.nzval, x, u, w, expression=Val{false})[2]
 
         sparsity_variables_variables = [findnz(jacobian_variables_variables)[1:2]...]
         num_jacobian_variables_variables = length(jacobian_variables_variables.nzval)
@@ -80,7 +80,7 @@ end
 
 Objective{T} = Vector{Cost{T}} where T
 
-function cost(c, objective::Objective, states, actions, parameters) 
+function cost(c, objective::Vector{Cost{T}}, states, actions, parameters) where T 
     for (t, obj) in enumerate(objective)
         obj.cost(obj.cost_cache, states[t], actions[t], parameters[t])
         c[1] += obj.cost_cache[1]
@@ -88,21 +88,23 @@ function cost(c, objective::Objective, states, actions, parameters)
     return
 end
 
-function gradient_variables!(gradient, indices, objective::Objective, states, actions, parameters)
+function gradient_variables!(gradient, indices, objective::Vector{Cost{T}}, states, actions, parameters) where T
     for (t, obj) in enumerate(objective)
         obj.gradient_variables(obj.gradient_variables_cache, states[t], actions[t], parameters[t])
         @views gradient[indices[t]] .+= obj.gradient_variables_cache
     end
 end
 
-function gradient_parameters!(gradient, indices, objective::Objective, states, actions, parameters)
+function gradient_parameters!(gradient, indices, objective::Vector{Cost{T}}, states, actions, parameters) where T
     for (t, obj) in enumerate(objective)
-        obj.gradient_parameters(obj.gradient_parameters_cache, states[t], actions[t], parameters[t])
-        @views gradient[indices[t]] .+= obj.gradient_parameters_cache
+        if !isempty(obj.gradient_parameters_cache)
+            obj.gradient_parameters(obj.gradient_parameters_cache, states[t], actions[t], parameters[t])
+            @views gradient[indices[t]] .+= obj.gradient_parameters_cache
+        end
     end
 end
 
-function jacobian_variables_variables!(jacobians, sparsity, objective::Objective, states, actions, parameters)
+function jacobian_variables_variables!(jacobians, sparsity, objective::Vector{Cost{T}}, states, actions, parameters) where T
     for (t, obj) in enumerate(objective)
         obj.jacobian_variables_variables(obj.jacobian_variables_variables_cache, states[t], actions[t], parameters[t])
         for (i, idx) in enumerate(sparsity[t]) 
@@ -111,16 +113,18 @@ function jacobian_variables_variables!(jacobians, sparsity, objective::Objective
     end
 end
 
-function jacobian_variables_parameters!(jacobians, sparsity, objective::Objective, states, actions, parameters)
+function jacobian_variables_parameters!(jacobians, sparsity, objective::Vector{Cost{T}}, states, actions, parameters) where T
     for (t, obj) in enumerate(objective)
-        obj.jacobian_variables_parameters(obj.jacobian_variables_parameters_cache, states[t], actions[t], parameters[t])
-        for (i, idx) in enumerate(sparsity[t]) 
-            jacobians[idx...] += obj.jacobian_variables_parameters_cache[i] 
-        end
+        if !isempty(obj.jacobian_variables_parameters_cache)
+            obj.jacobian_variables_parameters(obj.jacobian_variables_parameters_cache, states[t], actions[t], parameters[t])
+            for (i, idx) in enumerate(sparsity[t]) 
+                jacobians[idx...] += obj.jacobian_variables_parameters_cache[i] 
+            end
+        end 
     end
 end
 
-function sparsity_jacobian_variables_variables(objective::Objective, num_state::Vector{Int}, num_action::Vector{Int})
+function sparsity_jacobian_variables_variables(objective::Vector{Cost{T}}, num_state::Vector{Int}, num_action::Vector{Int}) where T
     sp = Vector{Tuple{Int,Int}}[]
     for (t, obj) in enumerate(objective)
         row = Int[]
@@ -136,7 +140,7 @@ function sparsity_jacobian_variables_variables(objective::Objective, num_state::
     return sp
 end
 
-function sparsity_jacobian_variables_parameters(objective::Objective, num_state::Vector{Int}, num_action::Vector{Int}, num_parameter::Vector{Int})
+function sparsity_jacobian_variables_parameters(objective::Vector{Cost{T}}, num_state::Vector{Int}, num_action::Vector{Int}, num_parameter::Vector{Int}) where T
     sp = Vector{Tuple{Int,Int}}[]
     for (t, obj) in enumerate(objective)
         row = Int[]
@@ -153,7 +157,7 @@ function sparsity_jacobian_variables_parameters(objective::Objective, num_state:
     return sp
 end
 
-function jacobian_variables_variables_indices(objective::Objective, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int})
+function jacobian_variables_variables_indices(objective::Vector{Cost{T}}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}) where T
     indices = Vector{Int}[]
     for (t, obj) in enumerate(objective)
         if !isempty(obj.sparsity_variables_variables[1])
@@ -169,7 +173,7 @@ function jacobian_variables_variables_indices(objective::Objective, key::Vector{
     return indices
 end
 
-function jacobian_variables_parameters_indices(objective::Objective, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}, num_parameter::Vector{Int})
+function jacobian_variables_parameters_indices(objective::Vector{Cost{T}}, key::Vector{Tuple{Int,Int}}, num_state::Vector{Int}, num_action::Vector{Int}, num_parameter::Vector{Int}) where T
     indices = Vector{Int}[]
     for (t, obj) in enumerate(objective)
         if !isempty(obj.sparsity_variables_parameters[1])
@@ -186,5 +190,5 @@ function jacobian_variables_parameters_indices(objective::Objective, key::Vector
     return indices
 end
 
-# num_gradient(objective::Objective{T}) where T = sum([obj.num_gradient  for obj in objective])
-# num_hessian(objective::Objective{T}) where T  = sum([obj.num_hessian   for obj in objective])
+# num_gradient(objective::Vector{Cost{T}}{T}) where T = sum([obj.num_gradient  for obj in objective])
+# num_hessian(objective::Vector{Cost{T}}{T}) where T  = sum([obj.num_hessian   for obj in objective])

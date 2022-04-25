@@ -62,10 +62,10 @@
 
     nz = sum([t < T ? dynamics[t].num_state : dynamics[t-1].num_next_state for t = 1:T]) + sum([dynamics[t].num_action for t = 1:T-1])
     z = rand(nz)
-    x = [zero(z[x_idx[t]]) for t = 1:T]
-    u = [[zero(z[u_idx[t]]) for t = 1:T-1]..., zeros(0)]
+    x = [@views z[x_idx[t]] for t = 1:T]
+    u = [[@views z[u_idx[t]] for t = 1:T-1]..., zeros(0)]
 
-    CALIPSO.trajectory!(x, u, z, x_idx, u_idx)
+    # CALIPSO.trajectory!(x, u, z, x_idx, u_idx)
     z̄ = zero(z)
     for (t, idx) in enumerate(x_idx) 
         z̄[idx] .= x[t] 
