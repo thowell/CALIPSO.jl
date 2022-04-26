@@ -141,21 +141,69 @@ function problem!(problem::ProblemData{T}, methods::ProblemMethods{T,O,OX,OP,OXX
     end
     # equality
     equality_constraint && methods.equality_constraint(problem.equality_constraint, x, θ)
-    equality_jacobian_variables && methods.equality_jacobian_variables(problem.equality_jacobian_variables, x, θ)
-    equality_jacobian_parameters && methods.equality_jacobian_parameters(problem.equality_jacobian_parameters, x, θ)
+    
+    if equality_jacobian_variables
+        methods.equality_jacobian_variables(methods.equality_jacobian_variables_cache, x, θ)
+        for (i, idx) in enumerate(methods.equality_jacobian_variables_sparsity) 
+            problem.equality_jacobian_variables[idx...] = methods.equality_jacobian_variables_cache[i]
+        end
+    end
+    if equality_jacobian_parameters
+        methods.equality_jacobian_parameters(methods.equality_jacobian_parameters_cache, x, θ)
+        for (i, idx) in enumerate(methods.equality_jacobian_parameters_sparsity) 
+            problem.equality_jacobian_parameters[idx...] = methods.equality_jacobian_parameters_cache[i]
+        end
+    end
+    
+    
     equality_dual && methods.equality_dual(problem.equality_dual, x, θ, y)
     equality_dual_jacobian_variables && methods.equality_dual_jacobian_variables(problem.equality_dual_jacobian_variables, x, θ, y)
-    equality_dual_jacobian_variables_variables && methods.equality_dual_jacobian_variables_variables(problem.equality_dual_jacobian_variables_variables, x, θ, y)
-    equality_dual_jacobian_variables_parameters && methods.equality_dual_jacobian_variables_parameters(problem.equality_dual_jacobian_variables_parameters, x, θ, y)
+    
+    
+    if equality_dual_jacobian_variables_variables
+        methods.equality_dual_jacobian_variables_variables(methods.equality_dual_jacobian_variables_variables_cache, x, θ, y)
+        for (i, idx) in enumerate(methods.equality_dual_jacobian_variables_variables_sparsity) 
+            problem.equality_dual_jacobian_variables_variables[idx...] = methods.equality_dual_jacobian_variables_variables_cache[i]
+        end
+    end
+    if equality_dual_jacobian_variables_parameters
+        methods.equality_dual_jacobian_variables_parameters(methods.equality_dual_jacobian_variables_parameters_cache, x, θ, y)
+        for (i, idx) in enumerate(methods.equality_dual_jacobian_variables_parameters_sparsity) 
+            problem.equality_dual_jacobian_variables_parameters[idx...] = methods.equality_dual_jacobian_variables_parameters_cache[i]
+        end
+    end
 
     # cone
     cone_constraint && methods.cone_constraint(problem.cone_constraint, x, θ)
-    cone_jacobian_variables && methods.cone_jacobian_variables(problem.cone_jacobian_variables, x, θ)
-    cone_jacobian_parameters && methods.cone_jacobian_parameters(problem.cone_jacobian_parameters, x, θ)
+    
+    if cone_jacobian_variables
+        methods.cone_jacobian_variables(methods.cone_jacobian_variables_cache, x, θ)
+        for (i, idx) in enumerate(methods.cone_jacobian_variables_sparsity) 
+            problem.cone_jacobian_variables[idx...] = methods.cone_jacobian_variables_cache[i]
+        end
+    end
+    if cone_jacobian_parameters
+        methods.cone_jacobian_parameters(methods.cone_jacobian_parameters_cache, x, θ)
+        for (i, idx) in enumerate(methods.cone_jacobian_parameters_sparsity) 
+            problem.cone_jacobian_parameters[idx...] = methods.cone_jacobian_parameters_cache[i]
+        end
+    end
+    
     cone_dual && methods.cone_dual(problem.cone_dual, x, θ, z)
     cone_dual_jacobian_variables && methods.cone_dual_jacobian_variables(problem.cone_dual_jacobian_variables, x, θ, z)
-    cone_dual_jacobian_variables_variables && methods.cone_dual_jacobian_variables_variables(problem.cone_dual_jacobian_variables_variables, x, θ, z)
-    cone_dual_jacobian_variables_parameters && methods.cone_dual_jacobian_variables_parameters(problem.cone_dual_jacobian_variables_parameters, x, θ, z)
+    
+    if cone_dual_jacobian_variables_variables
+        methods.cone_dual_jacobian_variables_variables(methods.cone_dual_jacobian_variables_variables_cache, x, θ, z)
+        for (i, idx) in enumerate(methods.cone_dual_jacobian_variables_variables_sparsity) 
+            problem.cone_dual_jacobian_variables_variables[idx...] = methods.cone_dual_jacobian_variables_variables_cache[i]
+        end
+    end
+    if cone_dual_jacobian_variables_parameters
+        methods.cone_dual_jacobian_variables_parameters(methods.cone_dual_jacobian_variables_parameters_cache, x, θ, z)
+        for (i, idx) in enumerate(methods.cone_dual_jacobian_variables_parameters_sparsity) 
+            problem.cone_dual_jacobian_variables_parameters[idx...] = methods.cone_dual_jacobian_variables_parameters_cache[i]
+        end
+    end
 
     return
 end

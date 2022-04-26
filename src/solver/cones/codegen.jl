@@ -40,13 +40,25 @@ function generate_cones(num_cone, idx_nn, idx_soc)
     pai = cone_product_jacobian_inverse(a, b, idx_nn, idx_soc)
     t = cone_target(idx_nn, idx_soc)
 
-    Φ_func = Symbolics.build_function([Φ], a, expression=Val{false})[2]
-    Φa_func = Symbolics.build_function(Φa, a, expression=Val{false})[2]
+    Φ_func = Symbolics.build_function([Φ], a, 
+        checkbounds=true,
+        expression=Val{false})[2]
+    Φa_func = Symbolics.build_function(Φa, a, 
+        checkbounds=true,
+        expression=Val{false})[2]
 
-    p_func = Symbolics.build_function(p, a, b, expression=Val{false})[2]
-    pa_func = Symbolics.build_function(pa, a, b, expression=Val{false})[2] 
-    pai_func = Symbolics.build_function(pai, a, b, expression=Val{false})[2]
-    t_func = Symbolics.build_function(t, a, b, expression=Val{false})[2]
+    p_func = Symbolics.build_function(p, a, b,
+        checkbounds=true, 
+        expression=Val{false})[2]
+    pa_func = Symbolics.build_function(pa, a, b, 
+        checkbounds=true,
+        expression=Val{false})[2] 
+    pai_func = Symbolics.build_function(pai, a, b, 
+        checkbounds=true,
+        expression=Val{false})[2]
+    t_func = Symbolics.build_function(t, a, b, 
+        checkbounds=true,
+        expression=Val{false})[2]
 
     return Φ_func, Φa_func, p_func, pa_func, pai_func, t_func
 end
