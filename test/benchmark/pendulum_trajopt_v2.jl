@@ -293,7 +293,8 @@ parameters = solver.parameters
         # cone_dual_jacobian_variables_variables=true,
         # cone_dual_jacobian_variables_parameters=true,
     )
-
+solver.dimensions.parameters
+problem.objective_gradient_parameters
 problem!(
     problem, 
     method, 
@@ -334,6 +335,7 @@ solver.problem.objective_gradient_variables
 solver.problem.objective_jacobian_variables_variables
 
 solver.solution.variables
+
 # ## solve 
 solve!(solver)
 solver.solution.variables
