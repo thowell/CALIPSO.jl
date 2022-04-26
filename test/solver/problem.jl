@@ -178,6 +178,7 @@
     @test norm(Δ.all - Δ_symmetric.all) < 1.0e-6
 
     # iterative refinement
+
     noisy_step = deepcopy(solver.data.step)
     noisy_step.all .= solver.data.step.all + randn(length(solver.data.step.all))
     # @show norm(solver.data.residual.all - solver.data.jacobian_variables * noisy_step)
