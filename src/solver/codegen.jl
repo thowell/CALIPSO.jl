@@ -6,16 +6,19 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
         
         fx = Symbolics.gradient(f[1], x)
         fθ = Symbolics.gradient(f[1], θ)
-        fxx = Symbolics.jacobian(fx, x)
-        fxθ = Symbolics.jacobian(fx, θ)
+        fxx = Symbolics.sparsejacobian(fx, x)
+        fxθ = Symbolics.sparsejacobian(fx, θ)
 
         f_expr = Symbolics.build_function(f, x, θ, expression=Val{false})[2]
         fx_expr = Symbolics.build_function(fx, x, θ, expression=Val{false})[2]
         fθ_expr = Symbolics.build_function(fθ, x, θ, expression=Val{false})[2]
-        fxx_expr = Symbolics.build_function(fxx, x, θ, expression=Val{false})[2]
-        fxθ_expr = Symbolics.build_function(fxθ, x, θ, expression=Val{false})[2]
+        fxx_expr = Symbolics.build_function(fxx.nzval, x, θ, expression=Val{false})[2]
+        fxθ_expr = Symbolics.build_function(fxθ.nzval, x, θ, expression=Val{false})[2]
 
-        return f_expr, fx_expr, fθ_expr, fxx_expr, fxθ_expr
+        fxx_sparsity = collect(zip([findnz(fxx)[1:2]...]...))
+        fxθ_sparsity = collect(zip([findnz(fxθ)[1:2]...]...))
+
+        return f_expr, fx_expr, fθ_expr, fxx_expr, fxθ_expr, fxx_sparsity, fxθ_sparsity
     elseif mode == :vector 
         f = func(x, θ)
         

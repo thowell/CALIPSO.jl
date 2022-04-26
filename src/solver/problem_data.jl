@@ -1,5 +1,5 @@
 # problem data 
-struct ProblemData{T,X}
+struct ProblemData{T}
     objective::Vector{T}
     objective_gradient_variables::Vector{T}
     objective_gradient_parameters::Vector{T}
@@ -27,13 +27,11 @@ struct ProblemData{T,X}
     second_order_jacobians_inverse::Vector{Matrix{T}}
     barrier::Vector{T} 
     barrier_gradient::Vector{T}
-    custom::X
 end
 
 function ProblemData(num_variables, num_parameters, num_equality, num_cone; 
     nonnegative_indices=collect(1:num_cone),
-    second_order_indices=[collect(1:0)],
-    custom=nothing)
+    second_order_indices=[collect(1:0)])
 
     objective = zeros(1)
     objective_gradient_variables = zeros(num_variables)
@@ -95,11 +93,10 @@ function ProblemData(num_variables, num_parameters, num_equality, num_cone;
         second_order_jacobians_inverse,
         barrier, 
         barrier_gradient,
-        custom,
     )
 end
 
-function problem!(problem::ProblemData{T}, methods::ProblemMethods{O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP}, idx::Indices, solution::Point{T}, parameters::Vector{T};
+function problem!(problem::ProblemData{T}, methods::ProblemMethods{T,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP}, idx::Indices, solution::Point{T}, parameters::Vector{T};
     objective=false,
     objective_gradient_variables=false,
     objective_gradient_parameters=false,
@@ -130,9 +127,18 @@ function problem!(problem::ProblemData{T}, methods::ProblemMethods{O,OX,OP,OXX,O
     objective && methods.objective(problem.objective, x, θ)
     objective_gradient_variables && methods.objective_gradient_variables(problem.objective_gradient_variables, x, θ)
     objective_gradient_parameters && methods.objective_gradient_parameters(problem.objective_gradient_parameters, x, θ)
-    objective_jacobian_variables_variables && methods.objective_jacobian_variables_variables(problem.objective_jacobian_variables_variables, x, θ)
-    objective_jacobian_variables_parameters && methods.objective_jacobian_variables_parameters(problem.objective_jacobian_variables_parameters, x, θ)
-    
+    if objective_jacobian_variables_variables 
+        methods.objective_jacobian_variables_variables(methods.objective_jacobian_variables_variables_cache, x, θ)
+        for (i, idx) in enumerate(methods.objective_jacobian_variables_variables_sparsity) 
+            problem.objective_jacobian_variables_variables[idx...] = methods.objective_jacobian_variables_variables_cache[i]
+        end
+    end
+    if objective_jacobian_variables_parameters 
+        methods.objective_jacobian_variables_parameters(methods.objective_jacobian_variables_parameters_cache, x, θ)
+        for (i, idx) in enumerate(methods.objective_jacobian_variables_parameters_sparsity) 
+            problem.objective_jacobian_variables_parameters[idx...] = methods.objective_jacobian_variables_parameters_cache[i]
+        end
+    end
     # equality
     equality_constraint && methods.equality_constraint(problem.equality_constraint, x, θ)
     equality_jacobian_variables && methods.equality_jacobian_variables(problem.equality_jacobian_variables, x, θ)
