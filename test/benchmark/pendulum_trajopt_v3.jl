@@ -37,23 +37,24 @@ x1 = [0.0; 0.0]
 xT = [π; 0.0] 
 
 # ## objective 
-ot = (x, u, w) -> 0.1 * dot(x[1:2], x[1:2]) + 0.1 * dot(u, u)
-oT = (x, u, w) -> 0.1 * dot(x[1:2], x[1:2])
-obj = [[ot for t = 1:T-1]..., oT]
+obj = [
+        [(x, u, w) -> dot(x[1:2], x[1:2]) + 0.1 * dot(u, u) for t = 1:T-1]..., 
+        (x, u, w) -> 0.1 * dot(x[1:2], x[1:2]),
+]
 
 # ## constraints 
-eq1(x, u, w) = x - x1
-eqt(x, u, w) = zeros(0)
-eqT(x, u, w) = x - xT
-eq = [eq1, [eqt for t = 2:T-1]..., eqT]
+eq = [
+        (x, u, w) -> x - x1, 
+        [(x, u, w) -> zeros(0) for t = 2:T-1]..., 
+        (x, u, w) -> x - xT,
+]
 
-ineqt(x, u, w) = zeros(0)
-ineq = [ineqt for t = 1:T]
+ineq = [(x, u, w) -> zeros(0) for t = 1:T]
+soc = [[(x, u, w) -> zeros(0)] for t = 1:T]
 
-soct(x, u, w) = zeros(0)
-soc = [[soct] for t = 1:T]
-
-method, nonnegative_indices, second_order_indices, total_trajectory, total_parameters, total_equality, total_cone = generate_trajectory_optimization(obj, dyn, eq, ineq, soc, nx, nu, np)
+method, nonnegative_indices, second_order_indices, total_trajectory, total_parameters, total_equality, total_cone = generate_trajectory_optimization(obj, dyn, eq, ineq, soc, nx, nu, np;
+    threads=false,
+    checkbounds=false)
 
 # ## initialize
 x_idx, u_idx = state_action_indices(nx, nu)
@@ -68,8 +69,8 @@ for t = 1:T
 end
 
 # ## solver
-nonnegative_indices
-second_order_indices
+nonnegative_indices[1]
+second_order_indices[1]
 solver = Solver(method, total_trajectory, total_parameters, total_equality, total_cone,
     # nonnegative_indices=nonnegative_indices, 
     # second_order_indices=second_order_indices,
@@ -163,7 +164,6 @@ initialize!(solver, z_guess)
 
 # ## solve 
 solve!(solver)
-solver.solution.variables
 
 @benchmark solve!($solver)
 

@@ -1,6 +1,7 @@
  
 
 function generate_trajectory_optimization(objective, dynamics, equality, nonnegative, second_order, num_states, num_actions, num_parameters;
+    threads=false,
     checkbounds=true)
 
     # dimensions
@@ -88,66 +89,85 @@ function generate_trajectory_optimization(objective, dynamics, equality, nonnega
 
     # objective
     o_func = Symbolics.build_function([os], z, p, 
+        parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     oz_func = Symbolics.build_function(oz, z, p, 
+        parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     oθ_func = Symbolics.build_function(oθ, z, p, 
+        parallel=((threads && length(oθ) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     ozz_func = Symbolics.build_function(ozz.nzval, z, p, 
+        parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     ozθ_func = Symbolics.build_function(ozθ.nzval, z, p, 
+        parallel=((threads && length(ozθ.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
 
     # equality
     e_func = Symbolics.build_function(es, z, p, 
+        parallel=((threads && length(es) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     ez_func = Symbolics.build_function(ez.nzval, z, p, 
+        parallel=((threads && length(ez.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     eθ_func = Symbolics.build_function(eθ.nzval, z, p, 
+        parallel=((threads && length(eθ.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     
     ey_func = Symbolics.build_function([ey], z, p, ye, 
+    parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     eyz_func = Symbolics.build_function(eyz, z, p, ye, 
+        parallel=((threads && length(eyz) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     eyzz_func = Symbolics.build_function(eyzz.nzval, z, p, ye, 
+        parallel=((threads && length(eyzz.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     eyzθ_func = Symbolics.build_function(eyzθ.nzval, z, p, ye, 
+        parallel=((threads && length(eyzθ.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
 
     # cone 
     c_func = Symbolics.build_function(cs, z, p, 
+        parallel=((threads && length(cs) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     cz_func = Symbolics.build_function(cz.nzval, z, p, 
+        parallel=((threads && length(cz.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     cθ_func = Symbolics.build_function(cθ.nzval, z, p, 
+        parallel=((threads && length(cθ.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
 
     cy_func = Symbolics.build_function([cy], z, p, yc, 
+        parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     cyz_func = Symbolics.build_function(cyz, z, p, yc, 
+        parallel=((threads && length(cyz) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     cyzz_func = Symbolics.build_function(cyzz.nzval, z, p, yc, 
+        parallel=((threads && length(cyzz.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
     cyzθ_func = Symbolics.build_function(cyzθ.nzval, z, p, yc, 
+        parallel=((threads && length(cyzθ.nzval) > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
         checkbounds=checkbounds, 
         expression=Val{false})[2]
 

@@ -126,29 +126,29 @@ cyzz_sparsity = collect(zip([findnz(cyzz)[1:2]...]...))
 cyzθ_sparsity = collect(zip([findnz(cyzθ)[1:2]...]...))
 
 # build functions
-o_func = Symbolics.build_function([os], z, p, checkbounds=true, expression=Val{false})[2]
-oz_func = Symbolics.build_function(oz, z, p, checkbounds=true, expression=Val{false})[2]
-oθ_func = Symbolics.build_function(oθ, z, p, checkbounds=true, expression=Val{false})[2]
-ozz_func = Symbolics.build_function(ozz.nzval, z, p, checkbounds=true, expression=Val{false})[2]
-ozθ_func = Symbolics.build_function(ozθ.nzval, z, p, checkbounds=true, expression=Val{false})[2]
+o_func = Symbolics.build_function([os], z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+oz_func = Symbolics.build_function(oz, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+oθ_func = Symbolics.build_function(oθ, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+ozz_func = Symbolics.build_function(ozz.nzval, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+ozθ_func = Symbolics.build_function(ozθ.nzval, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
 
-e_func = Symbolics.build_function(es, z, p, checkbounds=true, expression=Val{false})[2]
-ez_func = Symbolics.build_function(ez.nzval, z, p, checkbounds=true, expression=Val{false})[2]
-eθ_func = Symbolics.build_function(eθ.nzval, z, p, checkbounds=true, expression=Val{false})[2]
+e_func = Symbolics.build_function(es, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+ez_func = Symbolics.build_function(ez.nzval, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+eθ_func = Symbolics.build_function(eθ.nzval, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+length(eθ.nzval)
+ey_func = Symbolics.build_function([ey], z, p, ye, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+eyz_func = Symbolics.build_function(eyz, z, p, ye, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+eyzz_func = Symbolics.build_function(eyzz.nzval, z, p, ye, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+eyzθ_func = Symbolics.build_function(eyzθ.nzval, z, p, ye, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
 
-ey_func = Symbolics.build_function([ey], z, p, ye, checkbounds=true, expression=Val{false})[2]
-eyz_func = Symbolics.build_function(eyz, z, p, ye, checkbounds=true, expression=Val{false})[2]
-eyzz_func = Symbolics.build_function(eyzz.nzval, z, p, ye, checkbounds=true, expression=Val{false})[2]
-eyzθ_func = Symbolics.build_function(eyzθ.nzval, z, p, ye, checkbounds=true, expression=Val{false})[2]
+c_func = Symbolics.build_function(cs, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+cz_func = Symbolics.build_function(cz.nzval, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+cθ_func = Symbolics.build_function(cθ.nzval, z, p, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
 
-c_func = Symbolics.build_function(cs, z, p, checkbounds=true, expression=Val{false})[2]
-cz_func = Symbolics.build_function(cz.nzval, z, p, checkbounds=true, expression=Val{false})[2]
-cθ_func = Symbolics.build_function(cθ.nzval, z, p, checkbounds=true, expression=Val{false})[2]
-
-cy_func = Symbolics.build_function([cy], z, p, yc, checkbounds=true, expression=Val{false})[2]
-cyz_func = Symbolics.build_function(cyz, z, p, yc, checkbounds=true, expression=Val{false})[2]
-cyzz_func = Symbolics.build_function(cyzz.nzval, z, p, yc, checkbounds=true, expression=Val{false})[2]
-cyzθ_func = Symbolics.build_function(cyzθ.nzval, z, p, yc, checkbounds=true, expression=Val{false})[2]
+cy_func = Symbolics.build_function([cy], z, p, yc, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+cyz_func = Symbolics.build_function(cyz, z, p, yc, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+cyzz_func = Symbolics.build_function(cyzz.nzval, z, p, yc, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
+cyzθ_func = Symbolics.build_function(cyzθ.nzval, z, p, yc, checkbounds=true, expression=Val{false}, parallel=Symbolics.MultithreadedForm())[2]
 
 methods = ProblemMethods(
     o_func,
