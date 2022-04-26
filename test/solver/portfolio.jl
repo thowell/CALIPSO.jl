@@ -33,7 +33,7 @@
     idx_soc = [collect(2 .+ (1:12))]
 
     obj(x, θ) = dot(c, x)
-    eq(x, θ) = zeros(0)
+    eq = empty_constraint
     cone(x, θ) = b - A * x
 
 

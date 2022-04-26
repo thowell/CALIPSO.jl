@@ -1,7 +1,5 @@
-using CALIPSO 
-using LinearAlgebra 
-
-# ## horizon 
+# @testset "Examples: Pendulum" begin 
+# # ## horizon 
 horizon = 11 
 
 # ## dimensions 
@@ -44,11 +42,11 @@ dynamics = [pendulum_midpoint for t = 1:horizon-1]
 # ## constraints 
 equality = [
         (x, u, w) -> x - state_initial, 
-        [(x, u, w) -> zeros(0) for t = 2:horizon-1]..., 
+        [empty_constraint for t = 2:horizon-1]..., 
         (x, u, w) -> x - state_goal,
 ]
-nonnegative = [(x, u, w) -> zeros(0) for t = 1:horizon]
-second_order = [[(x, u, w) -> zeros(0)] for t = 1:horizon]
+nonnegative = [empty_constraint for t = 1:horizon]
+second_order = [[empty_constraint] for t = 1:horizon]
 
 # ## solver
 solver = Solver(
@@ -72,5 +70,15 @@ initialize!(solver, x)
 # ## solve 
 solve!(solver)
 
-# @benchmark solve!($solver)
+# test solution
+@test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
+slack_norm = max(
+                norm(solver.data.residual.equality_dual, Inf),
+                norm(solver.data.residual.cone_dual, Inf),
+)
+@test slack_norm < solver.options.slack_tolerance
+
+@test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+@test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+# end

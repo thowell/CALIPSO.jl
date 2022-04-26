@@ -9,21 +9,16 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
         fxx = Symbolics.sparsejacobian(fx, x)
         fxθ = Symbolics.sparsejacobian(fx, θ)
 
-        f_expr = Symbolics.build_function(f, x, θ, 
-            checkbounds=true,
-            expression=Val{false})[2]
-        fx_expr = Symbolics.build_function(fx, x, θ,
-            checkbounds=true, 
-            expression=Val{false})[2]
-        fθ_expr = Symbolics.build_function(fθ, x, θ, 
-            checkbounds=true,   
-            expression=Val{false})[2]
-        fxx_expr = Symbolics.build_function(fxx.nzval, x, θ, 
-            checkbounds=true,
-            expression=Val{false})[2]
-        fxθ_expr = Symbolics.build_function(fxθ.nzval, x, θ, 
-            checkbounds=true,
-            expression=Val{false})[2]
+        f_expr = eval(Symbolics.build_function(f, x, θ, 
+            checkbounds=true)[2])
+        fx_expr = eval(Symbolics.build_function(fx, x, θ,
+            checkbounds=true,)[2])
+        fθ_expr = eval(Symbolics.build_function(fθ, x, θ, 
+            checkbounds=true,  )[2])
+        fxx_expr = eval(Symbolics.build_function(fxx.nzval, x, θ, 
+            checkbounds=true)[2])
+        fxθ_expr = eval(Symbolics.build_function(fxθ.nzval, x, θ, 
+            checkbounds=true)[2])
 
         fxx_sparsity = collect(zip([findnz(fxx)[1:2]...]...))
         fxθ_sparsity = collect(zip([findnz(fxθ)[1:2]...]...))
@@ -44,27 +39,20 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
         fᵀyxx = Symbolics.sparsejacobian(fᵀyx, x) 
         fᵀyxθ = Symbolics.sparsejacobian(fᵀyx, θ) 
 
-        f_expr = Symbolics.build_function(f, x, θ,
-            checkbounds=true, 
-            expression=Val{false})[2]
-        fx_expr = Symbolics.build_function(fx.nzval, x, θ, 
-            checkbounds=true,
-            expression=Val{false})[2]
-        fθ_expr = Symbolics.build_function(fθ.nzval, x, θ, 
-            checkbounds=true,
-            expression=Val{false})[2]
-        fᵀy_expr = Symbolics.build_function([fᵀy], x, θ, y, 
-            checkbounds=true,
-            expression=Val{false})[2]
-        fᵀyx_expr = Symbolics.build_function(fᵀyx, x, θ, y,
-            checkbounds=true, 
-            expression=Val{false})[2]
-        fᵀyxx_expr = Symbolics.build_function(fᵀyxx.nzval, x, θ, y, 
-            checkbounds=true,
-            expression=Val{false})[2]
-        fᵀyxθ_expr = Symbolics.build_function(fᵀyxθ.nzval, x, θ, y,
-            checkbounds=true, 
-            expression=Val{false})[2]
+        f_expr = eval(Symbolics.build_function(f, x, θ,
+            checkbounds=true,)[2])
+        fx_expr = eval(Symbolics.build_function(fx.nzval, x, θ, 
+            checkbounds=true)[2])
+        fθ_expr = eval(Symbolics.build_function(fθ.nzval, x, θ, 
+            checkbounds=true)[2])
+        fᵀy_expr = eval(Symbolics.build_function([fᵀy], x, θ, y, 
+            checkbounds=true)[2])
+        fᵀyx_expr = eval(Symbolics.build_function(fᵀyx, x, θ, y,
+            checkbounds=true,)[2])
+        fᵀyxx_expr = eval(Symbolics.build_function(fᵀyxx.nzval, x, θ, y, 
+            checkbounds=true)[2])
+        fᵀyxθ_expr = eval(Symbolics.build_function(fᵀyxθ.nzval, x, θ, y,
+            checkbounds=true,)[2])
 
         fᵀyxx_sparsity = collect(zip([findnz(fᵀyxx)[1:2]...]...))
         fᵀyxθ_sparsity = collect(zip([findnz(fᵀyxθ)[1:2]...]...))
@@ -73,54 +61,7 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
     end
 end
 
-# using Convex 
-# using ECOS, SCS 
-# using MathOptInterface
+empty_constraint(x, θ) = zeros(0) 
 
-function generate_random_qp(num_variables, num_equality, num_cone;
-    # check_feasible=true,
-    # optimizer=ECOS.Optimizer,
-    # silent_solver=true
-    )
 
-    n = num_variables
-    m = num_cone
-    p = num_equality
-
-    P = randn(n, n)
-    P = P' * P
-    q = randn(n)
-    G = randn(m, n)
-    x = randn(n)
-    h = G * x + rand(m)
-    A = randn(p, n)
-    b = A * x
-
-    objective(z, θ) = transpose(z) * P * z + transpose(q) * z 
-    constraint_equality(z, θ) = A * z - b 
-    constraint_cone(z, θ) = h - G * z
-    
-    flag = true
-
-    # if check_feasible
-    #     x = Convex.Variable(n)
-    #     problem = minimize(0.5 * quadform(x, P) + q' * x,
-    #                     [G * x <= h,
-    #                     A * x == b])
-
-    #     Convex.solve!(problem, optimizer; 
-    #         silent_solver=silent_solver)
-
-    #     # optimal value
-    #     @show problem.optval
-
-    #     # solution 
-    #     @show x.value
-
-    #     # Check the status of the problem
-    #     flag = problem.status == MathOptInterface.OPTIMAL
-    # end
-
-    return objective, constraint_equality, constraint_cone, flag
-end
 

@@ -49,36 +49,45 @@ export
     ProblemMethods, Solver, solve!, initialize!, Options
 
 # Trajectory Optimization
-# include("trajectory_optimization/costs.jl")
-# include("trajectory_optimization/constraints.jl")
-# include("trajectory_optimization/constraints_vector.jl")
-# include("trajectory_optimization/dynamics.jl")
-# include("trajectory_optimization/data.jl")
-# include("trajectory_optimization/indices.jl")
-# include("trajectory_optimization/sparsity.jl")
-# include("trajectory_optimization/dimensions.jl")
-# include("trajectory_optimization/problem.jl")
-# include("trajectory_optimization/evaluate.jl")
+include("trajectory_optimization/costs.jl")
+include("trajectory_optimization/constraints.jl")
+include("trajectory_optimization/constraints_vector.jl")
+include("trajectory_optimization/dynamics.jl")
+include("trajectory_optimization/data.jl")
+include("trajectory_optimization/indices.jl")
+include("trajectory_optimization/sparsity.jl")
+include("trajectory_optimization/dimensions.jl")
+include("trajectory_optimization/problem.jl")
+include("trajectory_optimization/evaluate.jl")
+
 include("trajectory_optimization/indices_v2.jl")
 include("trajectory_optimization/codegen_v2.jl")
+include("trajectory_optimization/solver_v2.jl")
+include("trajectory_optimization/trajectory_v2.jl")
+
 include("trajectory_optimization/utilities.jl")
 
 # Interface
-# include("trajectory_optimization/methods.jl")
+include("trajectory_optimization/methods.jl")
 
 # objective
 export Cost
 
-# constraints
+# # constraints
 export Constraint, Constraints
 
-# dynamics
+# # dynamics
 export Dynamics
 
-# solver
+# # solver
 export initialize_states!, initialize_controls!, get_trajectory
 
 # utils
-export linear_interpolation
+export 
+    linear_interpolation,
+    trajectory
+
+export 
+    empty_constraint
 
 end # module

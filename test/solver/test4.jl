@@ -5,7 +5,7 @@
     num_cone = 1
     x0 = rand(num_variables)
     obj(x, θ) = x[1] - 2.0 * x[2] + x[3] + sqrt(6)
-    eq(x, θ) = zeros(0)
+    eq = empty_constraint
     cone(x, θ) = [1 - x[1]^2 - x[2]^2 - x[3]^2]
 
     # solver

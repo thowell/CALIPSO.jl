@@ -2,7 +2,7 @@
 function state_action_indices(nx::Vector{Int}, nu::Vector{Int}) 
     T = length(nx) 
     @assert length(nu) == T - 1
-    
+
     x_idx = [sum(nx[1:(t-1)]) + sum(nu[1:(t-1)]) .+ collect(1:nx[t]) for t = 1:T]
     u_idx = [sum(nx[1:t]) + sum(nu[1:(t-1)]) .+ collect(1:nu[t]) for t = 1:T-1]
 
@@ -10,6 +10,7 @@ function state_action_indices(nx::Vector{Int}, nu::Vector{Int})
 end
 
 function parameter_indices(np::Vector{Int}) 
+    T = length(np)
     p_idx = [sum(np[1:(t-1)]) .+ collect(1:np[t]) for t = 1:T]
     
     return p_idx 
@@ -26,7 +27,7 @@ function constraint_indices(dims::Vector{Int};
         shift += d
     end
 
-    return indices
+    return vcat(indices...)
 end 
 
 function constraint_indices(dims::Vector{Vector{Int}}; 
@@ -42,5 +43,5 @@ function constraint_indices(dims::Vector{Vector{Int}};
         push!(INDICES, indices)
     end
 
-    return INDICES
+    return [(INDICES...)...]
 end 

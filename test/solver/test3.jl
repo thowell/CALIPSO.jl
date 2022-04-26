@@ -6,7 +6,7 @@
     x0 = rand(num_variables)
 
     obj(x, θ) = 100.0 * (x[2] - x[1]^2)^2 + (1.0 - x[1])^2
-    eq(x, θ) = zeros(0)
+    eq = empty_constraint
     cone(x, θ) = [-(x[1] - 1.0)^3 + x[2] - 1.0;
                 -x[1] - x[2] + 2.0]
 

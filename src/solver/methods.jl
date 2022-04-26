@@ -1,5 +1,5 @@
 struct ProblemMethods{T,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP}
-    objective::O                                       # f
+    objective::O                                       
     objective_gradient_variables::OX                   # fx
     objective_gradient_parameters::OP                  # fθ
     objective_jacobian_variables_variables::OXX        # fxx 

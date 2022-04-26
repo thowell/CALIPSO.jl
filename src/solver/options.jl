@@ -46,6 +46,9 @@ Base.@kwdef mutable struct Options{T}
     machine_tolerance::T=1.0e-16
     max_filter::Int=1000
 
+    codegen_threads::Bool=false
+    codegen_checkbounds::Bool=true
+
     differentiate::Bool=true
     verbose::Bool=true
 end

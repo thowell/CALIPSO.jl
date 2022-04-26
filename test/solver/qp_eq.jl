@@ -30,7 +30,7 @@
         return Aθ * x - bθ 
     end
 
-    cone(x, θ) = zeros(0)
+    cone = empty_constraint
 
     # solver
     x0 = randn(num_variables)

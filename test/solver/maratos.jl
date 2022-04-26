@@ -7,7 +7,7 @@
 
     obj(x, θ) = 2.0 * (x[1]^2 + x[2]^2 - 1.0) - x[1]
     eq(x, θ) = [x[1]^2 + x[2]^2 - 1.0]
-    cone(x, θ) = zeros(0)
+    cone = empty_constraint
 
     # solver
     methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)

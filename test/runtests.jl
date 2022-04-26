@@ -29,8 +29,8 @@ include("solver/portfolio.jl")
 # include("trajectory_optimization/hessian_lagrangian.jl")
 
 # Examples
-# include("examples/pendulum.jl")
-# include("examples/cartpole.jl")
+include("examples/pendulum.jl")
+include("examples/cartpole.jl")
 # include("examples/acrobot.jl")
 # include("examples/rocket_landing.jl")
 # include("examples/box_move.jl")
@@ -42,7 +42,6 @@ include("solver/portfolio.jl")
 # include("examples/quadruped_drop.jl")
 # include("examples/quadruped_gait.jl")
 # include("examples/quadruped_gait_soc.jl")
-
 
 
 

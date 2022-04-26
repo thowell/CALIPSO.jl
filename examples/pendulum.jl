@@ -72,7 +72,9 @@ x_interpolation = linear_interpolation(x1, xT, T)
 u_guess = [1.0 * randn(num_action) for t = 1:T-1]
 
 methods = ProblemMethods(trajopt)
-
+idx_nn, idx_soc = cone_indices(trajopt)
+idx_nn
+idx_soc
 # ## solver
 
 solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
