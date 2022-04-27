@@ -19,14 +19,14 @@ include("solver/test4.jl")
 include("solver/maratos.jl")
 include("solver/knitro.jl")
 include("solver/wachter.jl")
-include("solver/friction_cone.jl")
+# include("solver/friction_cone.jl")
 include("solver/portfolio.jl")
 
 # Trajectory Optimization 
-include("trajectory_optimization/objective.jl")
-include("trajectory_optimization/dynamics.jl")
-include("trajectory_optimization/constraints.jl")
-include("trajectory_optimization/hessian_lagrangian.jl")
+# include("trajectory_optimization/objective.jl")
+# include("trajectory_optimization/dynamics.jl")
+# include("trajectory_optimization/constraints.jl")
+# include("trajectory_optimization/hessian_lagrangian.jl")
 
 # Examples
 include("examples/pendulum.jl")

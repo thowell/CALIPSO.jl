@@ -2,16 +2,14 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
     checkbounds=false,
     threads=false)
     @variables x[1:num_variables] θ[1:num_parameters]
-    # x = Symbolics.variables(:x, 1:num_variables)
-    # θ = Symbolics.variables(:θ, 1:num_parameters)
 
     if mode == :scalar 
         f = [func(x, θ)]
         
         fx = Symbolics.gradient(f[1], x)
         fθ = Symbolics.gradient(f[1], θ)
-        fxx = Symbolics.jacobian(fx, x)
-        fxθ = Symbolics.jacobian(fx, θ)
+        fxx = Symbolics.sparsejacobian(fx, x)
+        fxθ = Symbolics.sparsejacobian(fx, θ)
 
         f_expr = Symbolics.build_function(f, x, θ,
             parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
@@ -25,16 +23,19 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
             parallel=((threads && num_parameters > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
-        fxx_expr = Symbolics.build_function(fxx, x, θ,
+        fxx_expr = Symbolics.build_function(fxx.nzval, x, θ,
             parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
-        fxθ_expr = Symbolics.build_function(fxθ, x, θ,
+        fxθ_expr = Symbolics.build_function(fxθ.nzval, x, θ,
             parallel=((threads && num_parameters > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
 
-        return f_expr, fx_expr, fθ_expr, fxx_expr, fxθ_expr
+        fxx_sparsity = collect(zip([findnz(fxx)[1:2]...]...))
+        fxθ_sparsity = collect(zip([findnz(fxθ)[1:2]...]...))
+
+        return f_expr, fx_expr, fθ_expr, fxx_expr, fxθ_expr, fxx_sparsity, fxθ_sparsity
     elseif mode == :vector 
         f = func(x, θ)
         

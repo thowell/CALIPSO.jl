@@ -105,20 +105,23 @@ function gradient_parameters!(gradient, indices, objective::Vector{Cost{T}}, sta
 end
 
 function jacobian_variables_variables!(jacobians, sparsity, objective::Vector{Cost{T}}, states, actions, parameters) where T
+    count = 1
     for (t, obj) in enumerate(objective)
         obj.jacobian_variables_variables(obj.jacobian_variables_variables_cache, states[t], actions[t], parameters[t])
         for (i, idx) in enumerate(sparsity[t]) 
-            jacobians[idx...] += obj.jacobian_variables_variables_cache[i] 
+            jacobians[count] += obj.jacobian_variables_variables_cache[i] 
+            count += 1
         end
     end
 end
 
 function jacobian_variables_parameters!(jacobians, sparsity, objective::Vector{Cost{T}}, states, actions, parameters) where T
+    count = 1
     for (t, obj) in enumerate(objective)
         if !isempty(obj.jacobian_variables_parameters_cache)
             obj.jacobian_variables_parameters(obj.jacobian_variables_parameters_cache, states[t], actions[t], parameters[t])
             for (i, idx) in enumerate(sparsity[t]) 
-                jacobians[idx...] += obj.jacobian_variables_parameters_cache[i] 
+                jacobians[count] += obj.jacobian_variables_parameters_cache[i] 
             end
         end 
     end

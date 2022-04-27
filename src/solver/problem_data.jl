@@ -126,12 +126,28 @@ function problem!(problem::ProblemData{T}, methods::ProblemMethods{O,OX,OP,OXX,O
     z = solution.cone_dual
     θ = parameters
 
-    # # objective
+    # dimensions
+    nz = length(x) 
+    nθ = length(θ)
+
+    # objective
     objective && methods.objective(problem.objective, x, θ)
-    objective_gradient_variables && methods.objective_gradient_variables(problem.objective_gradient_variables, x, θ)
-    objective_gradient_parameters && methods.objective_gradient_parameters(problem.objective_gradient_parameters, x, θ)
-    objective_jacobian_variables_variables && methods.objective_jacobian_variables_variables(problem.objective_jacobian_variables_variables, x, θ)
-    objective_jacobian_variables_parameters && methods.objective_jacobian_variables_parameters(problem.objective_jacobian_variables_parameters, x, θ)
+    (objective_gradient_variables && nz > 0) && methods.objective_gradient_variables(problem.objective_gradient_variables, x, θ)
+    (objective_gradient_parameters && nθ > 0) && methods.objective_gradient_parameters(problem.objective_gradient_parameters, x, θ)
+    
+    if (objective_jacobian_variables_variables && nz > 0)
+        methods.objective_jacobian_variables_variables(methods.objective_jacobian_variables_variables_cache, x, θ)
+        for (i, idx) in enumerate(methods.objective_jacobian_variables_variables_sparsity) 
+            problem.objective_jacobian_variables_variables[idx...] = methods.objective_jacobian_variables_variables_cache[i]
+        end
+    end
+
+    if (objective_jacobian_variables_parameters && nz > 0 && nθ > 0)
+        methods.objective_jacobian_variables_parameters(methods.objective_jacobian_variables_parameters_cache, x, θ)
+        for (i, idx) in enumerate(methods.objective_jacobian_variables_parameters_sparsity) 
+            problem.objective_jacobian_variables_parameters[idx...] = methods.objective_jacobian_variables_parameters_cache[i]
+        end
+    end
     
     # equality
     equality_constraint && methods.equality_constraint(problem.equality_constraint, x, θ)

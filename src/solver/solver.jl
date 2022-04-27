@@ -1,6 +1,6 @@
 struct Solver{T,X,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP,B,BX,P,PX,PXI,K}
     problem::ProblemData{T,X} 
-    methods::ProblemMethods{O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP} 
+    methods::ProblemMethods{T,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,CDXP} 
     cone_methods::ConeMethods{B,BX,P,PX,PXI,K}
     data::SolverData{T}
     
