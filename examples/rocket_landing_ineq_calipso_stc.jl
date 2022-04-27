@@ -176,6 +176,6 @@ hold off
 mat"
 figure
 hold on
-plot($Um')
+plot($Um(4:7)')
 hold off
 "

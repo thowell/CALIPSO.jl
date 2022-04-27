@@ -41,7 +41,7 @@ function rocket(x, u, w)
 end
 
 function midpoint_implicit(y, x, u, w)
-    h = 0.025 # timestep
+    h = 0.025*2 # timestep
     y - (x + h * rocket(0.5 * (x + y), u, w))
 end
 
@@ -134,7 +134,7 @@ trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
 # ## initialize
 x_interpolation = linear_interpolation(x1, xT, T)
 for i = 1:T
-    h = 0.05
+    h = 0.05/2
     x_interpolation[i][4:6] = (xT[1:3]-x1[1:3])/(h*T)
 end
 u_guess = [zeros(num_action) for t = 1:T-1]
@@ -178,7 +178,7 @@ end
 methods = ProblemMethods(trajopt)
 
 solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-    options=Options(verbose=true,penalty_initial=1.0e3))
+    options=Options(verbose=true,penalty_initial=1.0e1,max_residual_iterations = 500))
 initialize_states!(solver, trajopt, x_interpolation)
 initialize_controls!(solver, trajopt, u_guess)
 
