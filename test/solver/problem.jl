@@ -1,4 +1,27 @@
 @testset "Solver: Problem" begin
+    # random QP 
+    function generate_random_qp(num_variables, num_equality, num_cone)
+
+        n = num_variables
+        m = num_cone
+        p = num_equality
+    
+        P = randn(n, n)
+        P = P' * P
+        q = randn(n)
+        G = randn(m, n)
+        x = randn(n)
+        h = G * x + rand(m)
+        A = randn(p, n)
+        b = A * x
+    
+        objective(z, θ) = transpose(z) * P * z + transpose(q) * z 
+        constraint_equality(z, θ) = A * z - b 
+        constraint_cone(z, θ) = h - G * z
+    
+        return objective, constraint_equality, constraint_cone, true
+    end
+    
     # dimensions 
     num_variables = 10 
     num_equality = 5 
@@ -6,7 +29,7 @@
     num_parameters = 0
 
     # methods
-    objective, equality, inequality, flag = CALIPSO.generate_random_qp(num_variables, num_equality, num_cone);
+    objective, equality, inequality, flag = generate_random_qp(num_variables, num_equality, num_cone);
 
     # solver
     methods = ProblemMethods(num_variables, num_parameters, objective, equality, inequality)
