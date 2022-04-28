@@ -76,13 +76,9 @@ methods = ProblemMethods(trajopt)
 # ## solver
 
 solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-    options=Options(verbose=true))
+    options=Options(verbose=true));
 initialize_states!(solver, trajopt, x_interpolation) 
 initialize_controls!(solver, trajopt, u_guess)
 
 # ## solve 
-solve!(solver)
-norm(solver.data.residual, Inf) < 1.0e-5
-
-trajopt.data.parameters[1] - θ1
-trajopt.data.parameters[2] - θ2
+solve!(solver);

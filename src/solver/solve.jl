@@ -147,7 +147,8 @@ function solve!(solver)
                     slack_violation, 
                     κ[1], 
                     ρ[1], 
-                    1.0) 
+                    1.0,
+                    options) 
                 options.verbose && solver_status(solver, true)
                 
                 return true
@@ -331,7 +332,8 @@ function solve!(solver)
                 slack_violation, 
                 κ[1], 
                 ρ[1], 
-                α) 
+                α,
+                options) 
             
             total_iterations += 1
         end

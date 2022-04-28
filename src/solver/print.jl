@@ -1,15 +1,15 @@
 function solver_info(solver) 
     println(crayon"bold red","
-     ___    __    __    ____  ____  ___  _____
-    / __)  /__\\  (  )  (_  _)(  _ \\/ __)(  _  )
-   ( (__  /(__)\\  )(__  _)(_  )___/\\__ \\ )(_)(
-    \\___)(__)(__)(____)(____)(__)  (___/(_____)
+                         ___    __    __    ____  ____  ___  _____
+                        / __)  /__\\  (  )  (_  _)(  _ \\/ __)(  _  )
+                       ( (__  /(__)\\  )(__  _)(_  )___/\\__ \\ )(_)(
+                        \\___)(__)(__)(____)(____)(__)  (___/(_____)
     ")
     
     println(crayon"reset bold black", 
-    "           Taylor Howell & Kevin Tracy")
-    println("             Robotic Exploration Lab")
-    println(" Stanford University & Carnegie Mellon University\n")
+    "                                Taylor Howell & Kevin Tracy")
+    println("                                  Robotic Exploration Lab")
+    println("                     Stanford University & Carnegie Mellon University\n")
     print(crayon"reset")
 end
 
@@ -23,7 +23,9 @@ function iteration_status(
         slack_violation, 
         central_path, 
         penalty, 
-        step_size) 
+        step_size,
+        options,
+        ) 
 
     # header
     if rem(total_iterations - 1, 10) == 0
