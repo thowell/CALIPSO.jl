@@ -59,7 +59,7 @@
 
     eq1 = Constraint((x, u, w) -> x - x1, num_state, num_action)
     eqT = Constraint((x, u, w) -> x - xT, num_state, 0)
-    eq = [eq1, [Constraint() for t = 2:T-1]..., eqT]
+    eq = [eq1, [Constraint((x, u, w) -> zeros(0), num_state, num_action) for t = 2:T-1]..., eqT]
 
     # ineq = [[Constraint((x, u, w) -> 
     #     [
@@ -68,7 +68,7 @@
     #         u[3] - Fz_min; Fz_max - u[3];
     #     ], num_state, num_action
     # ) for t = 1:T-1]..., Constraint()]
-    ineq = [Constraint() for t = 1:T]
+    ineq = [Constraint((x, u, w) -> zeros(0), num_state, t == T ? 0 : num_action) for t = 1:T]
 
     function thrust_cone(x, u, w) 
         [
@@ -79,23 +79,24 @@
     end
 
     # so = [[Constraint()] for t = 1:T]
-    so = [[[Constraint(thrust_cone, num_state, num_action)] for t = 1:T-1]..., [Constraint()]]
+    so = [[[Constraint(thrust_cone, num_state, num_action)] for t = 1:T-1]..., [Constraint((x, u, w) -> zeros(0), num_state, 0)]]
 
     # ## problem 
-    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
+    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so);
 
     # ## initialize
     x_interpolation = linear_interpolation(x1, xT, T)
     u_guess = [1.0e-3 * randn(num_action) for t = 1:T-1]
 
-    methods = ProblemMethods(trajopt)
+    methods = ProblemMethods(trajopt);
+
     idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
 
     # ## solver
     solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
         nonnegative_indices=idx_nn, 
         second_order_indices=idx_soc,
-        options=Options(verbose=true, penalty_initial=1.0))
+        options=Options(verbose=true, penalty_initial=1.0));
     initialize_states!(solver, trajopt, x_interpolation) 
     initialize_controls!(solver, trajopt, u_guess)
 
@@ -118,5 +119,4 @@
 
     @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
     @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
-
 end
