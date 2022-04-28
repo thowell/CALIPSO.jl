@@ -18,7 +18,9 @@ function iterative_refinement!(step::Point{T}, solver::Solver{T,O,OX,OP,OXX,OXP,
         # correction
         search_direction_symmetric!(solver.data.step_correction, solver.data.residual_error, solver.data.jacobian_variables, 
             solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
-            solver.indices, solver.linear_solver)
+            solver.indices, 
+            solver.data.step_correction_second_order, solver.data.residual_error_second_order,
+            solver.linear_solver)
         
         # update
         step.all .+= solver.data.step_correction.all 

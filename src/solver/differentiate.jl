@@ -39,7 +39,10 @@ function differentiate!(solver)
             solver.data.residual_symmetric, 
             solver.data.jacobian_variables_symmetric, 
             solver.indices, 
-            solver.linear_solver)
+            solver.data.solution_sensitivity_vectors_second_order[i],
+            solver.data.jacobian_parameters_vectors_second_order[i],
+            solver.linear_solver,
+            )
  
         for (k, s) in enumerate(solver.data.solution_sensitivity_vectors[i].all) 
             solver.data.solution_sensitivity[k, i] = -1.0 * s

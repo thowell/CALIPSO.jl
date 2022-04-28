@@ -79,15 +79,28 @@ function cone!(problem::ProblemData{T}, methods::ConeMethods, idx::Indices, solu
     s = solution.cone_slack
     t = solution.cone_slack_dual
 
+    # dimension
+    nc = length(s) 
+
     # barrier 
     barrier && methods.barrier(problem.barrier, s) 
     barrier_gradient && methods.barrier_gradient(problem.barrier_gradient, s)
 
     # cone
-    product && methods.product(problem.cone_product, s, t)
-    jacobian && methods.product_jacobian(problem.cone_product_jacobian_primal, s, t)
-    jacobian && methods.product_jacobian(problem.cone_product_jacobian_dual, t, s)
-    target && methods.target(problem.cone_target, s, t)
+    (product && nc > 0) && methods.product(problem.cone_product, s, t)
+    if (jacobian && nc > 0) 
+        methods.product_jacobian(methods.product_jacobian_cache, s, t)
+        for (i, idx) in enumerate(methods.product_jacobian_sparsity) 
+            problem.cone_product_jacobian_primal[idx...] = methods.product_jacobian_cache[i] 
+        end
+    end
+    if (jacobian && nc > 0) 
+        methods.product_jacobian(methods.product_jacobian_cache, t, s)
+        for (i, idx) in enumerate(methods.product_jacobian_sparsity)
+            problem.cone_product_jacobian_dual[idx...] = methods.product_jacobian_cache[i] 
+        end
+    end
+    (target && nc > 0) && methods.target(problem.cone_target, s, t)
 
     return
 end

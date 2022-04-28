@@ -46,8 +46,8 @@ function second_order_violation(x̂, x, τ, idx)
     x̂[idx[1]] - (1.0 - τ) * x[idx[1]] <= norm(x̂[idx[2:end]] - (1.0 - τ) * x[idx[2:end]])
 end
 
-
 # function jacobian(u)
+#     n = length(u)
 #     U = u[1] * Array(Diagonal(ones(n)))
 #     U[2:end,1] = u[2:end]
 #     U[1,2:end] = u[2:end]
@@ -70,6 +70,20 @@ end
 #     Ui = P * 1 / u[1] * Vi * P
 #     return Ui
 # end
+
+# function jacobian_inverse(A) 
+#     u = A[1, :] 
+#     inverse(u) 
+# end
+
+# a = rand(3)
+
+# A = jacobian(a)
+# Ai = inv(A)
+# Bi = inverse(a) 
+# Ci = jacobian_inverse(A)
+
+
 
 # @variables u[1:3] 
 # jacobian(u)

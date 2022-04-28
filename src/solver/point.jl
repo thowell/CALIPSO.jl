@@ -36,3 +36,23 @@ function PointSymmetric(dims::Dimensions, idx::Indices)
     return PointSymmetric(w, x, e, c)
 end
 
+struct SecondOrderViews{T}
+    cone_slack::Vector{SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}}
+    cone_dual::Vector{SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}}
+    cone_slack_dual::Vector{SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}} 
+end
+
+function SecondOrderViews(point::Point{T}, idx::Indices) where T 
+    cone_slack = [@views point.all[idx.cone_slack][i] for i in idx.cone_second_order]
+    cone_dual = [@views point.all[idx.cone_dual][i] for i in idx.cone_second_order]
+    cone_slack_dual = [@views point.all[idx.cone_slack_dual][i] for i in idx.cone_second_order] 
+
+    SecondOrderViews(
+        cone_slack, 
+        cone_dual,
+        cone_slack_dual,
+    )
+end
+
+
+

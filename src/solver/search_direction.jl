@@ -5,7 +5,9 @@ function search_direction!(solver)
     # compute search direction
     search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 
         solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
-        solver.indices, solver.linear_solver;
+        solver.indices, 
+        solver.data.step_second_order, solver.data.residual_second_order,
+        solver.linear_solver;
         update=solver.options.update_factorization)
  
     # refine search direction
@@ -20,6 +22,8 @@ function search_direction_symmetric!(
     residual_symmetric::PointSymmetric{T}, 
     matrix_symmetric::SparseMatrixCSC{T,Int}, 
     idx::Indices, 
+    step_second_order::SecondOrderViews{T}, 
+    residual_second_order::SecondOrderViews{T},
     solver::LDLSolver{T,Int};
     update=true) where T
  
