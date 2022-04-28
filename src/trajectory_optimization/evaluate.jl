@@ -134,7 +134,7 @@ function equality_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationP
 
     jacobian_variables!(
         jacobian, 
-        trajopt.sparsity.dynamics_jacobian_variables, 
+        0, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
@@ -142,7 +142,7 @@ function equality_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationP
     if trajopt.dimensions.equality_constraints > 0
         jacobian_variables!(
             jacobian, 
-            trajopt.sparsity.equality_jacobian_variables, 
+            length(vcat(trajopt.sparsity.dynamics_jacobian_variables...)), 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -159,7 +159,7 @@ function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimization
 
     jacobian_parameters!(
         jacobian, 
-        trajopt.sparsity.dynamics_jacobian_parameters, 
+        0, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
@@ -167,7 +167,7 @@ function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimization
     if trajopt.dimensions.equality_constraints > 0
         jacobian_parameters!(
             jacobian, 
-            trajopt.sparsity.equality_jacobian_parameters, 
+            length(vcat(trajopt.sparsity.dynamics_jacobian_parameters...)), 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -213,7 +213,7 @@ function cone_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProbl
     if trajopt.dimensions.cone_nonnegative > 0
         jacobian_variables!(
             jacobian, 
-            trajopt.sparsity.nonnegative_jacobian_variables, 
+            0, 
             trajopt.data.nonnegative, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -222,7 +222,7 @@ function cone_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationProbl
     if trajopt.dimensions.cone_second_order > 0
         jacobian_variables!(
             jacobian, 
-            trajopt.sparsity.second_order_jacobian_variables, 
+            length(vcat(trajopt.sparsity.nonnegative_jacobian_variables...)), 
             trajopt.data.second_order, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -240,7 +240,7 @@ function cone_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProb
     if trajopt.dimensions.cone_nonnegative > 0
         jacobian_parameters!(
             jacobian, 
-            trajopt.sparsity.nonnegative_jacobian_parameters, 
+            0, 
             trajopt.data.nonnegative, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -249,7 +249,7 @@ function cone_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimizationProb
     if trajopt.dimensions.cone_second_order > 0
         jacobian_parameters!(
             jacobian, 
-            trajopt.sparsity.second_order_jacobian_parameters, 
+            length(vcat(trajopt.sparsity.nonnegative_jacobian_parameters...)), 
             trajopt.data.second_order, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -299,7 +299,7 @@ function equality_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOpt
 
     jacobian_variables_variables!(
         jacobian, 
-        trajopt.sparsity.dynamics_jacobian_variables_variables, 
+        0, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
@@ -308,7 +308,7 @@ function equality_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOpt
     if trajopt.dimensions.equality_constraints > 0 
         jacobian_variables_variables!(
             jacobian, 
-            trajopt.sparsity.equality_jacobian_variables_variables, 
+            length(vcat(trajopt.sparsity.dynamics_jacobian_variables_variables...)), 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -327,7 +327,7 @@ function equality_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOp
     
     jacobian_variables_parameters!(
         jacobian, 
-        trajopt.sparsity.dynamics_jacobian_variables_parameters, 
+        0, 
         trajopt.data.dynamics, 
         trajopt.data.states, 
         trajopt.data.actions, 
@@ -336,7 +336,7 @@ function equality_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOp
     if trajopt.dimensions.equality_constraints > 0 
         jacobian_variables_parameters!(
             jacobian, 
-            trajopt.sparsity.equality_jacobian_variables_parameters, 
+            length(vcat(trajopt.sparsity.dynamics_jacobian_variables_parameters...)), 
             trajopt.data.equality, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -356,7 +356,7 @@ function cone_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimiz
     if trajopt.dimensions.cone_nonnegative > 0 
         jacobian_variables_variables!(
             jacobian, 
-            trajopt.sparsity.nonnegative_jacobian_variables_variables, 
+            0, 
             trajopt.data.nonnegative, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -366,7 +366,7 @@ function cone_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOptimiz
     if trajopt.dimensions.cone_second_order > 0 
         jacobian_variables_variables!(
             jacobian, 
-            trajopt.sparsity.second_order_jacobian_variables_variables, 
+            length(vcat(trajopt.sparsity.nonnegative_jacobian_variables_variables...)), 
             trajopt.data.second_order, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -386,7 +386,7 @@ function cone_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimi
     if trajopt.dimensions.cone_nonnegative > 0 
         jacobian_variables_parameters!(
             jacobian, 
-            trajopt.sparsity.nonnegative_jacobian_variables_parameters, 
+            0,
             trajopt.data.nonnegative, 
             trajopt.data.states, 
             trajopt.data.actions, 
@@ -396,7 +396,7 @@ function cone_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOptimi
     if trajopt.dimensions.cone_second_order > 0 
         jacobian_variables_parameters!(
             jacobian, 
-            trajopt.sparsity.second_order_jacobian_variables_parameters, 
+            length(vcat(trajopt.sparsity.nonnegative_jacobian_variables_parameters...)), 
             trajopt.data.second_order, 
             trajopt.data.states, 
             trajopt.data.actions, 

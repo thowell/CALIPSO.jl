@@ -120,7 +120,7 @@ function jacobian_variables_parameters!(jacobians, sparsity, objective::Vector{C
     for (t, obj) in enumerate(objective)
         if !isempty(obj.jacobian_variables_parameters_cache)
             obj.jacobian_variables_parameters(obj.jacobian_variables_parameters_cache, states[t], actions[t], parameters[t])
-            for v in obj.jacobian_variables_parameters_cache[i]
+            for v in obj.jacobian_variables_parameters_cache
                 jacobians[count] += v
                 count += 1
             end

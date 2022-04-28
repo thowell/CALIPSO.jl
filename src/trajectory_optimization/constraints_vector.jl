@@ -10,12 +10,14 @@ function constraints!(violations, indices, constraints::Vector{Constraints{T}}, 
 end
 
 function jacobian_variables!(jacobians, sparsity, constraints::Vector{Constraints{T}}, states, actions, parameters) where T
+    count = 1
     for (t, cons) in enumerate(constraints)
         for (i, con) in enumerate(cons)
             if !isempty(con.jacobian_variables_cache) 
                 con.jacobian_variables(con.jacobian_variables_cache, states[t], actions[t], parameters[t])
-                for (j, idx) in enumerate(sparsity[t][i]) 
-                    jacobians[idx...] = con.jacobian_variables_cache[j] 
+                for v in con.jacobian_variables_cache 
+                    jacobians[sparsity + count] = v
+                    count += 1
                 end
             end
         end
@@ -23,12 +25,14 @@ function jacobian_variables!(jacobians, sparsity, constraints::Vector{Constraint
 end
 
 function jacobian_parameters!(jacobians, sparsity, constraints::Vector{Constraints{T}}, states, actions, parameters) where T
+    count = 1
     for (t, cons) in enumerate(constraints)
         for (i, con) in enumerate(cons)
             if !isempty(con.jacobian_parameters_cache) 
                 con.jacobian_parameters(con.jacobian_parameters_cache, states[t], actions[t], parameters[t])
-                for (j, idx) in enumerate(sparsity[t][i]) 
-                    jacobians[idx...] = con.jacobian_parameters_cache[j] 
+                for v in con.jacobian_parameters_cache
+                    jacobians[sparsity + count] = v
+                    count += 1
                 end
             end
         end
@@ -49,12 +53,14 @@ function constraint_dual_jacobian_variables!(jacobians, indices, constraints::Ve
 end
 
 function jacobian_variables_variables!(jacobians, sparsity, constraints::Vector{Constraints{T}}, states, actions, parameters, duals) where T
+    count = 1
     for (t, cons) in enumerate(constraints)
         for (i, con) in enumerate(cons)
             if !isempty(con.jacobian_variables_variables_cache)
                 con.constraint_dual_jacobian_variables_variables(con.jacobian_variables_variables_cache, states[t], actions[t], parameters[t], duals[t][i])
-                for (j, idx) in enumerate(sparsity[t][i]) 
-                    jacobians[idx...] += con.jacobian_variables_variables_cache[j]
+                for v in con.jacobian_variables_variables_cache
+                    jacobians[sparsity + count] += v
+                    count += 1
                 end
             end
         end
@@ -62,12 +68,14 @@ function jacobian_variables_variables!(jacobians, sparsity, constraints::Vector{
 end
 
 function jacobian_variables_parameters!(jacobians, sparsity, constraints::Vector{Constraints{T}}, states, actions, parameters, duals) where T
+    count = 1
     for (t, cons) in enumerate(constraints)
         for (i, con) in enumerate(cons)
             if !isempty(con.jacobian_variables_parameters_cache)
                 con.constraint_dual_jacobian_variables_parameters(con.jacobian_variables_parameters_cache, states[t], actions[t], parameters[t], duals[t][i])
-                for (j, idx) in enumerate(sparsity[t][i]) 
-                    jacobians[idx...] += con.jacobian_variables_parameters_cache[j]
+                for v in con.jacobian_variables_parameters_cache
+                    jacobians[sparsity + count] += v
+                    count += 1
                 end
             end
         end
