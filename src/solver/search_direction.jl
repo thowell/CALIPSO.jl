@@ -11,6 +11,7 @@ function search_direction!(solver)
         update=solver.options.update_factorization)
  
     # refine search direction
+    # solver.options.iterative_refinement && iterative_refinement!(solver.data.step, solver)
     solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data))
 end
 
@@ -72,18 +73,27 @@ function search_direction_symmetric!(
     end
 
     # Δs, Δt (second-order)
-    for idx_soc in idx.cone_second_order
+    for (i, idx_soc) in enumerate(idx.cone_second_order)
         if !isempty(idx_soc)
             C̄t = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
             Cs = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
             P  = matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
-            rs_soc = @views rs[idx_soc] 
-            rt_soc = @views rt[idx_soc] 
-            Δz_soc = @views Δz[idx_soc] 
-            Δs_soc = @views Δs[idx_soc]
+            # rs_soc = @views rs[idx_soc] 
+            # rt_soc = @views rt[idx_soc] 
+            # Δz_soc = @views Δz[idx_soc] 
+            # Δs_soc = @views Δs[idx_soc]
 
-            Δs[idx_soc] = (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
-            Δt[idx_soc] = C̄t \ (rt_soc - Cs * Δs_soc)
+            # Δs[idx_soc] = (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
+            # Δt[idx_soc] = C̄t \ (rt_soc - Cs * Δs_soc)
+
+            rs_soc = residual_second_order.cone_slack[i] 
+            rt_soc = residual_second_order.cone_slack_dual[i] 
+            Δz_soc = step_second_order.cone_dual[i] 
+            Δs_soc = step_second_order.cone_slack[i]
+            Δt_soc = step_second_order.cone_slack_dual[i]
+
+            Δs_soc .= (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
+            Δt_soc .= C̄t \ (rt_soc - Cs * Δs_soc)
         end
     end
     
