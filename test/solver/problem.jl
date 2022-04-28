@@ -74,7 +74,7 @@
 
 
 
-    CALIPSO.problem!(solver.problem, solver.methods, solver.indices, solver.solution, solver.parameters,
+    CALIPSO.evaluate!(solver.problem, solver.methods, solver.indices, solver.solution, solver.parameters,
         objective=true,
         objective_gradient_variables=true,
         objective_jacobian_variables_variables=true,

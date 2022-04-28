@@ -1,6 +1,6 @@
 function differentiate!(solver)  
     # evaluate derivatives wrt to parameters 
-    CALIPSO.problem!(solver.problem, solver.methods, solver.indices, solver.solution, solver.parameters,
+    CALIPSO.evaluate!(solver.problem, solver.methods, solver.indices, solver.solution, solver.parameters,
         objective_jacobian_variables_parameters=true,
         equality_jacobian_parameters=true,
         equality_dual_jacobian_variables_parameters=true,

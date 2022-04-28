@@ -39,26 +39,29 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
     elseif mode == :vector 
         f = func(x, θ)
         
-        fx = Symbolics.jacobian(f, x)
-        fθ = Symbolics.jacobian(f, θ)
+        fx = Symbolics.sparsejacobian(f, x)
+        fθ = Symbolics.sparsejacobian(f, θ)
+
+        fx_sparsity = collect(zip([findnz(fx)[1:2]...]...))
+        fθ_sparsity = collect(zip([findnz(fθ)[1:2]...]...))
 
         @variables y[1:length(f)]
         # y = Symbolics.variables(:y, 1:length(f))
 
         fᵀy = length(f) == 0 ? 0.0 : sum(transpose(f) * y)
         fᵀyx = Symbolics.gradient(fᵀy, x)
-        fᵀyxx = Symbolics.jacobian(fᵀyx, x) 
-        fᵀyxθ = Symbolics.jacobian(fᵀyx, θ) 
+        fᵀyxx = Symbolics.sparsejacobian(fᵀyx, x) 
+        fᵀyxθ = Symbolics.sparsejacobian(fᵀyx, θ) 
 
         f_expr = Symbolics.build_function(f, x, θ,
             parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
-        fx_expr = Symbolics.build_function(fx, x, θ,
+        fx_expr = Symbolics.build_function(fx.nzval, x, θ,
             parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
-        fθ_expr = Symbolics.build_function(fθ, x, θ,
+        fθ_expr = Symbolics.build_function(fθ.nzval, x, θ,
             parallel=((threads && num_parameters > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
@@ -70,16 +73,19 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
             parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
-        fᵀyxx_expr = Symbolics.build_function(fᵀyxx, x, θ, y,
+        fᵀyxx_expr = Symbolics.build_function(fᵀyxx.nzval, x, θ, y,
             parallel=(threads ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
-        fᵀyxθ_expr = Symbolics.build_function(fᵀyxθ, x, θ, y,
+        fᵀyxθ_expr = Symbolics.build_function(fᵀyxθ.nzval, x, θ, y,
             parallel=((threads && num_parameters > 0) ? Symbolics.MultithreadedForm() : Symbolics.SerialForm()),
             checkbounds=checkbounds, 
             expression=Val{false})[2]
 
-        return f_expr, fx_expr, fθ_expr, fᵀy_expr, fᵀyx_expr, fᵀyxx_expr, fᵀyxθ_expr
+        fᵀyxx_sparsity = collect(zip([findnz(fᵀyxx)[1:2]...]...))
+        fᵀyxθ_sparsity = collect(zip([findnz(fᵀyxθ)[1:2]...]...))
+
+        return f_expr, fx_expr, fθ_expr, fx_sparsity, fθ_sparsity, fᵀy_expr, fᵀyx_expr, fᵀyxx_expr, fᵀyxθ_expr, fᵀyxx_sparsity, fᵀyxθ_sparsity
     end
 end
 

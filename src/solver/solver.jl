@@ -71,7 +71,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     random_solution = Point(dim, idx)
     random_solution.all .= randn(dim.total)
 
-    problem!(p_data, methods, idx, random_solution, parameters,
+    evaluate!(p_data, methods, idx, random_solution, parameters,
         objective_jacobian_variables_variables=true,
         equality_jacobian_variables=true,
         equality_dual_jacobian_variables_variables=true,

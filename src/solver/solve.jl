@@ -66,7 +66,7 @@ function solve!(solver)
     options.verbose && solver_info(solver)
 
     # evaluate
-    problem!(problem, methods, indices, solution, parameters,
+    evaluate!(problem, methods, indices, solution, parameters,
         objective=true,
         equality_constraint=true,
         equality_jacobian_variables=true,
@@ -88,7 +88,7 @@ function solve!(solver)
     for j = 1:options.max_outer_iterations
         for i = 1:options.max_residual_iterations
             # evaluate
-            problem!(problem, methods, indices, solution, parameters,
+            evaluate!(problem, methods, indices, solution, parameters,
                 objective_gradient_variables=true,
                 equality_dual_jacobian_variables=true,
                 cone_dual_jacobian_variables=true,
@@ -162,7 +162,7 @@ function solve!(solver)
                 norm_type=options.constraint_norm)
             
             # search direction
-            problem!(problem, methods, indices, solution, parameters,
+            evaluate!(problem, methods, indices, solution, parameters,
                 objective_jacobian_variables_variables=true,
                 equality_jacobian_variables=true,
                 equality_dual_jacobian_variables_variables=options.constraint_hessian,
@@ -218,7 +218,7 @@ function solve!(solver)
                 r̂[i] = r[i] - α * Δr[i] 
             end
 
-            problem!(problem, methods, indices, candidate, parameters,
+            evaluate!(problem, methods, indices, candidate, parameters,
                 objective=true,
                 equality_constraint=true,
                 cone_constraint=true,
@@ -265,7 +265,7 @@ function solve!(solver)
                     ŝ[i] = s[i] - α * Δs[i] 
                 end
 
-                problem!(problem, methods, indices, candidate, parameters,
+                evaluate!(problem, methods, indices, candidate, parameters,
                     objective=true,
                     equality_constraint=true,
                     cone_constraint=true,

@@ -84,14 +84,14 @@ idx = solver.indices
 solution = solver.solution
 parameters = solver.parameters
 
-@code_warntype problem!(
+@code_warntype evaluate!(
         problem, 
         method, 
         idx, 
         solution, 
         parameters)
 
-@benchmark problem!(
+@benchmark evaluate!(
         $problem, 
         $method, 
         $idx, 

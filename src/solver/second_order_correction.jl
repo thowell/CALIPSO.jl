@@ -1,7 +1,7 @@
 # ### second order correction 
 # step_copy = deepcopy(solver.data.step)
 # for i = 1:solver.options.max_second_order_correction
-#     problem!(solver.problem, solver.methods, solver.indices, solver.candidate,
+#     evaluate!(solver.problem, solver.methods, solver.indices, solver.candidate,
 #         gradient=false,
 #         constraint=true,
 #         jacobian=false,
