@@ -1,13 +1,13 @@
 @testset "Examples: Cart-pole" begin 
     # ## horizon 
-    T = 51
+    horizon = 51
 
-    # ## cartpole 
-    num_state = 4 
-    num_action = 1 
-    num_parameter = 0 
+    # ## dimensions 
+    num_states = [4 for t = 1:horizon]
+    num_actions = [1 for t = 1:horizon-1]
 
-    function cartpole(x, u, w)
+    # ## dynamics
+    function cartpole_continuous(x, u)
         mc = 1.0 
         mp = 0.2 
         l = 0.5 
@@ -19,88 +19,62 @@
         s = sin(q[2])
         c = cos(q[2])
 
-        H = [mc+mp mp*l*c; mp*l*c mp*l^2]
+        H = [mc + mp mp * l * c; mp * l * c mp * l^2]
         Hinv = 1.0 / (H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]) * [H[2, 2] -H[1, 2]; -H[2, 1] H[1, 1]]
         
-        C = [0 -mp*qd[2]*l*s; 0 0]
-        G = [0, mp*g*l*s]
+        C = [0 -mp * qd[2] * l * s; 0 0]
+        G = [0, mp * g * l * s]
         B = [1, 0]
 
-        qdd = -Hinv * (C*qd + G - B*u[1])
-
+        qdd = -Hinv * (C * qd + G - B * u[1])
 
         return [qd; qdd]
     end
 
-    function midpoint_explicit(x, u, w)
+    function cartpole_discrete(x, u)
         h = 0.05 # timestep 
-        x + h * cartpole(x + 0.5 * h * cartpole(x, u, w), u, w)
+        x + h * cartpole_continuous(x + 0.5 * h * cartpole_continuous(x, u), u)
     end
 
-    function midpoint_implicit(y, x, u, w)
-        y - midpoint_explicit(x, u, w)
+    function cartpole_discrete(y, x, u)
+        y - cartpole_discrete(x, u)
     end
 
-    # ## model
-    dt = Dynamics(midpoint_implicit, num_state, num_state, num_action)
-    dyn = [dt for t = 1:T-1] 
+    dynamics = [cartpole_discrete for t = 1:horizon-1] 
 
-    # ## initialization
-    x1 = [0.0; 0.0; 0.0; 0.0] 
-    xT = [0.0; π; 0.0; 0.0] 
+    # ## states
+    state_initial = [0.0; 0.0; 0.0; 0.0] 
+    state_goal = [0.0; π; 0.0; 0.0] 
 
     # ## objective 
-    Q = 1.0e-2 
-    R = 1.0e-1 
-    Qf = 1.0e2 
-
-    ot = (x, u, w) -> 0.5 * Q * dot(x - xT, x - xT) + 0.5 * R * dot(u, u)
-    oT = (x, u, w) -> 0.5 * Qf * dot(x - xT, x - xT)
-    ct = Cost(ot, num_state, num_action)
-    cT = Cost(oT, num_state, 0)
-    obj = [[ct for t = 1:T-1]..., cT]
+    objective = [
+        [(x, u) -> 0.5 * 1.0e-2 * dot(x - state_goal, x - state_goal) + 0.5 * 1.0e-1  * dot(u, u) for t = 1:horizon-1]..., 
+        (x, u) -> 0.5 * 1.0e2 * dot(x - state_goal, x - state_goal),
+    ];
 
     # ## constraints
-    eq = [
-                Constraint((x, u, w) -> x - x1, num_state, num_action,
-                    evaluate_hessian=true), 
-                [Constraint() for t = 2:T-1]..., 
-                Constraint((x, u, w) -> x - xT, num_state, 0,
-                    evaluate_hessian=true)
-        ]
+    equality = [
+        (x, u) -> x - state_initial, 
+        [empty_constraint for t = 2:horizon-1]..., 
+        (x, u) -> x - state_goal,
+    ];
 
-    ineq = [Constraint() for t = 1:T]
-
-    soc = [[Constraint()] for t = 1:T]
+    # ## solver 
+    solver = Solver(objective, dynamics, num_states, num_actions; 
+        equality=equality);
 
     # ## initialize
-    u_guess = [0.01 * ones(num_action) for t = 1:T-1]
+    state_guess = linear_interpolation(state_initial, state_goal, horizon)
+    action_guess = [0.01 * ones(num_actions[t]) for t = 1:horizon-1]
+    initialize_states!(solver, state_guess) 
+    initialize_controls!(solver, action_guess)
 
-    # x_rollout = [x1] 
-    # for t = 1:T-1 
-    #     push!(x_rollout, midpoint_explicit(x_rollout[end], u_guess[t], zeros(num_parameter)))
-    # end
-    # initialize_states!(solver, x_rollout)
-
-    x_interpolation = linear_interpolation(x1, xT, T)
-
-    # ## problem 
-    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, soc)
-    methods = ProblemMethods(trajopt)
-    idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
-
-    # solver
-    solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-        nonnegative_indices=idx_nn, 
-        second_order_indices=idx_soc,
-        options=Options(verbose=true))
-    initialize_states!(solver, trajopt, x_interpolation)
-    initialize_controls!(solver, trajopt, u_guess)
-
-    # solve 
+    # ## solve 
     solve!(solver)
 
-    # test solution
+    # ## solution
+    state_solution, action_solution = get_trajectory(solver);
+
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(

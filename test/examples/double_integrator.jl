@@ -1,26 +1,12 @@
 @testset "Examples: Double integrator (differentiate wrt parameters)" begin
     # ## horizon 
-    T = 5
+    horizon = 5
 
-    # ## acrobot 
-    num_state = 2
-    num_action = 1 
-    num_parameters = [2 * 2 + 2 + 2 + 1 + 2, [2 * 2 + 2 + 2 + 1 for t = 2:T-1]..., 2 + 2]
+    # ## dimensions 
+    num_states = [2 for t = 1:horizon]
+    num_actions = [1 for t = 1:horizon-1] 
 
-    # ## parameters
-    x1 = [0.0; 0.0] 
-    xT = [1.0; 0.0] 
-
-    A = [1.0 1.0; 0.0 1.0]
-    B = [0.0; 1.0]
-    Qt = [1.0 0.0; 0.0 1.0] 
-    Rt = [0.1]
-    QT = [10.0 0.0; 0.0 10.0] 
-    θ1 = [vec(A); B; diag(Qt); Rt; x1]
-    θt = [vec(A); B; diag(Qt); Rt]  
-    θT = [diag(QT); xT] 
-    parameters = [θ1, [θt for t = 2:T-1]..., θT]
-
+    # ## dynamics
     function double_integrator(y, x, u, w)
         A = reshape(w[1:4], 2, 2) 
         B = w[4 .+ (1:2)] 
@@ -29,84 +15,79 @@
     end
 
     # ## model
-    dyn = [
-            Dynamics(
-            double_integrator, 
-            num_state, 
-            num_state, 
-            num_action, 
-            num_parameter=num_parameters[t]) for t = 1:T-1
-    ] 
+    dynamics = [double_integrator for t = 1:horizon-1]
+
+    # ## parameters
+    state_initial = [0.0; 0.0] 
+    state_goal = [1.0; 0.0] 
+
+    A = [1.0 1.0; 0.0 1.0]
+    B = [0.0; 1.0]
+    Qt = [1.0 0.0; 0.0 1.0] 
+    Rt = [0.1]
+    QT = [10.0 0.0; 0.0 10.0] 
+    θ1 = [vec(A); B; diag(Qt); Rt; state_initial]
+    θt = [vec(A); B; diag(Qt); Rt]  
+    θT = [diag(QT); state_goal] 
+    parameters = [θ1, [θt for t = 2:horizon-1]..., θT]
 
     # ## objective 
-    function o1(x, u, w) 
+    function obj1(x, u, w) 
         Q1 = Diagonal(w[6 .+ (1:2)])
         R1 = w[8 + 1]
         return 0.5 * transpose(x) * Q1 * x + 0.5 * R1 * transpose(u) * u
     end
 
-    function ot(x, u, w) 
+    function objt(x, u, w) 
         Qt = Diagonal(w[6 .+ (1:2)])
         Rt = w[8 + 1]
         return 0.5 * transpose(x) * Qt * x + 0.5 * Rt * transpose(u) * u
     end
 
-    function oT(x, u, w) 
+    function objT(x, u, w) 
         QT = Diagonal(w[0 .+ (1:2)])
         return 0.5 * transpose(x) * QT * x
     end
 
-    obj = [
-            Cost(o1, num_state, num_action, 
-                num_parameter=num_parameters[1]),
-            [Cost(ot, num_state, num_action, 
-                num_parameter=num_parameters[t]) for t = 2:T-1]...,
-            Cost(oT, num_state, 0,
-                num_parameter=num_parameters[T]),
+    objective = [
+                    obj1,
+                    [objt for t = 2:horizon-1]...,
+                    objT,
     ]
 
     # ## constraints 
-    eq = [
-        Constraint((x, u, w) -> 1 * (x - w[9 .+ (1:2)]), num_state, num_action,
-            num_parameter=num_parameters[1]),
-        [Constraint() for t = 2:T-1]...,
-        Constraint((x, u, w) -> 1 * (x - w[2 .+ (1:2)]), num_state, 0,
-            num_parameter=num_parameters[T]),
+    equality = [
+            (x, u, w) -> 1 * (x - w[9 .+ (1:2)]),
+            [empty_constraint for t = 2:horizon-1]...,
+            (x, u, w) -> 1 * (x - w[2 .+ (1:2)]),
     ]
 
-    ineq = [Constraint() for t = 1:T]
-    so = [[Constraint()] for t = 1:T]
-
-    # ## problem 
-    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so;
-        parameters=parameters)
-
-    # ## initialize
-    x_interpolation = linear_interpolation(x1, xT, T)
-    u_guess = [1.0 * randn(num_action) for t = 1:T-1]
-
-    methods = ProblemMethods(trajopt)
-
-    # ## solver
-    solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-        parameters=vcat(parameters...),
-        options=Options(
+    # ## options 
+    options = Options(
             residual_tolerance=1.0e-12, 
             equality_tolerance=1.0e-8,
             complementarity_tolerance=1.0e-8,
-            differentiate=true))
+            differentiate=true)
 
-    initialize_states!(solver, trajopt, x_interpolation) 
-    initialize_controls!(solver, trajopt, u_guess)
+    # ## solver 
+    solver = Solver(objective, dynamics, num_states, num_actions;
+        parameters=parameters,
+        equality=equality,
+        options=options);
+
+    # ## initialize
+    state_guess = linear_interpolation(state_initial, state_goal, horizon)
+    action_guess = [1.0 * randn(num_actions[t]) for t = 1:horizon-1]
+    initialize_states!(solver, state_guess) 
+    initialize_controls!(solver, action_guess)
 
     # ## solve 
     solve!(solver)
 
     # ## tests 
-    using Test
     @test solver.dimensions.parameters - sum(num_parameters) == 0
-    @test norm(solver.parameters - vcat([θ1, [θt for t = 2:T-1]..., θT]...), Inf) < 1.0e-5
-    
+    @test norm(solver.parameters - vcat([θ1, [θt for t = 2:horizon-1]..., θT]...), Inf) < 1.0e-5
+
     # test solution
     opt_norm = max(
         norm(solver.data.residual.variables, Inf),
@@ -124,36 +105,36 @@
     @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
     @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 
-    nz = T * num_state + (T - 1) * num_action
-    nz += num_state + num_state # t=1
-    for t = 2:T-1 
-        nz += num_state 
+    nz = sum(num_states) + sum(num_actions)
+    nz += num_states[1] + num_states[end] # t=1, t=T
+    for t = 2:horizon-1 
+        nz += num_states[t]
     end
-    nz += num_state
+    nz += num_states[end]
 
     nθ = sum(num_parameters)
 
     function lagrangian(z, θ)
-        x = [z[(t - 1) * (num_state + num_action) .+ (1:num_state)] for t = 1:T]
-        u = [z[(t - 1) * (num_state + num_action) + num_state .+ (1:num_action)] for t = 1:T-1]
-        λdyn = [z[(T - 1) * (num_state + num_action) + num_state + (t - 1) * num_state .+ (1:num_state)] for t = 1:T-1] 
-        λx1 = z[(T - 1) * (num_state + num_action) + num_state + (T - 1) * num_state .+ (1:num_state)] 
-        λxT = z[(T - 1) * (num_state + num_action) + num_state + (T - 1) * num_state + num_state .+ (1:num_state)]
+        x = [z[sum(num_states[1:(t-1)]) + sum(num_actions[1:(t-1)]) .+ (1:num_states[t])] for t = 1:horizon]
+        u = [z[sum(num_states[1:t]) + sum(num_actions[1:(t-1)]) .+ (1:num_actions[t])] for t = 1:horizon-1]
+        λdyn = [z[sum(num_states) + sum(num_actions) + sum(num_states[1 .+ (1:(t-1))]) .+ (1:num_states[t+1])] for t = 1:horizon-1] 
+        λx1 = z[sum(num_states) + sum(num_actions) + sum(num_states[2:end]) .+ (1:num_states[1])] 
+        λxT = z[sum(num_states) + sum(num_actions) + sum(num_states[2:end]) + num_states[1] .+ (1:num_states[end])]
 
-        w = [θ[sum(num_parameters[1:(t-1)]) .+ (1:num_parameters[t])] for t = 1:T]
+        w = [θ[sum(num_parameters[1:(t-1)]) .+ (1:num_parameters[t])] for t = 1:horizon]
 
         L = 0.0 
 
-        for t = 1:T 
+        for t = 1:horizon 
             if t == 1
-                L += o1(x[1], u[1], w[1])
+                L += obj1(x[1], u[1], w[1])
                 L += transpose(λdyn[1]) * double_integrator(x[2], x[1], u[1], w[1]);
                 L += transpose(λx1) * (x[1] - w[1][9 .+ (1:2)])
-            elseif t == T 
-                L += oT(x[T], zeros(0), w[T]) 
-                L += transpose(λxT) * (x[T] - w[T][2 .+ (1:2)])
+            elseif t == horizon 
+                L += objT(x[horizon], zeros(0), w[horizon]) 
+                L += transpose(λxT) * (x[horizon] - w[horizon][2 .+ (1:2)])
             else 
-                L += ot(x[t], u[t], w[t]) 
+                L += objt(x[t], u[t], w[t]) 
                 L += transpose(λdyn[t]) * double_integrator(x[t+1], x[t], u[t], w[t])
             end 
         end

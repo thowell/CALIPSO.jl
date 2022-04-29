@@ -1,13 +1,13 @@
 @testset "Examples: Rocket landing" begin 
     # ## horizon 
-    T = 101
+    horizon = 101
 
-    # ## rocket 
-    num_state = 6
-    num_action = 3 
-    num_parameter = 0 
+    # ## dimensions 
+    num_states = [6 for t = 1:horizon]
+    num_actions = [3 for t = 1:horizon-1] 
 
-    function rocket(x, u, w)
+    # ## dynamics
+    function rocket_continuous(x, u)
         mass = 1.0
         gravity = -9.81
 
@@ -22,55 +22,31 @@
         ]
     end
 
-    function midpoint_implicit(y, x, u, w)
+    function rocket_discrete(y, x, u)
         h = 0.05 # timestep 
-        y - (x + h * rocket(0.5 * (x + y), u, w))
+        y - (x + h * rocket_continuous(0.5 * (x + y), u))
     end
 
-    # ## model
-    dt = Dynamics(
-        midpoint_implicit, 
-        num_state, 
-        num_state, 
-        num_action, 
-        num_parameter=num_parameter)
-    dyn = [dt for t = 1:T-1] 
+    dynamics = [rocket_discrete for t = 1:horizon-1] 
 
-    # ## initialization
-    x1 = [3.0; 2.0; 1.0; 0.0; 0.0; 0.0] 
-    xT = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0] 
+    # ## states
+    state_initial = [3.0; 2.0; 1.0; 0.0; 0.0; 0.0] 
+    state_goal = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0] 
 
     # ## objective 
-    ot = (x, u, w) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)]) + 0.1 * dot(u, u)
-    oT = (x, u, w) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)])
-    ct = Cost(ot, num_state, num_action, 
-        num_parameter=num_parameter)
-    cT = Cost(oT, num_state, 0, 
-        num_parameter=num_parameter)
-    obj = [[ct for t = 1:T-1]..., cT]
+    objective = [
+        [(x, u) -> 1.0 * dot(x[1:3] - state_goal[1:3], x[1:3] - state_goal[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)]) + 0.1 * dot(u, u) for t = 1:horizon-1]..., 
+        (x, u) -> 1.0 * dot(x[1:3] - state_goal[1:3], x[1:3] - state_goal[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)]),
+    ];
 
     # ## constraints 
-    # Fx_min = -10.0#-8.0 
-    # Fx_max = 10.0#8.0
-    # Fy_min = -10.0#-8.0 
-    # Fy_max = 10.0#8.0
-    # Fz_min = 0.0#6.0
-    # Fz_max = 100.0#12.5
+    equality = [
+            (x, u) -> x - state_initial, 
+            [empty_constraint for t = 2:horizon-1]..., 
+            (x, u) -> x - state_goal,
+    ];
 
-    eq1 = Constraint((x, u, w) -> x - x1, num_state, num_action)
-    eqT = Constraint((x, u, w) -> x - xT, num_state, 0)
-    eq = [eq1, [Constraint((x, u, w) -> zeros(0), num_state, num_action) for t = 2:T-1]..., eqT]
-
-    # ineq = [[Constraint((x, u, w) -> 
-    #     [
-    #         u[1] - Fx_min; Fx_max - u[1];
-    #         u[2] - Fy_min; Fy_max - u[2]; 
-    #         u[3] - Fz_min; Fz_max - u[3];
-    #     ], num_state, num_action
-    # ) for t = 1:T-1]..., Constraint()]
-    ineq = [Constraint((x, u, w) -> zeros(0), num_state, t == T ? 0 : num_action) for t = 1:T]
-
-    function thrust_cone(x, u, w) 
+    function thrust_cone(x, u) 
         [
             u[3]; 
             u[1]; 
@@ -78,33 +54,27 @@
         ]
     end
 
-    # so = [[Constraint()] for t = 1:T]
-    so = [[[Constraint(thrust_cone, num_state, num_action)] for t = 1:T-1]..., [Constraint((x, u, w) -> zeros(0), num_state, 0)]]
+    second_order = [
+            [[thrust_cone] for t = 1:horizon-1]..., 
+            [empty_constraint],
+    ];
 
-    # ## problem 
-    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so);
+    # ## solver 
+    solver = Solver(objective, dynamics, num_states, num_actions; 
+        equality=equality,
+        second_order=second_order);
 
     # ## initialize
-    x_interpolation = linear_interpolation(x1, xT, T)
-    u_guess = [1.0e-3 * randn(num_action) for t = 1:T-1]
-
-    methods = ProblemMethods(trajopt);
-
-    idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
-
-    # ## solver
-    solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-        nonnegative_indices=idx_nn, 
-        second_order_indices=idx_soc,
-        options=Options(verbose=true, penalty_initial=1.0));
-    initialize_states!(solver, trajopt, x_interpolation) 
-    initialize_controls!(solver, trajopt, u_guess)
+    state_guess = linear_interpolation(state_initial, state_goal, horizon)
+    action_guess = [1.0e-3 * randn(num_actions[t]) for t = 1:horizon-1]
+    initialize_states!(solver, state_guess) 
+    initialize_controls!(solver, action_guess)
 
     # ## solve 
     solve!(solver)
 
     # ## solution
-    x_sol, u_sol = get_trajectory(solver, trajopt)
+    x_sol, u_sol = get_trajectory(solver)
 
     # ## tests
     @test all([norm(u[1:2]) < u[3] for u in u_sol])

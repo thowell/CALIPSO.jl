@@ -1,13 +1,13 @@
-# @testset "Examples: Pendulum" begin 
+@testset "Examples: Pendulum" begin 
     # ## horizon 
-    T = 11 
+    horizon = 11 
 
-    # ## acrobot 
-    num_state = 2
-    num_action = 1 
-    num_parameter = 0 
+    # ## dimensions 
+    num_states = [2 for t = 1:horizon]
+    num_actions = [1 for t = 1:horizon-1] 
 
-    function pendulum(x, u, w)
+    # ## dynamics
+    function pendulum_continuous(x, u)
         mass = 1.0
         length_com = 0.5
         gravity = 9.81
@@ -21,63 +21,46 @@
         ]
     end
 
-    function midpoint_implicit(y, x, u, w)
+    function pendulum_discrete(y, x, u)
         h = 0.05 # timestep 
-        y - (x + h * pendulum(0.5 * (x + y), u, w))
+        y - (x + h * pendulum_continuous(0.5 * (x + y), u))
     end
 
-    # ## model
-    dt = Dynamics(
-        midpoint_implicit, 
-        num_state, 
-        num_state, 
-        num_action, 
-        num_parameter=num_parameter)
-    dyn = [dt for t = 1:T-1] 
+    dynamics = [pendulum_discrete for t = 1:horizon-1] 
 
-    # ## initialization
-    x1 = [0.0; 0.0] 
-    xT = [π; 0.0] 
+    # ## states
+    state_initial = [0.0; 0.0] 
+    state_goal = [π; 0.0] 
 
     # ## objective 
-    ot = (x, u, w) -> 0.1 * dot(x[1:2], x[1:2]) + 0.1 * dot(u, u)
-    oT = (x, u, w) -> 0.1 * dot(x[1:2], x[1:2])
-    ct = Cost(ot, num_state, num_action)
-    cT = Cost(oT, num_state, 0)
-    obj = [[ct for t = 1:T-1]..., cT]
+    objective = [
+        [(x, u) -> 0.1 * dot(x[1:2], x[1:2]) + 0.1 * dot(u, u) for t = 1:horizon-1]..., 
+        (x, u) -> 0.1 * dot(x[1:2], x[1:2]),
+    ];
 
     # ## constraints 
-    eq1 = Constraint((x, u, w) -> x - x1, num_state, num_action)
-    eqT = Constraint((x, u, w) -> x - xT, num_state, 0)
-    eq = [eq1, [Constraint() for t = 2:T-1]..., eqT]
+    equality = [
+            (x, u) -> x - state_initial, 
+            [empty_constraint for t = 2:horizon-1]..., 
+            (x, u) -> x - state_goal,
+    ];
 
-    ineq = [Constraint() for t = 1:T]
-
-    soc = [[Constraint()] for t = 1:T]
-
-    # ## problem 
-    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, soc)
+    # ## solver 
+    solver = Solver(objective, dynamics, num_states, num_actions; 
+        equality=equality);
 
     # ## initialize
-    x_interpolation = linear_interpolation(x1, xT, T)
-    u_guess = [1.0 * randn(num_action) for t = 1:T-1]
-
-    methods = ProblemMethods(trajopt)
-    idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
-
-    # ## solver
-    solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-        nonnegative_indices=idx_nn, 
-        second_order_indices=idx_soc,
-        custom=trajopt,
-        options=Options(verbose=true))
-    initialize_states!(solver, trajopt, x_interpolation) 
-    initialize_controls!(solver, trajopt, u_guess)
+    state_guess = linear_interpolation(state_initial, state_goal, horizon)
+    action_guess = [1.0 * randn(num_actions[t]) for t = 1:horizon-1]
+    initialize_states!(solver, state_guess) 
+    initialize_controls!(solver, action_guess)
 
     # ## solve 
     solve!(solver)
 
-    # test solution
+    # ## solution
+    state_solution, action_solution = get_trajectory(solver);
+
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
