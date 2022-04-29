@@ -1,7 +1,27 @@
 @testset "Solver problem: Quadratic program (w/ equality constraints)" begin
+    # ## variables 
     num_variables = 10
     num_equality = 5
-    num_cone = 0
+    
+    # ## problem
+    function objective(x, θ) 
+        Pθ = Diagonal(θ[1:num_variables])
+        pθ = θ[num_variables .+ (1:num_variables)]
+        
+        J = 0.0
+        J += 0.5 * transpose(x) * Pθ * x 
+        J += transpose(pθ) * x
+
+        return J 
+    end
+
+    function equality(x, θ)
+        Aθ = reshape(θ[num_variables + num_variables .+ (1:(num_equality * num_variables))], num_equality, num_variables)
+        bθ = θ[num_variables + num_variables + num_equality * num_variables .+ (1:num_equality)]
+        return Aθ * x - bθ 
+    end
+
+    # ## parameters
     num_parameters = num_variables + num_variables + num_equality * num_variables + num_equality
 
     x̂ = max.(0.0, randn(num_variables))
@@ -13,42 +33,26 @@
 
     parameters = [diag(P); p; vec(A); b]
 
-    function obj(x, θ) 
-        Pθ = Diagonal(θ[1:num_variables])
-        pθ = θ[num_variables .+ (1:num_variables)]
-        
-        J = 0.0
-        J += 0.5 * transpose(x) * Pθ * x 
-        J += transpose(pθ) * x
+    # ## options 
+    options = Options(
+        residual_tolerance=1.0e-8, 
+        equality_tolerance=1.0e-6,
+        complementarity_tolerance=1.0e-6,
+        differentiate=true) 
 
-        return J 
-    end
-
-    function eq(x, θ)
-        Aθ = reshape(θ[num_variables + num_variables .+ (1:(num_equality * num_variables))], num_equality, num_variables)
-        bθ = θ[num_variables + num_variables + num_equality * num_variables .+ (1:num_equality)]
-        return Aθ * x - bθ 
-    end
-
-    cone(x, θ) = zeros(0)
-
-    # solver
-    x0 = randn(num_variables)
-    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone;
+    # ## solver
+    solver = Solver(objective, equality, empty_constraint, num_variables; 
         parameters=parameters,
-        options=Options(
-            residual_tolerance=1.0e-8, 
-            equality_tolerance=1.0e-6,
-            complementarity_tolerance=1.0e-6,
-            differentiate=true))
+        options=options);
+
+    # ## initialize 
+    x0 = randn(num_variables)
     initialize!(solver, x0)
 
-    # solve 
+    # ## solve 
     solve!(solver)
     
-    # solution
-    # test solution
+    # ## solution
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
@@ -62,7 +66,7 @@
     
     @test norm(A * solver.solution.variables - b, Inf) < solver.options.equality_tolerance
 
-    # sensitivity
+    # ## sensitivity
     @variables x[1:num_variables] y[1:num_equality] θ[1:num_parameters]
     function f1(x, θ) 
         Pθ = Diagonal(θ[1:num_variables])
@@ -72,7 +76,7 @@
     end
 
     function f2(x, θ) 
-        eq(x, θ)
+        equality(x, θ)
     end
 
     function f3(y, θ) 
@@ -80,7 +84,7 @@
         return transpose(Aθ) * y
     end
 
-    f1θ = Symbolics.jacobian(Symbolics.gradient(obj(x, θ), x), θ)
+    f1θ = Symbolics.jacobian(Symbolics.gradient(objective(x, θ), x), θ)
     f2θ = Symbolics.jacobian(f2(x, θ), θ)
     f3θ = Symbolics.jacobian(f3(y, θ), θ)
     f1θ_func = eval(Symbolics.build_function(f1θ, x, θ)[2])

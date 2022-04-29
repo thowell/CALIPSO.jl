@@ -46,7 +46,8 @@ include("solver/iterative_refinement.jl")
 
 
 export
-    ProblemMethods, Solver, solve!, initialize!, Options
+    ProblemMethods, Solver, solve!, initialize!, Options,
+    empty_constraint
 
 # Trajectory Optimization
 include("trajectory_optimization/costs.jl")

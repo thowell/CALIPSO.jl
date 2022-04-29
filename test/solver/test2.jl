@@ -1,24 +1,24 @@
 @testset "Solver problem: Test 2" begin
-    num_variables = 2
-    num_parameters = 0
-    num_equality = 0
-    num_cone = 2
-    x0 = rand(num_variables)
-
-    obj(x, θ) = -x[1] * x[2] + 2.0 / (3.0 * sqrt(3))
-    eq(x, θ) = zeros(0)
-    cone(x, θ) = [-x[1] - x[2]^2 + 1.0;
+    # ## problem 
+    objective(x) = -x[1] * x[2] + 2.0 / (3.0 * sqrt(3))
+    equality(x) = zeros(0)
+    cone(x) = [-x[1] - x[2]^2 + 1.0;
                 x[1] + x[2]]
 
-    # solver
-    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
+    # ## variables 
+    num_variables = 2
+
+    # ## solver
+    solver = Solver(objective, equality, cone, num_variables);
+    
+    # ## initialize 
+    x0 = rand(num_variables)
     initialize!(solver, x0)
 
-    # solve 
+    # ## solve 
     solve!(solver)
 
-    # test solution
+    # ## solution
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(

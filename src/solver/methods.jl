@@ -42,10 +42,10 @@ end
 
 function ProblemMethods(num_variables::Int, num_parameters::Int, objective::Function, equality::Function, cone::Function)
     f, fx!, fθ!, fxx!, fxθ!, fxx_sparsity, fxθ_sparsity = generate_gradients(objective, num_variables, num_parameters, :scalar)
-    g, gx, gθ, gx_sparsity, gθ_sparsity, gᵀy, gᵀyx, gᵀyxx, gᵀyxθ, gᵀyxx_sparsity, gᵀyxθ_sparsity = generate_gradients(equality, num_variables, num_parameters, :vector)
-    h, hx, hθ, hx_sparsity, hθ_sparsity, hᵀy, hᵀyx, hᵀyxx, hᵀyxθ, hᵀyxx_sparsity, hᵀyxθ_sparsity = generate_gradients(cone, num_variables, num_parameters, :vector)
+    g, gx, gθ, gx_sparsity, gθ_sparsity, gᵀy, gᵀyx, gᵀyxx, gᵀyxθ, gᵀyxx_sparsity, gᵀyxθ_sparsity, num_g = generate_gradients(equality, num_variables, num_parameters, :vector)
+    h, hx, hθ, hx_sparsity, hθ_sparsity, hᵀy, hᵀyx, hᵀyxx, hᵀyxθ, hᵀyxx_sparsity, hᵀyxθ_sparsity, num_h = generate_gradients(cone, num_variables, num_parameters, :vector)
 
-    ProblemMethods(
+    methods = ProblemMethods(
         f, fx!, fθ!, fxx!, fxθ!, 
             zeros(length(fxx_sparsity)), zeros(length(fxθ_sparsity)), 
             fxx_sparsity, fxθ_sparsity,
@@ -62,4 +62,6 @@ function ProblemMethods(num_variables::Int, num_parameters::Int, objective::Func
             zeros(length(hᵀyxx_sparsity)), zeros(length(hᵀyxθ_sparsity)), 
             hᵀyxx_sparsity, hᵀyxθ_sparsity,
     )
+
+    return methods, num_g, num_h
 end

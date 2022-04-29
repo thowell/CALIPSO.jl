@@ -3,14 +3,11 @@
     Create a portfolio optimization problem with p dimensions 
     https://arxiv.org/pdf/1705.00772.pdf
     """
-
+    # ## setup
     p = 10
     E = randn(p, p)
     Σ = E' * E
-
     Σ½ = sqrt(Σ)
-
-    # setup for cone problem
     c = [zeros(p); 1.0]
 
     G1 = [2.0 * Σ½ zeros(p, 1); zeros(1, p) -1.0] 
@@ -24,34 +21,30 @@
     A = [G2; G3; -q'; -G1]
     b = [1.0; -1.0; z; h]
 
+    # ## problem 
+    objective(x) = dot(c, x)
+    cone(x) = b - A * x
+
+    # ## variables 
     num_variables = p + 1 
-    num_parameters = 0
-    num_equality = 0 
-    num_cone = 14 
 
-    idx_ineq = collect(1:2) 
-    idx_soc = [collect(2 .+ (1:12))]
+    # ## cone indices
+    nonnegative_indices = collect(1:2) 
+    second_order_indices = [collect(2 .+ (1:12))]
 
-    obj(x, θ) = dot(c, x)
-    eq(x, θ) = zeros(0)
-    cone(x, θ) = b - A * x
+    # ## solver
+    solver = Solver(objective, empty_constraint, cone, num_variables;
+        nonnegative_indices=nonnegative_indices,
+        second_order_indices=second_order_indices,)
 
-
-    # methods.cone_jacobian_variables(zeros(num_cone), x0, zeros(num_parameters))
-    # methods.cone_jacobian_variables(problem.cone_jacobian_variables, x, θ)
-    # solver
-    method = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-    solver = Solver(method, num_variables, num_parameters, num_equality, num_cone;
-        nonnegative_indices=idx_ineq,
-        second_order_indices=idx_soc,)
-
+    # ## initialize
     x0 = randn(num_variables)
     initialize!(solver, x0)
 
-    # solve 
+    # ## solve 
     solve!(solver)
 
-    # test solution
+    # ## solution
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(

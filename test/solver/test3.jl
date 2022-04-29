@@ -1,18 +1,18 @@
 @testset "Solver problem: Test 3" begin
-    num_variables = 2
-    num_parameters = 0
-    num_equality = 0
-    num_cone = 2
-    x0 = rand(num_variables)
-
-    obj(x, θ) = 100.0 * (x[2] - x[1]^2)^2 + (1.0 - x[1])^2
-    eq(x, θ) = zeros(0)
-    cone(x, θ) = [-(x[1] - 1.0)^3 + x[2] - 1.0;
+    
+    # ## problem 
+    objective(x) = 100.0 * (x[2] - x[1]^2)^2 + (1.0 - x[1])^2
+    cone(x) = [-(x[1] - 1.0)^3 + x[2] - 1.0;
                 -x[1] - x[2] + 2.0]
 
-    # solver
-    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
+    # ## variables 
+    num_variables = 2
+
+    # ## solver
+    solver = Solver(objective, empty_constraint, cone, num_variables);
+    
+    # ## initialize 
+    x0 = rand(num_variables)
     initialize!(solver, x0)
 
     # solve 

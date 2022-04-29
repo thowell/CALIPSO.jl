@@ -5,11 +5,10 @@ function solver_info(solver)
    ( (__  /(__)\\  )(__  _)(_  )___/\\__ \\ )(_)(
     \\___)(__)(__)(____)(____)(__)  (___/(_____)
     ")
-    
     println(crayon"reset bold black", 
-    "           Taylor Howell & Kevin Tracy")
-    println("             Robotic Exploration Lab")
-    println(" Stanford University & Carnegie Mellon University\n")
+    "Taylor Howell & Kevin Tracy & Simon Le Cleac'h")
+    println("Robotic Exploration Lab")
+    println("Stanford University & Carnegie Mellon University\n")
     print(crayon"reset")
 end
 

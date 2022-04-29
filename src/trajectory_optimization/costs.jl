@@ -24,7 +24,7 @@ function Cost(cost::Function, num_state::Int, num_action::Int;
     #TODO: option to load/save methods
     @variables x[1:num_state], u[1:num_action], w[1:num_parameter]
     
-    c = cost(x, u, w)
+    c = num_parameter > 0 ? cost(x, u, w) : cost(x, u)
     gz = Symbolics.gradient(c, [x; u])
     gw = Symbolics.gradient(c, w)
 

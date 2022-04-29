@@ -36,7 +36,7 @@ function Constraint(constraint::Function, num_state::Int, num_action::Int;
     #TODO: option to load/save methods
     @variables x[1:num_state], u[1:num_action], w[1:num_parameter]
 
-    c = constraint(x, u, w)
+    c = num_parameter > 0 ? constraint(x, u, w) : constraint(x, u)
     cz = Symbolics.sparsejacobian(c, [x; u])
     cw = Symbolics.sparsejacobian(c, w)
 

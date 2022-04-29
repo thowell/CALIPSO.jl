@@ -4,7 +4,7 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
     @variables x[1:num_variables] θ[1:num_parameters]
 
     if mode == :scalar 
-        f = [func(x, θ)]
+        f = num_parameters > 0 ? [func(x, θ)] : [func(x)]
         
         fx = Symbolics.gradient(f[1], x)
         fθ = Symbolics.gradient(f[1], θ)
@@ -37,7 +37,7 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
 
         return f_expr, fx_expr, fθ_expr, fxx_expr, fxθ_expr, fxx_sparsity, fxθ_sparsity
     elseif mode == :vector 
-        f = func(x, θ)
+        f = num_parameters > 0 ? func(x, θ) : func(x)
         
         fx = Symbolics.sparsejacobian(f, x)
         fθ = Symbolics.sparsejacobian(f, θ)
@@ -85,8 +85,9 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
         fᵀyxx_sparsity = collect(zip([findnz(fᵀyxx)[1:2]...]...))
         fᵀyxθ_sparsity = collect(zip([findnz(fᵀyxθ)[1:2]...]...))
 
-        return f_expr, fx_expr, fθ_expr, fx_sparsity, fθ_sparsity, fᵀy_expr, fᵀyx_expr, fᵀyxx_expr, fᵀyxθ_expr, fᵀyxx_sparsity, fᵀyxθ_sparsity
+        return f_expr, fx_expr, fθ_expr, fx_sparsity, fθ_sparsity, fᵀy_expr, fᵀyx_expr, fᵀyxx_expr, fᵀyxθ_expr, fᵀyxx_sparsity, fᵀyxθ_sparsity, length(f)
     end
 end
 
+empty_constraint(x) = zeros(0) 
 empty_constraint(x, θ) = zeros(0) 

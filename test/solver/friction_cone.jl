@@ -8,13 +8,14 @@
                     x in K
     """
 
+    # ## variables
     num_variables = 3
-    num_parameters = 0 
-    num_equality = 1 
-    num_cone = 3
-    idx_ineq = Int[]
-    idx_soc = [collect(1:3)]
 
+    # ## cone indices
+    nonnegative_indices = collect(1:0)
+    second_order_indices = [collect(1:3)]
+
+    # ## problem settings
     V = [[0.0; 0.0; 0.0], [0.0; 1.0; 0.0], [0.0; 0.0; 1.0], [0.0; 1.0; 1.0], [0.0; 10.0; 1.0]]
     friction_coefficients = [0.0, 0.5, 1.0] 
     impact_impulse = [0.0, 1.0] 
@@ -22,23 +23,25 @@
     for v in V 
         for μ in friction_coefficients 
             for γ in impact_impulse
-                obj(x, θ) = transpose(v) * x
-                eq(x, θ) = [x[1] - μ * γ]
-                cone(x, θ) = x
+
+                # ## problem
+                objective(x) = transpose(v) * x
+                equality(x) = [x[1] - μ * γ]
+                cone(x) = x
 
                 # solver
-                methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-                solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone;
-                    nonnegative_indices=idx_ineq,
-                    second_order_indices=idx_soc,)
+                solver = Solver(objective, equality, cone, num_variables;
+                    nonnegative_indices=nonnegative_indices,
+                    second_order_indices=second_order_indices,)
 
+                # ## initialize
                 x0 = randn(num_variables)
                 initialize!(solver, x0)
 
-                # solve 
+                # ## solve 
                 solve!(solver)
 
-                # test solution
+                # ## solution
                 @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
                 slack_norm = max(

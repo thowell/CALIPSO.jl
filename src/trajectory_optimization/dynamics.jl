@@ -33,7 +33,7 @@ function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_a
 
     #TODO: option to load/save methods
     @variables y[1:num_next_state], x[1:num_state], u[1:num_action], w[1:num_parameter] 
-    d = dynamics(y, x, u, w) 
+    d = num_parameter > 0 ? dynamics(y, x, u, w) : dynamics(y, x, u)
     dz = Symbolics.sparsejacobian(d, [x; u; y]);
     dw = Symbolics.sparsejacobian(d, w);
 

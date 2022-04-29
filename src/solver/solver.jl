@@ -115,4 +115,27 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     )
 end
 
+function Solver(objective, equality, cone, num_variables::Int; 
+    parameters=zeros(0),
+    nonnegative_indices=nothing,
+    second_order_indices=nothing,
+    custom=nothing,
+    options=Options(),
+    )
+
+    # codegen methods
+    num_parameters = length(parameters)
+    methods, num_equality, num_cone = ProblemMethods(num_variables, num_parameters, objective, equality, cone)
+    
+    # solver 
+    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone; 
+        parameters=parameters,
+        nonnegative_indices=(nonnegative_indices === nothing ? collect(1:num_cone) : nonnegative_indices),
+        second_order_indices=(second_order_indices === nothing ? [collect(1:0)] : second_order_indices),
+        custom=custom,
+        options=options)
+
+    return solver
+end
+
 

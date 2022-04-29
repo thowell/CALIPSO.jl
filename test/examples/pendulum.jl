@@ -1,4 +1,4 @@
-@testset "Examples: Pendulum" begin 
+# @testset "Examples: Pendulum" begin 
     # ## horizon 
     T = 11 
 

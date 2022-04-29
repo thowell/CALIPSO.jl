@@ -1,23 +1,23 @@
 @testset "Solver problem: Maratos" begin
+    # ## problem 
+    obj(x) = 2.0 * (x[1]^2 + x[2]^2 - 1.0) - x[1]
+    eq(x) = [x[1]^2 + x[2]^2 - 1.0]
+    cone(x) = zeros(0)
+
+    # ## variables 
     num_variables = 2
-    num_parameters = 0
-    num_equality = 1
-    num_cone = 0
+
+    # ## solver
+    solver = Solver(obj, eq, empty_constraint, num_variables);
+
+    # ## initialize 
     x0 = [2.0; 1.0]
-
-    obj(x, θ) = 2.0 * (x[1]^2 + x[2]^2 - 1.0) - x[1]
-    eq(x, θ) = [x[1]^2 + x[2]^2 - 1.0]
-    cone(x, θ) = zeros(0)
-
-    # solver
-    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
     initialize!(solver, x0)
 
-    # solve 
+    # ## solve 
     solve!(solver)
 
-    # test solution
+    # ## solution
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(

@@ -36,3 +36,29 @@ are automatically formulated, and fast gradients generated, for CALIPSO.
 ## Solution gradients
 The solver is differentiable, and gradients of the solution (including internal solver variables) with respect to the problem parameters are efficiently computed.
 
+## Quick start 
+```julia
+using CALIPSO
+
+# problem
+objective(x) = x[1]
+equality(x) = [x[1]^2 - x[2] - 1.0; x[1] - x[3] - 0.5]
+cone(x) = x[2:3]
+
+# variables 
+num_variables = 3
+
+# solver
+solver = Solver(objective, equality, cone, num_variables);
+
+# initialize
+x0 = [-2.0, 3.0, 1.0]
+initialize!(solver, x0)
+
+# solve 
+solve!(solver)
+
+# solution 
+solver.solution.variables # x* = [1.0, 0.0, 0.5]
+```
+

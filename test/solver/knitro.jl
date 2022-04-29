@@ -1,30 +1,30 @@
 @testset "Solver problem: Knitro" begin
-    num_variables = 8
-    num_parameters = 0
-    num_equality = 7
-    num_cone = 8
-    x0 = zeros(num_variables)
-
-    obj(x, θ) = (x[1] - 5)^2 + (2*x[2] + 1)^2
-    eq(x, θ) = [2*(x[2] - 1) - 1.5*x[2] + x[3] - 0.5*x[4] + x[5];
+    # ## problem
+    objective(x) = (x[1] - 5)^2 + (2*x[2] + 1)^2
+    equality(x) = [2*(x[2] - 1) - 1.5*x[2] + x[3] - 0.5*x[4] + x[5];
                 3*x[1] - x[2] - 3.0 - x[6];
                 -x[1] + 0.5*x[2] + 4.0 - x[7];
                 -x[1] - x[2] + 7.0 - x[8];
                 x[3]*x[6];
                 x[4]*x[7];
                 x[5]*x[8];]
-    cone(x, θ) = x #.- 1.0e-5
+    cone(x) = x #.- 1.0e-5
 
-    # solver
-    methods = ProblemMethods(num_variables, num_parameters, obj, eq, cone)
-    solver = Solver(methods, num_variables, num_parameters, num_equality, num_cone)
+    # ## variables 
+    num_variables = 8
+
+    # ## solver
+    solver = Solver(objective, equality, cone, num_variables);
+    
+    # ## initialize
+    x0 = zeros(num_variables)
     initialize!(solver, x0)
 
-    # solve 
+    # ## solve 
     solve!(solver)
     x = solver.solution.variables[1:8]
 
-    # test solution
+    # ## solution
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
     slack_norm = max(
