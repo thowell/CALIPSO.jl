@@ -1,11 +1,14 @@
 @testset "Dynamics" begin 
-    T = 3
-    num_state = 2 
-    num_action = 1 
-    num_parameter = 0 
-    parameter_dimensions = [num_parameter for t = 1:T]
+    # ## horizon
+    horizon = 3
 
-    function pendulum(z, u, w) 
+    # ## dimensions
+    num_states = [2 for t = 1:horizon] 
+    num_actions = [1 for t = 1:horizon-1] 
+    num_parameters = [0 for t = 1:horizon]
+
+    # ## dynamics
+    function pendulum_continuous(z, u) 
         mass = 1.0 
         lc = 1.0 
         gravity = 9.81 
@@ -13,61 +16,60 @@
         [z[2], (u[1] / ((mass * lc * lc)) - gravity * sin(z[1]) / lc - damping * z[2] / (mass * lc * lc))]
     end
 
-    function euler_implicit(y, x, u, w)
+    function pendulum_discrete(y, x, u)
         h = 0.1
-        y - (x + h * pendulum(y, u, w))
+        y - (x + h * pendulum_continuous(y, u))
     end
 
-    dt = Dynamics(euler_implicit, num_state, num_state, num_action, 
-        num_parameter=num_parameter);
-    dynamics = [dt for t = 1:T-1] 
+    dynamics = [pendulum_discrete for t = 1:horizon-1]
+    dyn = CALIPSO.generate_methods(dynamics, num_states, num_actions, num_parameters, :Dynamics)
 
-    x1 = ones(num_state) 
-    u1 = ones(num_action)
-    w1 = zeros(num_parameter)
-    X = [x1 for t = 1:T]
-    U = [u1 for t = 1:T]
-    W = [w1 for t = 1:T]
-    idx_dyn = CALIPSO.constraint_indices(dynamics)
-    idx_jac = CALIPSO.jacobian_variables_indices(dynamics)
+    x1 = ones(num_states[1]) 
+    u1 = ones(num_actions[1])
+    w1 = zeros(num_parameters[1])
+    X = [x1 for t = 1:horizon]
+    U = [u1 for t = 1:horizon]
+    W = [w1 for t = 1:horizon]
+    idx_dyn = CALIPSO.constraint_indices(dyn)
+    idx_jac = CALIPSO.jacobian_variables_indices(dyn)
 
-    d = zeros(CALIPSO.num_constraint(dynamics))
-    J = zeros(CALIPSO.num_constraint(dynamics), CALIPSO.num_state_action_next_state(dynamics))
+    d = zeros(CALIPSO.num_constraint(dyn))
+    J = zeros(CALIPSO.num_constraint(dyn), CALIPSO.num_state_action_next_state(dyn))
 
-    sp = CALIPSO.sparsity_jacobian_variables(dynamics, [num_state for t = 1:T], [num_action for t = 1:T-1], row_shift=0)
+    sp = CALIPSO.sparsity_jacobian_variables(dyn, num_states, num_actions, row_shift=0)
     j = zeros(length(vcat(sp...)))
 
-    dt.constraint(dt.constraint_cache, x1, x1, u1, w1) 
+    dyn[1].constraint(dyn[1].constraint_cache, x1, x1, u1, w1) 
     # @benchmark $dt.constraint($dt.constraint_cache, $x1, $x1, $u1, $w1) 
-    @test norm(dt.constraint_cache - euler_implicit(x1, x1, u1, w1)) < 1.0e-8
-    dt.jacobian_variables(dt.jacobian_variables_cache, x1, x1, u1, w1) 
-    jac_dense = zeros(dt.num_next_state, dt.num_state + dt.num_action + dt.num_next_state)
-    for (i, ji) in enumerate(dt.jacobian_variables_cache)
-        jac_dense[dt.jacobian_variables_sparsity[1][i], dt.jacobian_variables_sparsity[2][i]] = ji
+    @test norm(dyn[1].constraint_cache - pendulum_discrete(x1, x1, u1)) < 1.0e-8
+    dyn[1].jacobian_variables(dyn[1].jacobian_variables_cache, x1, x1, u1, w1) 
+    jac_dense = zeros(dyn[1].num_next_state, dyn[1].num_state + dyn[1].num_action + dyn[1].num_next_state)
+    for (i, ji) in enumerate(dyn[1].jacobian_variables_cache)
+        jac_dense[dyn[1].jacobian_variables_sparsity[1][i], dyn[1].jacobian_variables_sparsity[2][i]] = ji
     end
-    jac_fd = ForwardDiff.jacobian(a -> euler_implicit(a[num_state + num_action .+ (1:num_state)], a[1:num_state], a[num_state .+ (1:num_action)], w1), [x1; u1; x1])
+    jac_fd = ForwardDiff.jacobian(a -> pendulum_discrete(a[num_states[1] + num_actions[1] .+ (1:num_states[2])], a[1:num_states[1]], a[num_states[1] .+ (1:num_actions[1])]), [x1; u1; x1])
     @test norm(jac_dense - jac_fd) < 1.0e-8
 
-    CALIPSO.constraints!(d, idx_dyn, dynamics, X, U, W)
-    @test norm(vcat(d...) - vcat([euler_implicit(X[t+1], X[t], U[t], W[t]) for t = 1:T-1]...)) < 1.0e-8
+    CALIPSO.constraints!(d, idx_dyn, dyn, X, U, W)
+    @test norm(vcat(d...) - vcat([pendulum_discrete(X[t+1], X[t], U[t]) for t = 1:horizon-1]...)) < 1.0e-8
     # info = @benchmark CALIPSO.constraints!($d, $idx_dyn, $dynamics, $X, $U, $W) 
 
-    CALIPSO.jacobian_variables!(j, 0, dynamics, X, U, W) 
+    CALIPSO.jacobian_variables!(j, 0, dyn, X, U, W) 
     for (i, idx) in enumerate(vcat(sp...))
         J[idx...] = j[i] 
     end
-    @test norm(J - [jac_fd zeros(dynamics[2].num_state, dynamics[2].num_action + dynamics[2].num_next_state); zeros(dynamics[2].num_next_state, dynamics[1].num_state + dynamics[1].num_action) jac_fd]) < 1.0e-8
+    @test norm(J - [jac_fd zeros(dyn[2].num_state, dyn[2].num_action + dyn[2].num_next_state); zeros(dyn[2].num_next_state, dyn[1].num_state + dyn[1].num_action) jac_fd]) < 1.0e-8
     # info = @benchmark CALIPSO.jacobian!($j, $idx_jac, $dynamics, $X, $U, $W) 
 
-    x_idx = CALIPSO.state_indices(dynamics)
-    u_idx = CALIPSO.action_indices(dynamics)
-    xu_idx = CALIPSO.state_action_indices(dynamics)
-    xuy_idx = CALIPSO.state_action_next_state_indices(dynamics)
+    x_idx = CALIPSO.state_indices(dyn)
+    u_idx = CALIPSO.action_indices(dyn)
+    xu_idx = CALIPSO.state_action_indices(dyn)
+    xuy_idx = CALIPSO.state_action_next_state_indices(dyn)
 
-    nz = sum([t < T ? dynamics[t].num_state : dynamics[t-1].num_next_state for t = 1:T]) + sum([dynamics[t].num_action for t = 1:T-1])
+    nz = sum([t < horizon ? dyn[t].num_state : dyn[t-1].num_next_state for t = 1:horizon]) + sum([dyn[t].num_action for t = 1:horizon-1])
     z = rand(nz)
-    x = [@views z[x_idx[t]] for t = 1:T]
-    u = [[@views z[u_idx[t]] for t = 1:T-1]..., zeros(0)]
+    x = [@views z[x_idx[t]] for t = 1:horizon]
+    u = [[@views z[u_idx[t]] for t = 1:horizon-1]..., zeros(0)]
 
     # CALIPSO.trajectory!(x, u, z, x_idx, u_idx)
     z̄ = zero(z)
@@ -79,6 +81,5 @@
     end
 
     @test norm(z - z̄) < 1.0e-8
-    # info = @benchmark CALIPSO.trajectory!($x, $u, $z, $x_idx, $u_idx)
 end
 

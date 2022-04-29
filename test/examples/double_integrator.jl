@@ -31,6 +31,10 @@
     θT = [diag(QT); state_goal] 
     parameters = [θ1, [θt for t = 2:horizon-1]..., θT]
 
+    CALIPSO.generate_methods(dynamics, num_states, num_actions, [length(p) for p in parameters], :Dynamics)
+    @show "dynamics!"
+
+
     # ## objective 
     function obj1(x, u, w) 
         Q1 = Diagonal(w[6 .+ (1:2)])
@@ -55,12 +59,18 @@
                     objT,
     ]
 
+    CALIPSO.generate_methods(objective, num_states, num_actions, [length(p) for p in parameters], :Cost)
+
+    @show "objective!"
     # ## constraints 
     equality = [
             (x, u, w) -> 1 * (x - w[9 .+ (1:2)]),
             [empty_constraint for t = 2:horizon-1]...,
             (x, u, w) -> 1 * (x - w[2 .+ (1:2)]),
     ]
+
+    CALIPSO.generate_methods(equality, num_states, num_actions, [length(p) for p in parameters], :Constraint)
+    @show "equality!"
 
     # ## options 
     options = Options(
@@ -84,11 +94,10 @@
     # ## solve 
     solve!(solver)
 
-    # ## tests 
-    @test solver.dimensions.parameters - sum(num_parameters) == 0
+    # ## test 
+    num_parameters = [length(p) for p in parameters]
     @test norm(solver.parameters - vcat([θ1, [θt for t = 2:horizon-1]..., θT]...), Inf) < 1.0e-5
 
-    # test solution
     opt_norm = max(
         norm(solver.data.residual.variables, Inf),
         norm(solver.data.residual.cone_slack, Inf),

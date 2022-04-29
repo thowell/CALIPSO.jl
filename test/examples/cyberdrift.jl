@@ -1,8 +1,8 @@
 @testset "Examples: CYBERDRIFT" begin
     """
-        CYBERTRUCKV2
+        CYBERTRUCK
     """
-    struct CYBERTRUCKV2{T} <: RoboDojo.Model{T}
+    struct CYBERTRUCK{T} <: RoboDojo.Model{T}
         # dimensions
         nq::Int # generalized coordinates
         nu::Int # controls
@@ -26,22 +26,22 @@
             -x[2] x[1] 0]
     end
 
-    function mm(model::CYBERTRUCKV2, q) 
+    function mm(model::CYBERTRUCK, q) 
         Diagonal([model.mass, model.mass, model.inertia])
     end
 
-    function db(model::CYBERTRUCKV2, q, q̇) 
+    function db(model::CYBERTRUCK, q, q̇) 
         [0.0; 0.0; 0.0]
     end
 
-    function input_jacobian(model::CYBERTRUCKV2, q)
+    function input_jacobian(model::CYBERTRUCK, q)
         [
             cos(q[3]) sin(q[3]) 0.0; 
             0.0       0.0       1.0;
         ]
     end
 
-    function contact_jacobian(model::CYBERTRUCKV2, q)
+    function contact_jacobian(model::CYBERTRUCK, q)
 
         R = [cos(q[3]) -sin(q[3]); sin(q[3]) cos(q[3])] 
 
@@ -58,54 +58,62 @@
     end
 
     # nominal configuration 
-    function nominal_configuration(model::CYBERTRUCKV2)
+    function nominal_configuration(model::CYBERTRUCK)
         [0.0; 0.0; 0.0]
     end
 
     # friction coefficients 
-    friction_coefficients(model::CYBERTRUCKV2) = model.friction_body_world
+    friction_coefficients(model::CYBERTRUCK) = model.friction_body_world
 
-    function dynamics(model, mass_matrix, dynamics_bias, h, q0, q1, u1, w1, λ1, q2)
+    function dynamics_discrete(model, mass_matrix, dynamics_bias, timestep, q0, q1, u1, w1, λ1, q2)
         # evalutate at midpoint
         qm1 = 0.5 * (q0 + q1)
-        vm1 = (q1 - q0) / h[1]
+        vm1 = (q1 - q0) / timestep[1]
         qm2 = 0.5 * (q1 + q2)
-        vm2 = (q2 - q1) / h[1]
+        vm2 = (q2 - q1) / timestep[1]
 
         D1L1, D2L1 = RoboDojo.lagrangian_derivatives(mass_matrix, dynamics_bias, qm1, vm1)
         D1L2, D2L2 = RoboDojo.lagrangian_derivatives(mass_matrix, dynamics_bias, qm2, vm2)
 
-        d = 0.5 * h[1] * D1L1 + D2L1 + 0.5 * h[1] * D1L2 - D2L2 # variational integrator (midpoint)
+        d = 0.5 * timestep[1] * D1L1 + D2L1 + 0.5 * timestep[1] * D1L2 - D2L2 # variational integrator (midpoint)
         d .+= transpose(input_jacobian(model, qm2)) * u1        # control inputs
         d .+= λ1                                                # contact impulses
 
         return d
     end
 
-    # Dimensions
+    # ## Dimensions
     nq = 3 # configuration dimension
     nu = 2 # control dimension
     nw = 0 # parameters
     nc = 2 # number of contact points
 
-    # Parameters
+    # ## Parameters
     body_mass = 1.0
     body_inertia = 0.1
     friction_body_world = [0.5; 0.5]  # coefficient of friction
     kinematics_front = [0.1; 0.0] 
     kinematics_rear =  [-0.1; 0.0]
 
-    # Model
-    cybertruck = CYBERTRUCKV2(nq, nu, nw, nc,
+    # ## Model
+    cybertruck = CYBERTRUCK(nq, nu, nw, nc,
             body_mass, body_inertia,
             kinematics_front, kinematics_rear,
             friction_body_world, zeros(0))
 
-    # Dimensions 
+    # ## horizon
+    horizon = 26
+    timestep = 0.1
+
+    # ## Optimization Dimensions 
     nx = 2 * nq
     nu = 2 + nc * 6
 
-    function dynamics(model::CYBERTRUCKV2, h, y, x, u, w)
+    num_states = [nx for t = 1:horizon]
+    num_actions = [nu for t = 1:horizon-1]
+
+    # ## dynamics
+    function cybertruck_dynamics(model::CYBERTRUCK, timestep, y, x, u)
         
         # configurations
         q1⁻ = x[1:3]
@@ -128,12 +136,12 @@
 
         [
             q2⁺ - q2⁻;
-            dynamics(model, q -> mm(model, q), (q, q̇) -> db(model, q, q̇),
-                h, q1⁻, q2⁺, u_control, zeros(model.nw), λ, q3⁺);
+            dynamics_discrete(model, q -> mm(model, q), (q, q̇) -> db(model, q, q̇),
+                timestep, q1⁻, q2⁺, u_control, zeros(model.nw), λ, q3⁺);
         ]
     end
 
-    function contact_equality(model, h, x, u, w)
+    function contact_equality(model, timestep, x, u)
         # configurations
         q2 = x[1:3]
         q3 = x[3 .+ (1:3)]
@@ -148,11 +156,11 @@
         μ = model.friction_body_world[1:2]
 
         # contact point velocities
-        v = contact_jacobian(model, q3) * (q3 - q2) ./ h[1]
+        v = contact_jacobian(model, q3) * (q3 - q2) ./ timestep[1]
 
         [
-            β1[1] - μ[1] * model.mass * 9.81 * h[1];
-            β2[1] - μ[2] * model.mass * 9.81 * h[1];
+            β1[1] - μ[1] * model.mass * 9.81 * timestep[1];
+            β2[1] - μ[2] * model.mass * 9.81 * timestep[1];
             v[1:2] - η1[2:3];
             v[3:4] - η2[2:3];
             CALIPSO.second_order_product(β1, η1);
@@ -160,136 +168,118 @@
         ]
     end
 
-    # ## horizon
-    T = 26
-    h = 0.1
+    # ## dynamics
+    dynamics = [(y, x, u) -> cybertruck_dynamics(cybertruck, [timestep], y, x, u) for t = 1:horizon-1]
 
-    ## model
-    dyn = [
-            CALIPSO.Dynamics((y, x, u, w) -> dynamics(cybertruck, [h], y, x, u, w), nx, nx, nu) for t = 1:T-1
-    ]
-
-    # ## initial conditions
-
-    # Initial 
-    x1 = [0.0; 1.0; -0.5 * π; 0.0; 1.0; -0.5 * π] 
-
-    # Terminal 
-    xT = [3.0; 0.0; 0.5 * π; 3.0; 0.0; 0.5 * π]
-
-    # x1 = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0] 
-
-    # # Terminal 
-    # xT = [1.0; 1.0; 0.0; 1.0; 1.0; 0.0]
-
+    # ## states
+    state_initial = [0.0; 1.0; -0.5 * π; 0.0; 1.0; -0.5 * π] 
+    state_goal = [3.0; 0.0; 0.5 * π; 3.0; 0.0; 0.5 * π]
 
     # ## objective
-    # ## objective
-    function obj1(x, u, w)
+    function obj1(x, u)
         J = 0.0
-        v = (x[4:6] - x[1:3]) ./ h[1]
+        v = (x[4:6] - x[1:3]) ./ timestep[1]
         J += 0.5 * 1.0e-3 * dot(v, v)
         # vc = contact_jacobian(model, x[4:6]) * v 
         # J += 0.5 * 1.0e-5 * v[3]^2.0
         # J += 0.5 * 1.0e-5 * dot(vc, vc)
-        J += 0.5 * 1.0e-3 * transpose(x - xT) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x - xT)
+        J += 0.5 * 1.0e-3 * transpose(x - state_goal) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x - state_goal)
         J += 0.5 * 1.0e-3 * transpose(u) * Diagonal([1.0 * ones(2); 1.0e-5 * ones(6 * nc)]) * u
         return J
     end
 
-    function objt(x, u, w)
+    function objt(x, u)
         J = 0.0
-        v = (x[4:6] - x[1:3]) ./ h[1]
+        v = (x[4:6] - x[1:3]) ./ timestep[1]
         J += 0.5 * 1.0e-3 * dot(v, v)
-        J += 0.5 * 1.0e-3 * transpose(x - xT) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x - xT)
+        J += 0.5 * 1.0e-3 * transpose(x - state_goal) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x - state_goal)
         J += 0.5 * 1.0e-3 * transpose(u) * Diagonal([1.0 * ones(2); 1.0e-5 * ones(6 * nc)]) * u
         return J
     end
 
-    function objT(x, u, w)
+    function objT(x, u)
         J = 0.0
-        v = (x[4:6] - x[1:3]) ./ h[1]
+        v = (x[4:6] - x[1:3]) ./ timestep[1]
         J += 0.5 * 1.0e-3 * dot(v, v)
-        J += 0.5 * 1.0e-3 * transpose(x - xT) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x - xT)
+        J += 0.5 * 1.0e-3 * transpose(x - state_goal) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x - state_goal)
         return J
     end
-    c1 = CALIPSO.Cost(obj1, nx, nu)
-    ct = CALIPSO.Cost(objt, nx, nu)
-    cT = CALIPSO.Cost(objT, nx, 0)
-    obj = [c1, [ct for t = 2:T-1]..., cT];
+
+    objective = [
+        obj1, 
+        [objt for t = 2:horizon-1]..., 
+        objT,
+    ];
 
     # ## constraints
-    function equality_1(x, u, w)
+    function equality_1(x, u)
         [
-            contact_equality(cybertruck, h, x, u, w);
-            x - x1;
-        ]
-    end
-    function equality_t(x, u, w)
-        [
-            contact_equality(cybertruck, h, x, u, w);
-        ]
-    end
-    function equality_T(x, u, w)
-        # zeros(0)
-        [
-            x - xT;
+            contact_equality(cybertruck, timestep, x, u);
+            x - state_initial;
         ]
     end
 
-    eq1 = CALIPSO.Constraint(equality_1, nx, nu)
-    eqt = CALIPSO.Constraint(equality_t, nx, nu)
-    eqT = CALIPSO.Constraint(equality_T, nx, 0)
-    eq = [eq1, [eqt for t = 2:T-1]..., eqT];
+    function equality_t(x, u)
+        [
+            contact_equality(cybertruck, timestep, x, u);
+        ]
+    end
+
+    function equality_T(x, u)
+        [
+            x - state_goal;
+        ]
+    end
+
+    equality = [
+        equality_1, 
+        [equality_t for t = 2:horizon-1]..., 
+        equality_T,
+    ];
 
     u_min = [0.0; -0.5]
     u_max = [10.0;  0.5]
     # p_car1 = [3.0, 2.0 * 0.65]
     # p_car2 = [3.0, 2.0 * -0.65]
     circle_obstacle(x, p; r=0.5) = (x[1] - p[1])^2.0 + (x[2] - p[2])^2.0 - r^2.0
-    ineq = [[Constraint(
-                (x, u, w) -> [
+    nonnegative = [
+            [(x, u) -> [
                     u_max - u[1:2]; 
                     u[1:2] - u_min;
                     # circle_obstacle(x, p_car1, r=0.1); 
                     # circle_obstacle(x, p_car2, r=0.1);
-                ], nx, nu) for t = 1:T-1]..., Constraint()]
-
-    soc = [
-            [
-                [
-                    Constraint((x, u, w) -> u[2 .+ (1:3)], nx, nu), 
-                    Constraint((x, u, w) -> u[2 + 3 .+ (1:3)], nx, nu),
-                    Constraint((x, u, w) -> u[2 + 6 .+ (1:3)], nx, nu),
-                    Constraint((x, u, w) -> u[2 + 9 .+ (1:3)], nx, nu)
-                ] for t = 1:T-1]..., 
-            [Constraint()]
+                ] for t = 1:horizon-1]..., 
+            empty_constraint,
     ]
-    # soc = [[Constraint()] for t = 1:T]
+
+    second_order = [
+        [
+            [
+                (x, u) -> u[2 .+ (1:3)], 
+                (x, u) -> u[2 + 3 .+ (1:3)],
+                (x, u) -> u[2 + 6 .+ (1:3)],
+                (x, u) -> u[2 + 9 .+ (1:3)],
+            ] for t = 1:horizon-1]..., 
+        [empty_constraint],
+    ]
+
+    # ## solver 
+    solver = Solver(objective, dynamics, num_states, num_actions; 
+        equality=equality,
+        nonnegative=nonnegative,
+        second_order=second_order,
+        );
 
     # ## initialize
-    x_guess = linear_interpolation(x1, xT, T)
-    u_guess = [[1.0e-3 * randn(2); 1.0e-5 * ones(6 * nc)] for t = 1:T-1] # may need to run more than once to get good trajectory
+    state_guess = linear_interpolation(state_initial, state_goal, horizon)
+    action_guess = [[1.0e-3 * randn(2); 1.0e-5 * ones(6 * nc)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
+    initialize_states!(solver, state_guess) 
+    initialize_controls!(solver, action_guess)
 
-    # ## problem
-    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, soc);
-    methods = ProblemMethods(trajopt);
-    idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
-
-    # ## solver
-    solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-        nonnegative_indices=idx_nn, 
-        second_order_indices=idx_soc,
-        options=Options(
-            verbose=true, 
-        ));
-    initialize_states!(solver, trajopt, x_guess);
-    initialize_controls!(solver, trajopt, u_guess);
-
-    # solve
+    # ## solve
     solve!(solver)
 
-    x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
+    x_sol, u_sol = CALIPSO.get_trajectory(solver)
 
     # test solution
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
@@ -320,7 +310,7 @@ end
 #     RoboDojo.MeshCat.setprop!(vis["/Background"], "bottom_color", bottom_color)
 # end
 
-# function visualize!(vis, model::CYBERTRUCKV2, q;
+# function visualize!(vis, model::CYBERTRUCK, q;
 #     scale=0.1,
 #     Δt = 0.1)
 
@@ -358,5 +348,5 @@ end
 #     RoboDojo.MeshCat.setanimation!(vis, anim)
 # end
 
-# visualize!(vis, cybertruck, x_sol, Δt=h)
+# visualize!(vis, cybertruck, x_sol, Δt=timestep)
 # set_background!(vis)
