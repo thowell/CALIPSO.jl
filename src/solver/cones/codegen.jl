@@ -3,15 +3,13 @@ function generate_cones(num_cone, idx_nn, idx_soc;
     threads=false)
 
     @variables a[1:num_cone] b[1:num_cone]
-    # a = Symbolics.variables(:a, 1:num_cone) 
-    # b = Symbolics.variables(:b, 1:num_cone) 
 
     Φ = cone_barrier(a, idx_nn, idx_soc)
     Φa = cone_barrier_gradient(a, idx_nn, idx_soc)
 
     p = cone_product(a, b, idx_nn, idx_soc) 
     pa = cone_product_jacobian(a, b, idx_nn, idx_soc) 
-    pai = cone_product_jacobian_inverse(a, b, idx_nn, idx_soc)
+    pai = pa # NOTE: this method is never used
     t = cone_target(idx_nn, idx_soc)
 
     pa_sparse = sparse(pa) 

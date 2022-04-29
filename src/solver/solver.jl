@@ -85,7 +85,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         constraint_hessian=options.constraint_hessian)
     residual_jacobian_variables_symmetric!(s_data.jacobian_variables_symmetric, s_data.jacobian_variables, idx, 
         p_data.second_order_jacobians, p_data.second_order_jacobians)
-
+    
     linear_solver = ldl_solver(s_data.jacobian_variables_symmetric)
 
     # regularization 

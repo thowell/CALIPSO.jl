@@ -11,7 +11,6 @@ function search_direction!(solver)
         update=solver.options.update_factorization)
  
     # refine search direction
-    # solver.options.iterative_refinement && iterative_refinement!(solver.data.step, solver)
     solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data))
 end
 
@@ -29,7 +28,7 @@ function search_direction_symmetric!(
     update=true) where T
  
     # solve symmetric system
-    residual_symmetric!(residual_symmetric, residual, matrix, idx) 
+    residual_symmetric!(residual_symmetric, residual, residual_second_order, matrix, idx) 
      
     linear_solve!(solver, step_symmetric.all, matrix_symmetric, residual_symmetric.all;
         update=update)
@@ -75,16 +74,9 @@ function search_direction_symmetric!(
     # Δs, Δt (second-order)
     for (i, idx_soc) in enumerate(idx.cone_second_order)
         if !isempty(idx_soc)
-            C̄t = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
-            Cs = matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
-            P  = matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
-            # rs_soc = @views rs[idx_soc] 
-            # rt_soc = @views rt[idx_soc] 
-            # Δz_soc = @views Δz[idx_soc] 
-            # Δs_soc = @views Δs[idx_soc]
-
-            # Δs[idx_soc] = (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
-            # Δt[idx_soc] = C̄t \ (rt_soc - Cs * Δs_soc)
+            C̄t = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
+            Cs = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
+            P  = @views matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
 
             rs_soc = residual_second_order.cone_slack[i] 
             rt_soc = residual_second_order.cone_slack_dual[i] 
@@ -92,8 +84,11 @@ function search_direction_symmetric!(
             Δs_soc = step_second_order.cone_slack[i]
             Δt_soc = step_second_order.cone_slack_dual[i]
 
-            Δs_soc .= (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
-            Δt_soc .= C̄t \ (rt_soc - Cs * Δs_soc)
+            # Δs_soc .= (Cs + C̄t * P) \ (rt_soc + C̄t * (rs_soc + Δz_soc))
+            second_order_matrix_inverse!(Δs_soc, Cs + C̄t * P, rt_soc + C̄t * (rs_soc + Δz_soc))
+
+            # Δt_soc .= C̄t \ (rt_soc - Cs * Δs_soc)
+            second_order_matrix_inverse!(Δt_soc, C̄t, (rt_soc - Cs * Δs_soc))
         end
     end
     

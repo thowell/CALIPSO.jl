@@ -105,7 +105,7 @@ rank(solver.data.jacobian_variables_symmetric)
 
 CALIPSO.residual!(solver.data, solver.problem, solver.indices, solver.solution, κ, ρ, λ)
 
-CALIPSO.residual_symmetric!(solver.data.residual_symmetric, solver.data.residual, solver.data.jacobian_variables, solver.indices)
+CALIPSO.residual_symmetric!(solver.data.residual_symmetric, solver.data.residual, solver.data.residual_second_order, solver.data.jacobian_variables, solver.indices)
 
 # KKT matrix 
 @test rank(solver.data.jacobian_variables) == solver.dimensions.total

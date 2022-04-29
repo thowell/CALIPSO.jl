@@ -9,7 +9,8 @@ function iterative_refinement!(step::Point{T}, solver::Solver{T,O,OX,OP,OXX,OXP,
     mul!(solver.data.residual_error.all, solver.data.jacobian_variables, step.all, -1.0, 1.0)
     
     residual_norm = norm(solver.data.residual_error.all, Inf)
-    
+    residual_norm_initial = residual_norm 
+
     while iteration <= solver.options.max_iterative_refinement  
         if residual_norm <= solver.options.iterative_refinement_tolerance && iteration >= solver.options.min_iterative_refinement
             return true
@@ -34,7 +35,11 @@ function iterative_refinement!(step::Point{T}, solver::Solver{T,O,OX,OP,OXX,OXP,
         iteration += 1
     end
 
-    # failure
-    @warn "iterative refinement failure"
-    return false
+    if residual_norm <= residual_norm_initial 
+        return true
+    else
+        # failure
+        @warn "iterative refinement failure: $(residual_norm)"
+        return false
+    end
 end

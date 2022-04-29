@@ -123,7 +123,7 @@
     ineqT = Constraint(iT, num_state, 0, num_parameter=num_parameter, evaluate_hessian=true)
     ineq = [[ineqt for t = 1:T-1]..., ineqT]
 
-    # nonnegative constraints
+    # second-order constraints
     st = (x, u, w, e) -> e .* tan.(x) .- sqrt(sum(u.^2) + e^2)
     sT = (x, u, w, e) -> e .* tan.(x) .+ cos(sum(u) + e^2)
     nsi = 2
@@ -196,6 +196,7 @@
     Lxx = Symbolics.hessian(L, z[1:np])
     Lxx_sp = Symbolics.sparsehessian(L, z[1:np])
     spar = [findnz(Lxx_sp)[1:2]...]
+
     Lxx_func = eval(Symbolics.build_function(Lxx, z)[1])
     Lxx_sp_func = eval(Symbolics.build_function(Lxx_sp.nzval, z)[1])
 
@@ -267,14 +268,33 @@
     # @test sp_vp_key[vcat(idx_so_jacobian_variables_parameters[3]...)] == [(sparsity_second_order_jacobian_variables_parameters[3]...)...]
 
     z0 = rand(nz)
-    σ = 1.0
-    ho = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
-    he = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
-    hc = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
 
+    ho = zeros(length(vcat(sparsity_objective_jacobians_variables_variables...)))
+    he = zeros(length(vcat(sparsity_dynamics_jacobian_variables_variables..., sparsity_equality_jacobian_variables_variables...)))
+    hc = zeros(length(vcat(sparsity_nonnegative_jacobian_variables_variables..., (sparsity_second_order_jacobian_variables_variables...)...)))
+
+    Ho = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
+    He = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
+    Hc = zeros(trajopt.dimensions.total_variables, trajopt.dimensions.total_variables)
+
+    length(vcat(sparsity_dynamics_jacobian_variables_variables...))
+    length(vcat(trajopt.sparsity.dynamics_jacobian_variables_variables...))
+    length(vcat(sparsity_equality_jacobian_variables_variables...))
     CALIPSO.objective_jacobian_variables_variables!(ho, trajopt, z0[1:np], zeros(trajopt.dimensions.total_parameters))
     CALIPSO.equality_jacobian_variables_variables!(he, trajopt, z0[1:np], z0[np .+ (1:nde)], zeros(trajopt.dimensions.total_parameters))
     CALIPSO.cone_jacobian_variables_variables!(hc, trajopt, z0[1:np], z0[np + nde .+ (1:ndc)], zeros(trajopt.dimensions.total_parameters))
 
-    @test norm(norm((ho + he + hc) - Lxx_func(z0))) < 1.0e-8
+    for (i, idx) in enumerate(vcat(sparsity_objective_jacobians_variables_variables...))
+        Ho[idx...] = ho[i]
+    end
+
+    for (i, idx) in enumerate(vcat(sparsity_dynamics_jacobian_variables_variables..., sparsity_equality_jacobian_variables_variables...))
+        He[idx...] += he[i] 
+    end
+
+    for (i, idx) in enumerate(vcat(sparsity_nonnegative_jacobian_variables_variables..., (sparsity_second_order_jacobian_variables_variables...)...))
+        Hc[idx...] += hc[i]
+    end
+
+    @test norm(norm((Ho + He + Hc) - Lxx_func(z0))) < 1.0e-8
 end

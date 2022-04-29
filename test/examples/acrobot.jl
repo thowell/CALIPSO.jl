@@ -30,7 +30,7 @@
 
             c = inertia2
 
-        return [a b; b c]
+            return [a b; b c]
         end
 
         function Minv(x, w)

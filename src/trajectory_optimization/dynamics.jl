@@ -109,50 +109,6 @@ function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_a
     )
 end
 
-# function Dynamics(constraint::Function, constraint_jacobian::Function, num_next_state::Int, num_state::Int, num_action::Int; 
-#     num_parameter::Int=0)  
-
-#     # jacobian function 
-#     num_variables = num_state + num_action + num_next_state
-#     jacobian_func = (J, y, x, u, w) -> constraint_jacobian(reshape(view(J, :), num_next_state, num_variables), y, x, u, w)
-
-#     # number of Jacobian elements
-#     num_jacobian = num_next_state * num_variables
-
-#     # Jacobian sparsity
-#     row = Int[]
-#     col = Int[]
-#     for j = 1:num_variables
-#         for i = 1:num_next_state 
-#             push!(row, i) 
-#             push!(col, j)
-#         end
-#     end
-
-#     jacobian_sparsity = [row, col]
-  
-#     # Hessian
-#     hessian_func = Expr(:null) 
-#     hessian_sparsity = [Int[]]
-#     num_hessian = 0
-  
-#     return Dynamics(
-#         constraint, 
-#         jacobian_func, 
-#         hessian_func, 
-#         num_next_state, 
-#         num_state, 
-#         num_action, 
-#         num_parameter, 
-#         num_jacobian, 
-#         num_hessian,
-#         jacobian_sparsity, 
-#         hessian_sparsity, 
-#         zeros(num_next_state), 
-#         zeros(num_jacobian), 
-#         zeros(num_hessian))
-# end
-
 function constraints!(violations, indices, constraints::Vector{Dynamics{T}}, states, actions, parameters) where T
     for (t, con) in enumerate(constraints)
         con.constraint(con.constraint_cache, states[t+1], states[t], actions[t], parameters[t])

@@ -151,12 +151,15 @@ function residual_jacobian_variables_symmetric!(matrix_symmetric, matrix, idx::I
     # cone correction (second-order)
     for (i, idx_soc) in enumerate(idx.cone_second_order)
         if !isempty(idx_soc)
-            @warn "soc cone jacobian allocating"
             C̄t = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
             Cs = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
             P = @views matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
             D = @views matrix[idx.cone_dual[idx_soc], idx.cone_dual[idx_soc]]
-            matrix_symmetric[idx.symmetric_cone[idx_soc], idx.symmetric_cone[idx_soc]] += -1.0 * (Cs + C̄t * P) \ C̄t + D
+            
+            for (i, ii) in enumerate(idx_soc) 
+                matrix_symmetric[idx.symmetric_cone[idx_soc], idx.symmetric_cone[ii]] -= second_order_matrix_inverse((Cs + C̄t * P), C̄t[:, i])
+            end
+            matrix_symmetric[idx.symmetric_cone[idx_soc], idx.symmetric_cone[idx_soc]] += D
         end
     end
 

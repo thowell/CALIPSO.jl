@@ -46,64 +46,24 @@ function second_order_violation(x̂, x, τ, idx)
     x̂[idx[1]] - (1.0 - τ) * x[idx[1]] <= norm(x̂[idx[2:end]] - (1.0 - τ) * x[idx[2:end]])
 end
 
-# function jacobian(u)
-#     n = length(u)
-#     U = u[1] * Array(Diagonal(ones(n)))
-#     U[2:end,1] = u[2:end]
-#     U[1,2:end] = u[2:end]
-#     return U
-# end
+# inverses
+function second_order_vector_inverse(u, x)
+    n = length(u)
+    α = -1.0 / u[1]^2 * dot(u[2:end], u[2:end])
+    β = 1.0 / (1.0 + α)
+    us = u[2:end] / u[1]
+    
+    x0 = x - [transpose(us) * x[2:end]; zeros(n-1)]
+    x1 = x - β * [0.0; us * x0[1]]
+    x2 = x1 - [transpose(us) * x1[2:end]; zeros(n-1)]
+    x = 1.0 / u[1] * x2
+    return x
+end
 
-# function inverse(u)
-#     n = length(u)
-#     α = -1 / u[1]^2 * dot(u[2:end], u[2:end])
-#     β = 1 / (1 + α)
-#     S1 = zeros(eltype(u), n, n)
-#     S1[end, 1:end-1] = u[end:-1:2] / u[1]
-#     S2 = zeros(eltype(u), n, n)
-#     S2[1:end-1, end] = u[end:-1:2] / u[1]
-#     P = zeros(eltype(u), n, n)
-#     for i = 1:n
-#         P[end-i+1, i] = 1
-#     end
-#     Vi = (I - S1) * (I - β * (S2 * (I - S1)))
-#     Ui = P * 1 / u[1] * Vi * P
-#     return Ui
-# end
+function second_order_matrix_inverse(U, x)
+    second_order_vector_inverse(U[1, :], x)
+end
 
-# function jacobian_inverse(A) 
-#     u = A[1, :] 
-#     inverse(u) 
-# end
-
-# a = rand(3)
-
-# A = jacobian(a)
-# Ai = inv(A)
-# Bi = inverse(a) 
-# Ci = jacobian_inverse(A)
-
-
-
-# @variables u[1:3] 
-# jacobian(u)
-# inverse(u)
-# function inverse(u,x)
-#     n = length(u)
-#     α = -1/u[1]^2 * norm(u[2:end])^2
-#     β = 1 / (1 + α)
-
-#     x0 = x - [u[2:end]'*x[2:end]; zeros(n-1)]
-#     x1 = x - β * [0; u[2:end] * x0[1]]
-#     x2 = x1 - [u[2:end]'*x1[2:end]; zeros(n-1)]
-#     x = 1/u[1] * x2
-#     return xi
-# end
-
-
-# n = 3
-# x = rand(n)
-# u = rand(n)
-# U = jacobian(u)
-# U * inverse(u) * x - x
-# U * inverse(u,x) - x
+function second_order_matrix_inverse!(y, U, x)
+    y .= second_order_matrix_inverse(U, x) 
+end

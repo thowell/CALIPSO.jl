@@ -50,7 +50,7 @@ function residual!(data::SolverData, problem::ProblemData, idx::Indices, solutio
     return 
 end
 
-function residual_symmetric!(residual_symmetric, residual, matrix, idx::Indices)
+function residual_symmetric!(residual_symmetric, residual, residual_second_order, matrix, idx::Indices)
     # reset
     fill!(residual_symmetric.all, 0.0)
      
@@ -85,13 +85,15 @@ function residual_symmetric!(residual_symmetric, residual, matrix, idx::Indices)
     end
 
     # cone correction (second-order)
-    for idx_soc in idx.cone_second_order 
+    for (i, idx_soc) in enumerate(idx.cone_second_order)
         if !isempty(idx_soc)
-            @warn "allocating soc"
             C̄t = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack_dual[idx_soc]] 
             Cs = @views matrix[idx.cone_slack_dual[idx_soc], idx.cone_slack[idx_soc]]
             P  = @views matrix[idx.cone_slack[idx_soc], idx.cone_slack[idx_soc]] 
-            residual_symmetric.cone[idx_soc] += (Cs + C̄t * P) \ (C̄t * rt[idx_soc] + rt[idx_soc])
+            rs_soc = residual_second_order.cone_slack[i] 
+            rt_soc = residual_second_order.cone_slack_dual[i]
+            
+            residual_symmetric.cone[idx_soc] += second_order_matrix_inverse((Cs + C̄t * P), (C̄t * rs_soc + rt_soc))
         end
     end
 

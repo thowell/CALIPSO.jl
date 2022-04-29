@@ -24,7 +24,7 @@
     c = zeros(nc) 
     j = zeros(CALIPSO.num_constraint(constraints), T * num_state + (T - 1) * num_action)
     sp = CALIPSO.sparsity_jacobian_variables(constraints, [num_state for t = 1:T], [[num_action for t = 1:T-1]..., 0], row_shift=0)
-
+    j = zeros(length(vcat(sp...)))
     cont.constraint(c[idx_c[1]], x[1], u[1], w[1])
     conT.constraint(c[idx_c[T]], x[T], u[T], w[T])
 
@@ -33,12 +33,16 @@
 
     @test norm(c - vcat([ct(x[t], u[t], w[t]) for t = 1:T-1]..., cT(x[T], u[T], w[T]))) < 1.0e-8
 
-    CALIPSO.jacobian_variables!(j, sp, constraints, x, u, w)
+    CALIPSO.jacobian_variables!(j, 0, constraints, x, u, w)
+    J = zeros(CALIPSO.num_constraint(constraints), T * num_state + (T - 1) * num_action)
+    for (i, idx) in enumerate(vcat(sp...)) 
+        J[idx...] = j[i] 
+    end
     # info = @benchmark CALIPSO.jacobian!($j, $idx_j, $constraints, $x, $u, $w)
 
     dct = [-I zeros(num_state, num_action); I zeros(num_state, num_action)]
     dcT = Diagonal(ones(num_state))
     dc = cat([dct for t = 1:T-1]..., dcT, dims=(1,2))
 
-    @test norm(j - dc) < 1.0e-8
+    @test norm(J - dc) < 1.0e-8
 end
