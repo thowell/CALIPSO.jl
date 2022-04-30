@@ -29,6 +29,7 @@ end
 
 function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_action::Int; 
     num_parameter::Int=0, 
+    checkbounds=true,
     constraint_tensor=true)
 
     #TODO: option to load/save methods
@@ -37,9 +38,15 @@ function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_a
     dz = Symbolics.sparsejacobian(d, [x; u; y]);
     dw = Symbolics.sparsejacobian(d, w);
 
-    d_func = Symbolics.build_function(d, y, x, u, w, expression=Val{false})[2];
-    dz_func = Symbolics.build_function(dz.nzval, y, x, u, w, expression=Val{false})[2];
-    dw_func = Symbolics.build_function(dw.nzval, y, x, u, w, expression=Val{false})[2];
+    d_func = Symbolics.build_function(d, y, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2];
+    dz_func = Symbolics.build_function(dz.nzval, y, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2];
+    dw_func = Symbolics.build_function(dw.nzval, y, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2];
 
     num_jacobian_variables = length(dz.nzval)
     num_jacobian_parameters = length(dw.nzval)
@@ -52,32 +59,42 @@ function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_a
     dᵀλz = Symbolics.gradient(dᵀλ, [x; u; y])
     dᵀλw = Symbolics.gradient(dᵀλ, w)
 
-    dᵀλ_func = Symbolics.build_function([dᵀλ], y, x, u, w, λ, expression=Val{false})[2]
-    dᵀλz_func = Symbolics.build_function(dᵀλz, y, x, u, w, λ, expression=Val{false})[2]
-    dᵀλw_func = Symbolics.build_function(dᵀλw, y, x, u, w, λ, expression=Val{false})[2]
+    dᵀλ_func = Symbolics.build_function([dᵀλ], y, x, u, w, λ,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    dᵀλz_func = Symbolics.build_function(dᵀλz, y, x, u, w, λ,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    dᵀλw_func = Symbolics.build_function(dᵀλw, y, x, u, w, λ,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
 
-    if constraint_tensor
-        dᵀλzz = Symbolics.sparsejacobian(dᵀλz, [x; u; y])
-        dᵀλzw = Symbolics.sparsejacobian(dᵀλz, w)
+    # if constraint_tensor
+    dᵀλzz = Symbolics.sparsejacobian(constraint_tensor ? dᵀλz : zeros(num_state + num_action + num_next_state), [x; u; y])
+    dᵀλzw = Symbolics.sparsejacobian(constraint_tensor ? dᵀλz : zeros(num_state + num_action + num_next_state), w)
 
-        dᵀλzz_func = Symbolics.build_function(dᵀλzz.nzval, y, x, u, w, λ, expression=Val{false})[2]
-        dᵀλzw_func = Symbolics.build_function(dᵀλzw.nzval, y, x, u, w, λ, expression=Val{false})[2]
+    dᵀλzz_func = Symbolics.build_function(dᵀλzz.nzval, y, x, u, w, λ,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    dᵀλzw_func = Symbolics.build_function(dᵀλzw.nzval, y, x, u, w, λ,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
 
-        jacobian_variables_variables_sparsity = [findnz(dᵀλzz)[1:2]...]
-        jacobian_variables_parameters_sparsity = [findnz(dᵀλzw)[1:2]...]
+    jacobian_variables_variables_sparsity = [findnz(dᵀλzz)[1:2]...]
+    jacobian_variables_parameters_sparsity = [findnz(dᵀλzw)[1:2]...]
 
-        num_jacobian_variables_variables = length(dᵀλzz.nzval)
-        num_jacobian_variables_parameters = length(dᵀλzw.nzval)
-    else 
-        dᵀλzz_func = Expr(:null) 
-        dᵀλzw_func = Expr(:null) 
+    num_jacobian_variables_variables = length(dᵀλzz.nzval)
+    num_jacobian_variables_parameters = length(dᵀλzw.nzval)
+    # else 
+    #     dᵀλzz_func = Expr(:null) 
+    #     dᵀλzw_func = Expr(:null) 
 
-        jacobian_variables_variables_sparsity = [Int[]]
-        jacobian_variables_parameters_sparsity = [Int[]]
+    #     jacobian_variables_variables_sparsity = [Int[]]
+    #     jacobian_variables_parameters_sparsity = [Int[]]
 
-        num_jacobian_variables_variables = 0
-        num_jacobian_variables_parameters = 0
-    end
+    #     num_jacobian_variables_variables = 0
+    #     num_jacobian_variables_parameters = 0
+    # end
   
     return Dynamics(
         d_func, 

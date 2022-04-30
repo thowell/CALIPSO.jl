@@ -24,18 +24,22 @@ function Solver(objective, dynamics, num_states::Vector{Int}, num_actions::Vecto
      
     # objective
     obj = generate_methods(objective, num_states, num_actions, num_parameters, :Cost;
+        checkbounds=options.codegen_checkbounds,
         constraint_tensor=options.constraint_tensor);
 
     # dynamics 
     dyn = generate_methods(dynamics, num_states, num_actions, num_parameters, :Dynamics;
+        checkbounds=options.codegen_checkbounds,
         constraint_tensor=options.constraint_tensor);
 
     # equality 
     eq = generate_methods(equality, num_states, num_actions, num_parameters, :Constraint;
+        checkbounds=options.codegen_checkbounds,
         constraint_tensor=options.constraint_tensor);
 
     # nonnegative 
     nn = generate_methods(nonnegative, num_states, num_actions, num_parameters, :Constraint;
+        checkbounds=options.codegen_checkbounds,
         constraint_tensor=options.constraint_tensor);
  
     # second order
@@ -89,34 +93,45 @@ function get_trajectory(solver::Solver)
 end
 
 function generate_methods(func::Vector, num_states::Vector{Int}, num_actions::Vector{Int}, num_parameters::Vector{Int}, mode::Symbol;
+    checkbounds=true,
     constraint_tensor=true)
 
     # trajectory length
     horizon = length(num_states)
 
-    # get unique functions
-    func_unique = unique(func)
-    
-    # get indices for unique functions
-    func_unique_indices = unique(i -> func[i], 1:length(func))
-    
-    # codegen unique functions
+    # pairs 
     if mode == :Dynamics
-        f_unique = [eval(mode)(func_unique[i], num_states[t+1], num_states[t], num_actions[t], 
-            num_parameter=num_parameters[t],
-            constraint_tensor=constraint_tensor) for (i, t) in enumerate(func_unique_indices)];
+        pairs = [(func[t], num_states[t], num_actions[t], num_states[t+1], num_parameters[t]) for t = 1:horizon-1]
+         # get indices for unique pairs
+        indices_unique = unique(i -> pairs[i], 1:horizon-1)
     else
-        f_unique = [eval(mode)(func_unique[i], num_states[t], t == horizon ? 0 : num_actions[t], 
-            num_parameter=num_parameters[t],
-            constraint_tensor=constraint_tensor) for (i, t) in enumerate(func_unique_indices)];
+        pairs = [(func[t], num_states[t],  t == horizon ? 0 : num_actions[t], num_parameters[t]) for t = 1:horizon] 
+        # get indices for unique pairs
+        indices_unique = unique(i -> pairs[i], 1:horizon)
+    end
+
+    # get unique pairs
+    pairs_unique = unique(pairs)
+    
+    # codegen unique pairs
+    if mode == :Dynamics
+        f_unique = [eval(mode)(pairs_unique[i][1], pairs_unique[i][4], pairs_unique[i][2], pairs_unique[i][3], 
+            num_parameter=pairs_unique[i][5],
+            checkbounds=checkbounds,
+            constraint_tensor=constraint_tensor) for (i, t) in enumerate(indices_unique)];
+    else
+        f_unique = [eval(mode)(pairs_unique[i][1], pairs_unique[i][2], pairs_unique[i][3], 
+            num_parameter=pairs_unique[i][4],
+            checkbounds=checkbounds,
+            constraint_tensor=constraint_tensor) for (i, t) in enumerate(indices_unique)];
     end
 
     # initialize trajectory
     f = [f_unique[1]];
 
-    for ft in func[2:end]
-        for (i, fu) in enumerate(func_unique) 
-            if fu == ft
+    for pt in pairs[2:end]
+        for (i, fu) in enumerate(pairs_unique) 
+            if fu == pt
                 push!(f, f_unique[i]) 
                 break
             end

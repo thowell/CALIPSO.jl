@@ -19,6 +19,7 @@ end
 
 function Cost(cost::Function, num_state::Int, num_action::Int; 
     num_parameter::Int=0,
+    checkbounds=true,
     constraint_tensor=true)
 
     #TODO: option to load/save methods
@@ -31,32 +32,42 @@ function Cost(cost::Function, num_state::Int, num_action::Int;
     num_gradient_variables = num_state + num_action
     num_gradient_parameters = num_parameter
 
-    cost_func = Symbolics.build_function([c], x, u, w, expression=Val{false})[2]
-    gradient_variables_func = Symbolics.build_function(gz, x, u, w, expression=Val{false})[2]
-    gradient_parameters_func = Symbolics.build_function(gw, x, u, w, expression=Val{false})[2]
+    cost_func = Symbolics.build_function([c], x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    gradient_variables_func = Symbolics.build_function(gz, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    gradient_parameters_func = Symbolics.build_function(gw, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
 
-    if constraint_tensor 
-        jacobian_variables_variables = Symbolics.sparsejacobian(gz, [x; u])
-        jacobian_variables_parameters = Symbolics.sparsejacobian(gz, w)
+    # if constraint_tensor 
+    jacobian_variables_variables = Symbolics.sparsejacobian(constraint_tensor ? gz : zeros(num_state + num_action), [x; u])
+    jacobian_variables_parameters = Symbolics.sparsejacobian(constraint_tensor ? gz : zeros(num_state + num_action), w)
 
-        jacobian_variables_variables_func = Symbolics.build_function(jacobian_variables_variables.nzval, x, u, w, expression=Val{false})[2]
-        jacobian_variables_parameters_func = Symbolics.build_function(jacobian_variables_parameters.nzval, x, u, w, expression=Val{false})[2]
+    jacobian_variables_variables_func = Symbolics.build_function(jacobian_variables_variables.nzval, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    jacobian_variables_parameters_func = Symbolics.build_function(jacobian_variables_parameters.nzval, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
 
-        sparsity_variables_variables = [findnz(jacobian_variables_variables)[1:2]...]
-        num_jacobian_variables_variables = length(jacobian_variables_variables.nzval)
+    sparsity_variables_variables = [findnz(jacobian_variables_variables)[1:2]...]
+    num_jacobian_variables_variables = length(jacobian_variables_variables.nzval)
 
-        sparsity_variables_parameters = [findnz(jacobian_variables_parameters)[1:2]...]
-        num_jacobian_variables_parameters = length(jacobian_variables_parameters.nzval)
-    else 
-        jacobian_variables_variables_func = Expr(:null)
-        jacobian_variables_parameters_func = Expr(:null)
+    sparsity_variables_parameters = [findnz(jacobian_variables_parameters)[1:2]...]
+    num_jacobian_variables_parameters = length(jacobian_variables_parameters.nzval)
+    # else 
+    #     jacobian_variables_variables_func = Expr(:null)
+    #     jacobian_variables_parameters_func = Expr(:null)
 
-        sparsity_variables_variables = [Int[]]
-        num_jacobian_variables_variables = 0
+    #     sparsity_variables_variables = [Int[]]
+    #     num_jacobian_variables_variables = 0
 
-        sparsity_variables_parameters = [Int[]]
-        num_jacobian_variables_parameters = 0
-    end
+    #     sparsity_variables_parameters = [Int[]]
+    #     num_jacobian_variables_parameters = 0
+    # end
 
     return Cost(
         cost_func, 

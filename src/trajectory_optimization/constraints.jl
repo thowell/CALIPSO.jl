@@ -31,6 +31,7 @@ Constraints{T} = Vector{Constraint{T}} where T
 
 function Constraint(constraint::Function, num_state::Int, num_action::Int; 
     num_parameter::Int=0,
+    checkbounds=true,
     constraint_tensor=true)
 
     #TODO: option to load/save methods
@@ -46,12 +47,24 @@ function Constraint(constraint::Function, num_state::Int, num_action::Int;
     cᵀyz = Symbolics.gradient(cᵀy, [x; u]) 
     cᵀyw = Symbolics.gradient(cᵀy, w) 
   
-    c_func = Symbolics.build_function(c, x, u, w, expression=Val{false})[2]
-    cz_func = Symbolics.build_function(cz.nzval, x, u, w, expression=Val{false})[2]
-    cw_func = Symbolics.build_function(cw.nzval, x, u, w, expression=Val{false})[2]
-    cᵀy_func = Symbolics.build_function([cᵀy], x, u, w, y, expression=Val{false})[2]
-    cᵀyz_func = Symbolics.build_function(cᵀyz, x, u, w, y, expression=Val{false})[2]
-    cᵀyw_func = Symbolics.build_function(cᵀyw, x, u, w, y, expression=Val{false})[2]
+    c_func = Symbolics.build_function(c, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    cz_func = Symbolics.build_function(cz.nzval, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    cw_func = Symbolics.build_function(cw.nzval, x, u, w,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    cᵀy_func = Symbolics.build_function([cᵀy], x, u, w, y,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    cᵀyz_func = Symbolics.build_function(cᵀyz, x, u, w, y,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    cᵀyw_func = Symbolics.build_function(cᵀyw, x, u, w, y,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
 
     num_jacobian_variables = length(cz.nzval)
     num_jacobian_parameters = length(cw.nzval)
@@ -59,23 +72,27 @@ function Constraint(constraint::Function, num_state::Int, num_action::Int;
     jacobian_variables_sparsity = [findnz(cz)[1:2]...]
     jacobian_parameters_sparsity = [findnz(cw)[1:2]...]
    
-    if constraint_tensor
-        cᵀyzz = Symbolics.sparsejacobian(cᵀyz, [x; u])
-        cᵀyzw = Symbolics.sparsejacobian(cᵀyz, w)
-        num_jacobian_variables_variables = length(cᵀyzz.nzval)
-        num_jacobian_variables_parameters = length(cᵀyzw.nzval)
-        cᵀyzz_func = Symbolics.build_function(cᵀyzz.nzval, x, u, w, y, expression=Val{false})[2]
-        cᵀyzw_func = Symbolics.build_function(cᵀyzw.nzval, x, u, w, y, expression=Val{false})[2]
-        jacobian_variables_variables_sparsity = [findnz(cᵀyzz)[1:2]...]
-        jacobian_variables_parameters_sparsity = [findnz(cᵀyzw)[1:2]...]
-    else      
-        num_jacobian_variables_variables = 0
-        num_jacobian_variables_parameters = 0
-        cᵀyzz_func = Expr(:null) 
-        cᵀyzw_func = Expr(:null) 
-        jacobian_variables_variables_sparsity = [Int[]]
-        jacobian_variables_parameters_sparsity = [Int[]]
-    end
+    # if constraint_tensor
+    cᵀyzz = Symbolics.sparsejacobian(constraint_tensor ? cᵀyz : zeros(num_state + num_action), [x; u])
+    cᵀyzw = Symbolics.sparsejacobian(constraint_tensor ? cᵀyz : zeros(num_state + num_action), w)
+    num_jacobian_variables_variables = length(cᵀyzz.nzval)
+    num_jacobian_variables_parameters = length(cᵀyzw.nzval)
+    cᵀyzz_func = Symbolics.build_function(cᵀyzz.nzval, x, u, w, y,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    cᵀyzw_func = Symbolics.build_function(cᵀyzw.nzval, x, u, w, y,
+        checkbounds=checkbounds, 
+        expression=Val{false})[2]
+    jacobian_variables_variables_sparsity = [findnz(cᵀyzz)[1:2]...]
+    jacobian_variables_parameters_sparsity = [findnz(cᵀyzw)[1:2]...]
+    # else      
+    #     num_jacobian_variables_variables = 0
+    #     num_jacobian_variables_parameters = 0
+    #     cᵀyzz_func = Expr(:null) 
+    #     cᵀyzw_func = Expr(:null) 
+    #     jacobian_variables_variables_sparsity = [Int[]]
+    #     jacobian_variables_parameters_sparsity = [Int[]]
+    # end
     
     return Constraint(
         c_func, 
