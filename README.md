@@ -10,7 +10,7 @@ An augmented Lagrangian is employed for equality constraints and cones are handl
 ## Standard form
 Problems of the following form:
 ```
-minimize     f(x; p)
+minimize     c(x; p)
    x
 subject to   g(x; p)  = 0,
              h(x; p) in K = R+ x Q^1 x ... x Q^k
@@ -36,7 +36,7 @@ are automatically formulated, and fast gradients generated, for CALIPSO.
 ## Solution gradients
 The solver is differentiable, and gradients of the solution (including internal solver variables) with respect to the problem parameters are efficiently computed.
 
-## Quick start (Non-convex problem)
+## Quick start (non-convex problem)
 ```julia
 using CALIPSO
 
@@ -62,8 +62,11 @@ solve!(solver)
 solver.solution.variables # x* = [1.0, 0.0, 0.5]
 ```
 
-## Quick start (Pendulum swing-up trajectory optimization)
+## Quick start (pendulum swing-up)
 ```julia
+using CALIPSO 
+using LinearAlgebra 
+
 # horizon 
 horizon = 11 
 
