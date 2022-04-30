@@ -23,21 +23,26 @@ function Solver(objective, dynamics, num_states::Vector{Int}, num_actions::Vecto
     num_parameters = [length(p) for p in parameters]
      
     # objective
-    obj = generate_methods(objective, num_states, num_actions, num_parameters, :Cost);
+    obj = generate_methods(objective, num_states, num_actions, num_parameters, :Cost;
+        constraint_tensor=options.constraint_tensor);
 
     # dynamics 
-    dyn = generate_methods(dynamics, num_states, num_actions, num_parameters, :Dynamics);
+    dyn = generate_methods(dynamics, num_states, num_actions, num_parameters, :Dynamics;
+        constraint_tensor=options.constraint_tensor);
 
     # equality 
-    eq = generate_methods(equality, num_states, num_actions, num_parameters, :Constraint);
+    eq = generate_methods(equality, num_states, num_actions, num_parameters, :Constraint;
+        constraint_tensor=options.constraint_tensor);
 
     # nonnegative 
-    nn = generate_methods(nonnegative, num_states, num_actions, num_parameters, :Constraint);
+    nn = generate_methods(nonnegative, num_states, num_actions, num_parameters, :Constraint;
+        constraint_tensor=options.constraint_tensor);
  
     # second order
     # TODO: more efficient generate method 
     so = [[Constraint(s, num_states[t], t == H ? 0 : num_actions[t]; 
-        num_parameter=num_parameters[t]) for s in second_order[t]] for t = 1:H]
+        num_parameter=num_parameters[t],
+        constraint_tensor=options.constraint_tensor) for s in second_order[t]] for t = 1:H]
 
     # trajectory optimization problem
     trajopt = TrajectoryOptimizationProblem(dyn, obj, eq, nn, so;
@@ -83,7 +88,9 @@ function get_trajectory(solver::Solver)
     return states, actions
 end
 
-function generate_methods(func::Vector, num_states::Vector{Int}, num_actions::Vector{Int}, num_parameters::Vector{Int}, mode::Symbol) 
+function generate_methods(func::Vector, num_states::Vector{Int}, num_actions::Vector{Int}, num_parameters::Vector{Int}, mode::Symbol;
+    constraint_tensor=true)
+
     # trajectory length
     horizon = length(num_states)
 
@@ -95,9 +102,13 @@ function generate_methods(func::Vector, num_states::Vector{Int}, num_actions::Ve
     
     # codegen unique functions
     if mode == :Dynamics
-        f_unique = [eval(mode)(func_unique[i], num_states[t+1], num_states[t], num_actions[t], num_parameter=num_parameters[t]) for (i, t) in enumerate(func_unique_indices)];
+        f_unique = [eval(mode)(func_unique[i], num_states[t+1], num_states[t], num_actions[t], 
+            num_parameter=num_parameters[t],
+            constraint_tensor=constraint_tensor) for (i, t) in enumerate(func_unique_indices)];
     else
-        f_unique = [eval(mode)(func_unique[i], num_states[t], t == horizon ? 0 : num_actions[t], num_parameter=num_parameters[t]) for (i, t) in enumerate(func_unique_indices)];
+        f_unique = [eval(mode)(func_unique[i], num_states[t], t == horizon ? 0 : num_actions[t], 
+            num_parameter=num_parameters[t],
+            constraint_tensor=constraint_tensor) for (i, t) in enumerate(func_unique_indices)];
     end
 
     # initialize trajectory

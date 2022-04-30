@@ -46,7 +46,7 @@ dt = DirectTrajectoryOptimization.Dynamics(
     num_state, 
     num_action, 
     num_parameter=num_parameter,
-    evaluate_hessian=eval_hess_lag)
+    constraint_tensor=eval_hess_lag)
 dynamics = [dt for t = 1:T-1] 
 
 # ## initialization
@@ -59,10 +59,10 @@ ot = (x, u, w) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 
 oT = (x, u, w) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)])
 ct = Cost(ot, num_state, num_action, 
     num_parameter=num_parameter,
-    evaluate_hessian=eval_hess_lag)
+    constraint_tensor=eval_hess_lag)
 cT = Cost(oT, num_state, 0, 
     num_parameter=num_parameter,
-    evaluate_hessian=eval_hess_lag)
+    constraint_tensor=eval_hess_lag)
 objective = [[ct for t = 1:T-1]..., cT]
 
 # ## constraints
@@ -95,7 +95,7 @@ con1 = Constraint(
         ], 
     num_state, num_action,
     indices_inequality=collect(num_state .+ (1:6)),
-    evaluate_hessian=eval_hess_lag)
+    constraint_tensor=eval_hess_lag)
 cont = Constraint(
     (x, u, w) -> [
         Fx_min - u[1]; u[1] - Fx_max;
@@ -104,15 +104,15 @@ cont = Constraint(
         ], 
     num_state, num_action,
     indices_inequality=collect(0 .+ (1:6)),
-    evaluate_hessian=eval_hess_lag)
+    constraint_tensor=eval_hess_lag)
 conT = Constraint((x, u, w) -> x - xT, 
     num_state, num_action,
-    evaluate_hessian=eval_hess_lag)
+    constraint_tensor=eval_hess_lag)
 constraints = [con1, [cont for t = 2:T-1]..., conT]
 
 # ## problem 
 solver = Solver(dynamics, objective, constraints, bounds, 
-    evaluate_hessian=eval_hess_lag,
+    constraint_tensor=eval_hess_lag,
     options=Options{Float64}())
 
 # ## initialize

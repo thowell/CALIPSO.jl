@@ -166,9 +166,9 @@ function solve!(solver)
             evaluate!(problem, methods, indices, solution, parameters,
                 objective_jacobian_variables_variables=true,
                 equality_jacobian_variables=true,
-                equality_dual_jacobian_variables_variables=options.constraint_hessian,
+                equality_dual_jacobian_variables_variables=options.constraint_tensor,
                 cone_jacobian_variables=true,
-                cone_dual_jacobian_variables_variables=options.constraint_hessian,
+                cone_dual_jacobian_variables_variables=options.constraint_tensor,
             )
 
             cone!(problem, cone_methods, indices, solution,
@@ -178,24 +178,24 @@ function solve!(solver)
             search_direction!(solver)        
 
             # line search
-            α = 1.0
-            αt = 1.0
+            step_size = 1.0
+            step_size_cone_slack_dual = 1.0
 
             # cone search
             for i = 1:solver.dimensions.cone_slack 
-                ŝ[i] = s[i] - α * Δs[i] 
+                ŝ[i] = s[i] - step_size * Δs[i] 
             end 
 
             for i = 1:solver.dimensions.cone_slack_dual 
-                t̂[i] = t[i] - αt * Δt[i]
+                t̂[i] = t[i] - step_size_cone_slack_dual * Δt[i]
             end
 
             cone_iteration = 0
 
             while cone_violation(ŝ, s, τ, indices.cone_nonnegative, indices.cone_second_order)
-                α = 0.5 * α 
+                step_size = options.scaling_line_search * step_size 
                 for i = 1:solver.dimensions.cone_slack 
-                    ŝ[i] = s[i] - α * Δs[i] 
+                    ŝ[i] = s[i] - step_size * Δs[i] 
                 end 
                 cone_iteration += 1
                 cone_iteration > options.max_cone_line_search && error("cone search failure")
@@ -203,9 +203,9 @@ function solve!(solver)
 
             cone_iteration = 0
             while cone_violation(t̂, t, τ, indices.cone_nonnegative, indices.cone_second_order)
-                αt = 0.5 * αt
+                step_size_cone_slack_dual = options.scaling_line_search * step_size_cone_slack_dual
                 for i = 1:solver.dimensions.cone_slack_dual 
-                    t̂[i] = t[i] - αt * Δt[i]
+                    t̂[i] = t[i] - step_size_cone_slack_dual * Δt[i]
                 end
                 cone_iteration += 1
                 cone_iteration > options.max_cone_line_search && error("cone search failure")
@@ -213,10 +213,10 @@ function solve!(solver)
 
             # decrease search
             for i = 1:solver.dimensions.variables
-                x̂[i] = x[i] - α * Δx[i] 
+                x̂[i] = x[i] - step_size * Δx[i] 
             end
             for i = 1:solver.dimensions.equality_slack 
-                r̂[i] = r[i] - α * Δr[i] 
+                r̂[i] = r[i] - step_size * Δr[i] 
             end
 
             evaluate!(problem, methods, indices, candidate, parameters,
@@ -245,25 +245,25 @@ function solve!(solver)
             while residual_iteration < options.max_residual_line_search
                 # filter check
                 if check_filter(θ̂ , M̂, filter)
-                    if θ <= options.slack_tolerance && switching_condition(α, Δp, data.merit_gradient, options.merit_exponent, θ, options.violation_exponent, 1.0) && 
-                        armijo(M, M̂, data.merit_gradient, Δp, α, options.armijo_tolerance, options.machine_tolerance) && break
+                    if θ <= options.slack_tolerance && switching_condition(step_size, Δp, data.merit_gradient, options.merit_exponent, θ, options.violation_exponent, 1.0) && 
+                        armijo(M, M̂, data.merit_gradient, Δp, step_size, options.armijo_tolerance, options.machine_tolerance) && break
                     elseif sufficient_progress(θ, θ̂ , M, M̂, options.violation_tolerance, options.merit_tolerance, options.machine_tolerance)
                         break
                     end                     
                 end
 
                 # decrease step size 
-                α = 0.5 * α
+                step_size = options.scaling_line_search * step_size
 
                 # update candidate
                 for i = 1:solver.dimensions.variables
-                    x̂[i] = x[i] - α * Δx[i] 
+                    x̂[i] = x[i] - step_size * Δx[i] 
                 end
                 for i = 1:solver.dimensions.equality_slack 
-                    r̂[i] = r[i] - α * Δr[i] 
+                    r̂[i] = r[i] - step_size * Δr[i] 
                 end
                 for i = 1:solver.dimensions.cone_slack 
-                    ŝ[i] = s[i] - α * Δs[i] 
+                    ŝ[i] = s[i] - step_size * Δs[i] 
                 end
 
                 evaluate!(problem, methods, indices, candidate, parameters,
@@ -287,12 +287,12 @@ function solve!(solver)
 
  
                 residual_iteration += 1
-                residual_iteration > options.max_residual_line_search && break
+                residual_iteration > options.max_residual_line_search && (options.verbose && (@warn "residual line search failure"); break)
             end
  
              
             # update filter
-            augment_filter!(solver, M, M̂, data.merit_gradient, θ, α, Δp)
+            augment_filter!(solver, M, M̂, data.merit_gradient, θ, step_size, Δp)
              
             # update
             for i = 1:solver.dimensions.variables
@@ -305,10 +305,10 @@ function solve!(solver)
                 s[i] = ŝ[i] 
             end   
             for i = 1:solver.dimensions.equality_dual
-                y[i] = y[i] - α * Δy[i] 
+                y[i] = y[i] - step_size * Δy[i] 
             end
             for i = 1:solver.dimensions.cone_dual
-                z[i] = z[i] - α * Δz[i] 
+                z[i] = z[i] - step_size * Δz[i] 
             end
             for i = 1:solver.dimensions.cone_slack_dual
                 t[i] = t̂[i] 
@@ -332,7 +332,7 @@ function solve!(solver)
                 slack_violation, 
                 κ[1], 
                 ρ[1], 
-                α,
+                step_size,
                 options) 
             
             total_iterations += 1

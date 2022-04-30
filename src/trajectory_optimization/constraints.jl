@@ -31,7 +31,7 @@ Constraints{T} = Vector{Constraint{T}} where T
 
 function Constraint(constraint::Function, num_state::Int, num_action::Int; 
     num_parameter::Int=0,
-    evaluate_hessian=true)
+    constraint_tensor=true)
 
     #TODO: option to load/save methods
     @variables x[1:num_state], u[1:num_action], w[1:num_parameter]
@@ -59,7 +59,7 @@ function Constraint(constraint::Function, num_state::Int, num_action::Int;
     jacobian_variables_sparsity = [findnz(cz)[1:2]...]
     jacobian_parameters_sparsity = [findnz(cw)[1:2]...]
    
-    if evaluate_hessian
+    if constraint_tensor
         cᵀyzz = Symbolics.sparsejacobian(cᵀyz, [x; u])
         cᵀyzw = Symbolics.sparsejacobian(cᵀyz, w)
         num_jacobian_variables_variables = length(cᵀyzz.nzval)

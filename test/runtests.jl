@@ -10,8 +10,8 @@ using CALIPSO
 
 # Solver
 include("solver/problem.jl")
-include("solver/qp_eq.jl")
-include("solver/qp_ineq.jl")
+include("solver/qp_equality.jl")
+include("solver/qp_nonnegative.jl")
 include("solver/test1.jl")
 include("solver/test2.jl")
 include("solver/test3.jl")
@@ -37,8 +37,8 @@ include("examples/box_move.jl")
 include("examples/box_move_soc.jl")
 include("examples/hopper_gait.jl")
 include("examples/hopper_gait_soc.jl")
-include("examples/cyberdrift_v2.jl")
-# include("examples/double_integrator.jl")
+include("examples/cyberdrift.jl")
+# include("examples/double_integrator.jl") # TODO: fix indexing issue
 include("examples/quadruped_drop.jl")
 include("examples/quadruped_gait.jl")
 include("examples/quadruped_gait_soc.jl")

@@ -19,7 +19,7 @@ end
 
 function Cost(cost::Function, num_state::Int, num_action::Int; 
     num_parameter::Int=0,
-    evaluate_hessian=true)
+    constraint_tensor=true)
 
     #TODO: option to load/save methods
     @variables x[1:num_state], u[1:num_action], w[1:num_parameter]
@@ -35,7 +35,7 @@ function Cost(cost::Function, num_state::Int, num_action::Int;
     gradient_variables_func = Symbolics.build_function(gz, x, u, w, expression=Val{false})[2]
     gradient_parameters_func = Symbolics.build_function(gw, x, u, w, expression=Val{false})[2]
 
-    if evaluate_hessian 
+    if constraint_tensor 
         jacobian_variables_variables = Symbolics.sparsejacobian(gz, [x; u])
         jacobian_variables_parameters = Symbolics.sparsejacobian(gz, w)
 

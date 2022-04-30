@@ -29,7 +29,7 @@ end
 
 function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_action::Int; 
     num_parameter::Int=0, 
-    evaluate_hessian=true)
+    constraint_tensor=true)
 
     #TODO: option to load/save methods
     @variables y[1:num_next_state], x[1:num_state], u[1:num_action], w[1:num_parameter] 
@@ -56,7 +56,7 @@ function Dynamics(dynamics::Function, num_next_state::Int, num_state::Int, num_a
     dᵀλz_func = Symbolics.build_function(dᵀλz, y, x, u, w, λ, expression=Val{false})[2]
     dᵀλw_func = Symbolics.build_function(dᵀλw, y, x, u, w, λ, expression=Val{false})[2]
 
-    if evaluate_hessian
+    if constraint_tensor
         dᵀλzz = Symbolics.sparsejacobian(dᵀλz, [x; u; y])
         dᵀλzw = Symbolics.sparsejacobian(dᵀλz, w)
 

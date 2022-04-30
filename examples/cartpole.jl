@@ -73,10 +73,10 @@ obj = [[ct for t = 1:T-1]..., cT]
 # ## constraints
 eq = [
             Constraint((x, u, w) -> x - x1, num_state, num_action,
-                evaluate_hessian=true), 
+                constraint_tensor=true), 
             [Constraint() for t = 2:T-1]..., 
             Constraint((x, u, w) -> x - xT, num_state, 0,
-                evaluate_hessian=true)
+                constraint_tensor=true)
     ]
 
 ineq = [Constraint() for t = 1:T]

@@ -7,7 +7,7 @@ struct TrajectoryOptimizationProblem{T}
 end
 
 function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData; 
-    evaluate_hessian=true) 
+    constraint_tensor=true) 
     spar = TrajectoryOptimizationSparsity(data)
     dims = TrajectoryOptimizationDimensions(data, 
         num_jacobian_variables_variables=length(spar.jacobian_variables_variables_key),
@@ -32,7 +32,7 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
         idx, 
         spar, 
         dims,
-        evaluate_hessian, 
+        constraint_tensor, 
     )
 end
 
@@ -42,14 +42,14 @@ function TrajectoryOptimizationProblem(
     equality, 
     nonnegative,
     second_order; 
-    evaluate_hessian=true, 
+    constraint_tensor=true, 
     parameters=[[zeros(num_parameter) for num_parameter in dimensions(dynamics)[3]]..., zeros(0)])
 
     data = TrajectoryOptimizationData(dynamics, objective, equality, nonnegative, second_order,
         parameters=parameters)
 
     trajopt = TrajectoryOptimizationProblem(data, 
-        evaluate_hessian=evaluate_hessian) 
+        constraint_tensor=constraint_tensor) 
 
     return trajopt 
 end

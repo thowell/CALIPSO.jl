@@ -1,5 +1,5 @@
 function residual_jacobian_variables!(data::SolverData, problem::ProblemData, idx::Indices, κ, ρ, λ, ϵp, ϵd;
-    constraint_hessian=true)
+    constraint_tensor=true)
      
     # reset
     H = data.jacobian_variables 
@@ -9,8 +9,8 @@ function residual_jacobian_variables!(data::SolverData, problem::ProblemData, id
     for i in idx.variables 
         for j in idx.variables 
             H[i, j]  = problem.objective_jacobian_variables_variables[i, j] 
-            constraint_hessian && (H[i, j] += problem.equality_dual_jacobian_variables_variables[i, j])
-            constraint_hessian && (H[i, j] += problem.cone_dual_jacobian_variables_variables[i, j])
+            constraint_tensor && (H[i, j] += problem.equality_dual_jacobian_variables_variables[i, j])
+            constraint_tensor && (H[i, j] += problem.cone_dual_jacobian_variables_variables[i, j])
         end
     end
 

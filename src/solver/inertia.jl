@@ -14,7 +14,7 @@ function factorize_regularized_residual_jacobian_variables!(s)
     residual_jacobian_variables!(s.data, s.problem, s.indices, 
         s.central_path, s.penalty, s.dual,
         s.primal_regularization, s.dual_regularization,
-        constraint_hessian=s.options.constraint_hessian)
+        constraint_tensor=s.options.constraint_tensor)
     
     residual_jacobian_variables_symmetric!(s.data.jacobian_variables_symmetric, s.data.jacobian_variables, s.indices, 
         s.problem.second_order_jacobians,

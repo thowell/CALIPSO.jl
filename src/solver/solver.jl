@@ -82,7 +82,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         jacobian=true,
     )
     residual_jacobian_variables!(s_data, p_data, idx, rand(1), rand(1), randn(num_equality), 1.0e-5, 1.0e-5,
-        constraint_hessian=options.constraint_hessian)
+        constraint_tensor=options.constraint_tensor)
     residual_jacobian_variables_symmetric!(s_data.jacobian_variables_symmetric, s_data.jacobian_variables, idx, 
         p_data.second_order_jacobians, p_data.second_order_jacobians)
     
