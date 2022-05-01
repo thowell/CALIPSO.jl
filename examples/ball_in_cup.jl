@@ -23,7 +23,7 @@ struct BallInCup{T}
     gravity_ball::T 
 end
 
-ballincup = BallInCup(4, 2, 0, 1.0, 0.1, 0.5, 0.0, 10.0)
+ballincup = BallInCup(4, 2, 0, 1.0, 0.01, 1.0, 0.0, 10.0)
 
 function mass_matrix(model::BallInCup, q::Vector)
     Diagonal([
@@ -141,8 +141,8 @@ function contact_constraints_equality_t(model, timestep, x, u)
 end
 
 # ## horizon
-horizon = 11
-timestep = 0.1
+horizon = 21
+timestep = 0.075
 
 # ## dimensions
 nx = 2 * ballincup.num_configuration
@@ -154,29 +154,47 @@ num_actions = [3 for t = 1:horizon-1]
 # ## dynamics
 dynamics = [(y, x, u) -> ballincup_discrete(ballincup, [timestep], y, x, u) for t = 1:horizon-1]
 
-# ## initial conditions
-x1 = [0.0; 1.0; 0.0; 0.5; 0.0; 1.0; 0.0; 0.5]
-x_ref = copy(x1) 
-xT = copy(x1)
+# ## states
+x1 = [0.0; 0.0; 0.0; -0.99; 0.0; 0.0; 0.0; -0.99]
+xT = [0.0; 0.0; 0.0; 0.125; 0.0; 0.0; 0.0; 0.125]
+
+# ## intermediate states
+xM1 = [0.0; 0.0; 1.0; 0.0; 0.0; 0.0; 1.0; 0.0]
+dr = sqrt(0.5 * ballincup.string_length^2)
+xM2 = [0.0; 0.0; dr; dr; 0.0; 0.0; dr; dr]
+# xM2 = [0.0; 0.0; 0.0; 1.0; 0.0; 0.0; 0.0; 1.0]
+tM1 = 11
+tM2 = 16
 
 # ## objective
 function obj1(x, u)
     J = 0.0
-    J += 0.5 * transpose(x[1:nx] - x_ref) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x[1:nx] - x_ref)
-    J += 0.5 * transpose(u) * Diagonal([1.0e-2 * ones(2); 1.0e-5 * ones(1)]) * u
+    v = (x[4 .+ (1:4)] - x[1:4]) ./ timestep
+    J += 0.5 * 1.0e-1 * dot(v, v)
+    Δcup_goal = x[4 .+ (1:2)] - xT[4 .+ (1:2)]
+    J += 0.5 * 1.0 * dot(Δcup_goal, Δcup_goal)
+    J += 0.5 * transpose(u) * Diagonal([1.0e-1 * ones(2); 0.1 * ones(1)]) * u
     return J
 end
 
 function objt(x, u)
     J = 0.0
-    J += 0.5 * transpose(x[1:nx] - x_ref) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x[1:nx] - x_ref)
-    J += 0.5 * transpose(u) * Diagonal([1.0e-2 * ones(2); 1.0e-5 * ones(1)]) * u
+    v = (x[4 .+ (1:4)] - x[1:4]) ./ timestep
+    J += 0.5 * 1.0e-1 * dot(v, v)
+    Δcup_goal = x[4 .+ (1:2)] - xT[4 .+ (1:2)]
+    J += 0.5 * 1.0 * dot(Δcup_goal, Δcup_goal)
+    J += 0.5 * transpose(u) * Diagonal([1.0e-1 * ones(2); 0.1 * ones(1)]) * u
     return J
 end
 
 function objT(x, u)
     J = 0.0
-    J += 0.5 * transpose(x[1:nx] - x_ref) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x[1:nx] - x_ref)
+    v = (x[4 .+ (1:4)] - x[1:4]) ./ timestep
+    J += 0.5 * 1.0e-1 * dot(v, v)
+    Δcup_goal = x[4 .+ (1:2)] - xT[4 .+ (1:2)]
+    J += 0.5 * 1.0 * dot(Δcup_goal, Δcup_goal)
+    Δcup_ball = x[4 .+ (1:2)] - x[6 .+ (1:2)]
+    J += 0.5 * 1.0 * dot(Δcup_ball, Δcup_ball)
     return J
 end
 
@@ -184,7 +202,7 @@ objective = [
         obj1, 
         [objt for t = 2:horizon-1]..., 
         objT,
-];
+]
 
 # ## constraints
 function equality_1(x, u)
@@ -194,19 +212,37 @@ function equality_1(x, u)
 end
 
 function equality_t(x, u)
-    contact_constraints_equality_t(ballincup, timestep, x, u);
+    [
+        contact_constraints_equality_t(ballincup, timestep, x, u);
+    ]
+end
+
+function equality_tM1(x, u)
+    [
+        contact_constraints_equality_t(ballincup, timestep, x, u);
+        x[6 .+ (1:2)] - xM1[6 .+ (1:2)];
+    ]
+end
+
+function equality_tM2(x, u)
+    [
+        contact_constraints_equality_t(ballincup, timestep, x, u);
+        x[6 .+ (1:2)] - xM2[6 .+ (1:2)];
+    ]
 end
 
 function equality_T(x, u)
     [
         contact_constraints_equality_t(ballincup, timestep, x, u);
-        x[1:8] - xT;
+        x[1:2] - xT[1:2];
+        x[4 .+ (1:2)] - xT[4 .+ (1:2)];
+        x[6 .+ (1:2)] - xT[6 .+ (1:2)];
     ]
 end
 
 equality = [
         equality_1, 
-        [equality_t for t = 2:horizon-1]..., 
+        [t == tM1 ? equality_tM1 : (t == tM2 ? equality_tM2 : equality_t) for t = 2:horizon-1]..., 
         equality_T,
 ]
 
@@ -238,12 +274,13 @@ nonnegative = [
 solver = Solver(objective, dynamics, num_states, num_actions,
     equality=equality,
     nonnegative=nonnegative,
+    options=Options()
     );
 
 # ## initialize
-x_interpolation = linear_interpolation(x1, xT, horizon)
+x_interpolation = [linear_interpolation(x1, xM1, 11)..., linear_interpolation(xM1, xM2, 6)[2:end]..., linear_interpolation(xM2, xT, 6)[2:end]...]
 state_guess = [x_interpolation[1], [[x_interpolation[t]; zeros(1)] for t = 2:horizon]...]
-action_guess = [[0.0 * randn(2); 1.0e-1 * ones(1)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
+action_guess = [[1.0e-3 * randn(2); 1.0e-3 * ones(1)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
 initialize_states!(solver, state_guess) 
 initialize_controls!(solver, action_guess)
 
@@ -253,19 +290,98 @@ solve!(solver)
 # ## solution
 x_sol, u_sol = get_trajectory(solver)
 
-# ## test
-@test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
+# # ## test
+# @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
-slack_norm = max(
-                norm(solver.data.residual.equality_dual, Inf),
-                norm(solver.data.residual.cone_dual, Inf),
-)
-@test slack_norm < solver.options.slack_tolerance
+# slack_norm = max(
+#                 norm(solver.data.residual.equality_dual, Inf),
+#                 norm(solver.data.residual.cone_dual, Inf),
+# )
+# @test slack_norm < solver.options.slack_tolerance
 
-@test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
-@test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+# @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+# @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+
+# function build_robot!(vis, model::BallInCup;
+#     r_cup=0.1,
+#     r_ball=0.05,
+#     tl=1.0,
+#     cup_color=RoboDojo.Colors.RGBA(0.0, 0.0, 0.0, tl),
+#     ball_color=RoboDojo.Colors.RGBA(1.0, 0.0, 0.0, tl),
+#     )
+
+#     RoboDojo.setobject!(vis["cup"], RoboDojo.GeometryBasics.Sphere(RoboDojo.Point3f0(0),
+#         convert(Float32, r_cup)),
+#         RoboDojo.MeshPhongMaterial(color=cup_color))
+
+#     RoboDojo.setobject!(vis["ball"], RoboDojo.GeometryBasics.Sphere(RoboDojo.Point3f0(0),
+#         convert(Float32, r_ball)),
+#         RoboDojo.MeshPhongMaterial(color=ball_color))
+# end
+
+# function set_robot!(vis, model::BallInCup, q)
+#     RoboDojo.settransform!(vis["cup"],
+#         RoboDojo.Translation(q[1], 0.0, q[2]))
+#     RoboDojo.settransform!(vis["ball"],
+#         RoboDojo.Translation(q[3], 0.0, q[4]))
+# end
+
+# function set_background!(vis::Visualizer; 
+#     top_color=RoboDojo.RGBA(1,1,1.0), 
+#     bottom_color=RoboDojo.RGBA(1,1,1.0))
+
+#     RoboDojo.MeshCat.setprop!(vis["/Background"], "top_color", top_color)
+#     RoboDojo.MeshCat.setprop!(vis["/Background"], "bottom_color", bottom_color)
+# end
+
+# function visualize!(vis, model::BallInCup, q;
+#     r_cup=0.1,
+#     r_ball=0.05,
+#     tl=1.0,
+#     cup_color=RoboDojo.Colors.RGBA(0.0, 0.0, 0.0, tl),
+#     ball_color=RoboDojo.Colors.RGBA(1.0, 0.0, 0.0, tl),
+#     Δt=0.1,
+#     fixed_camera=true)
+
+#     set_background!(vis)
+
+#     build_robot!(vis, model,
+#         r_cup=r_cup,
+#         r_ball=r_ball,
+#         tl=tl,
+#         cup_color=cup_color,
+#         ball_color=ball_color,
+#         ) 
+
+#     anim = RoboDojo.MeshCat.Animation(convert(Int, floor(1.0 / Δt)))
+
+#     T = length(q)
+#     for t = 1:T
+#         RoboDojo.MeshCat.atframe(anim, t) do
+#             set_robot!(vis, model, q[t])
+#         end
+#     end
+
+#     if fixed_camera
+#         RoboDojo.MeshCat.settransform!(vis["/Cameras/default"],
+#         RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation(0.0, -50.0, -1.0), RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(-pi / 2.0))))
+#         RoboDojo.setprop!(vis["/Cameras/default/rotated/<object>"], "zoom", 25)
+#     end
+
+#     RoboDojo.MeshCat.setvisible!(vis["/Grid"], false)
+#     RoboDojo.MeshCat.setvisible!(vis["/Axes"], false)
+
+#     RoboDojo.MeshCat.setanimation!(vis, anim)
+# end
 
 # ## visualize
 # vis = Visualizer()
-# render(vis)
-# RoboDojo.visualize!(vis, RoboDojo.box, x_sol, Δt=timestep, r=0.5);
+# open(vis)
+
+q_sol = [[x[1:4] for x in x_sol]..., x_sol[end][4 .+ (1:4)]]
+visualize!(vis, ballincup, 
+    q_sol, 
+    # x_interpolation,
+    Δt=timestep,
+    r_cup=0.1,
+    r_ball=0.05)

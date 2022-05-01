@@ -59,74 +59,56 @@ fx(x, u, w) = FiniteDiff.finite_difference_jacobian(z -> f(z, u, w), x)
 fu(x, u, w) = FiniteDiff.finite_difference_jacobian(z -> f(x, z, w), u) 
     
 ### MPC policy 
+
 # ## horizon 
-H = 5#T
+H = 5
 
 # ## pendulum 
-num_state = 2
-num_action = 1 
+num_states = [2 for t = 1:H]
+num_actions = [1 for t = 1:H-1] 
 num_parameters = [2 + 1, [2 + 1 for t = 2:H-1]..., 2]
 
 p = sum(num_parameters) - 2
 
 # ## model
-dyn = [
-        Dynamics(
-        (y, x, u, w) -> y - f(x, u, w), 
-        num_state, 
-        num_state, 
-        num_action, 
-        num_parameter=num_parameters[t]) for t = 1:H-1
-    ]
+dynamics = [(y, x, u, w) -> y - f(x, u, w) for t = 1:H-1]
 
 # ## objective 
-o1 = (x, u, w) -> w[3] * dot(u, u)
-ot = (x, u, w) -> transpose(x - xT) * Diagonal(w[1:2]) * (x - xT) + w[3] * dot(u, u)
-oT = (x, u, w) -> transpose(x - xT) * Diagonal(w[1:2]) * (x - xT)
-
-obj = [
-        Cost(o1, num_state, num_action, 
-            num_parameter=num_parameters[1]),
-        [Cost(ot, num_state, num_action,
-            num_parameter=num_parameters[t]) for t = 2:H-1]..., 
-        Cost(oT, num_state, 0,
-            num_parameter=num_parameters[H])
-      ]
+objective = [
+        (x, u, w) -> w[3]^2 * dot(u, u),
+        [(x, u, w) -> transpose(x - xT) * Diagonal(w[1:2].^2) * (x - xT) + w[3].^2 * dot(u, u) for t = 2:H-1]..., 
+        (x, u, w) -> transpose(x - xT) * Diagonal(w[1:2].^2) * (x - xT),
+]
 
 # ## constraints 
-eq = [
-        Constraint((x, u, w) -> x - w[1:2], num_state, num_action, 
-            num_parameter=num_parameters[1]),
-        [Constraint() for t = 2:H-1]..., 
-        Constraint()
-    ]
+equality = [
+            (x, u, w) -> x - w[1:2], 
+            [empty_constraint for t = 2:H-1]..., 
+            empty_constraint,
+]
 
-ineq = [[Constraint((x, u, w) -> [10.0 .- u; u .+ 10.0], num_state, num_action, num_parameter=num_parameters[t]) for t = 1:H-1]..., Constraint()]
-so = [[Constraint()] for t = 1:H]
+nonnegative = [
+        [(x, u, w) -> [10.0 .- u; u .+ 10.0] for t = 1:H-1]..., 
+        empty_constraint,
+]
 
-# ## problem 
+# ## parameters 
 parameters = [
     [zeros(num_state); 1.0], 
     [[1.0; 1.0; 1.0] for t = 2:H-1]..., 
     [1.0; 1.0]
 ]
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so;
-    parameters=parameters,
+
+# ## options 
+options = Options(
+    verbose=false
 )
 
 # ## solver
-methods = ProblemMethods(trajopt)
-solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-    parameters=vcat(parameters...), 
-    custom=trajopt,  
-    options=Options(
-        verbose=false, 
-        # penalty_initial=1.0,
-        # residual_tolerance=1.0e-4,
-        # equality_tolerance=1.0e-3, 
-        # complementarity_tolerance=1.0e-3
-        )
-);
+solver = Solver(objective, dynamics, num_states, num_actions,
+    parameters=parameters,
+    equality=equality,
+    options=options);
 
 function ϕ_calipso(x, θ)
     # initialize
@@ -184,9 +166,6 @@ parameters_obj = [
 p = sum([length(par) for par in parameters_obj])
 θ0 = vcat(parameters_obj...)
 ϕ_calipso(x0, θ0)
-
-solver.parameters
-trajopt.data.parameters
 ϕx_calipso(x0, θ0)
 ϕθ_calipso(x0, θ0)
 
@@ -252,20 +231,6 @@ function ψθ(X, U, W, θ)
     return Jθ ./ (T + 1) 
 end
 
-# function ψθ_fd(X, U, W, θ) 
-#     function eval_ψ(x0, θ) 
-#         u = [] 
-#         x = [x0] 
-#         for t = 1:T 
-#             push!(u, ϕ(x[end], θ))
-#             push!(x, f(x[end], u[end], W[t])) 
-#         end
-#         return ψ(x, u, W) 
-#     end
-
-#     FiniteDiff.finite_difference_gradient(p -> eval_ψ(X[1], p), θ) 
-# end
-
 function simulate(x0, T, policy) 
     X = [x0] 
     U = [] 
@@ -282,7 +247,7 @@ end
 E = 1
 
 # initial policy
-θ = 1.0 * ones(p)
+θ = 1.0 * rand(p)
 J_opt = 0.0
 for i = 1:E
     x0 = noise * randn(n)
@@ -299,7 +264,7 @@ X, U, W = simulate([0.0; 0.0], T,
     )
 
 # @test norm(ψθ(X, U, W, θ) - ψθ_fd(X, U, W, θ), Inf) < noise
-# plot(hcat(X...)', xlabel="time step", ylabel="states", labels=["pos." "vel."])
+plot(hcat(X...)', xlabel="time step", ylabel="states", labels=["pos." "vel."])
 ψθ(X, U, W, θ)
 N = 1
 α = 0.1
@@ -350,7 +315,7 @@ plot(c, xlabel="iteration", ylabel="cost")
 # plot!(J_lqr / E * ones(length(cost)), color=:black)
 
 # ϕ_calipso(ones(n), θ)
-
+θ
 # evaluate policy
 X, U, W = simulate([0.0; 0.0], T, 
         x -> ϕ_calipso(x, θ),

@@ -471,8 +471,8 @@ q_interp = CALIPSO.linear_interpolation(q1, qT, horizon+1)
 x_interp = [[q_interp[t]; q_interp[t+1]] for t = 1:horizon]
 action_guess = [max.(0.0, 1.0e-3 * randn(nu)) for t = 1:horizon-1] # may need to run more than once to get good trajectory
 state_guess = [t == 1 ? x_interp[t] : [x_interp[t]; max.(0.0, 1.0e-3 * randn(nc)); x_interp[t-1]] for t = 1:horizon]
-initialize_states!(solver, x_guess);
-initialize_controls!(solver, u_guess);
+initialize_states!(solver, state_guess);
+initialize_controls!(solver, action_guess);
 println("solver instantiated and initialized!")
 
 # ## solve 
