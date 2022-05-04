@@ -291,6 +291,7 @@
     @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
     @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 end
+
 # function build_robot!(vis, model::BallInCup;
 #     r_cup=0.1,
 #     r_ball=0.05,

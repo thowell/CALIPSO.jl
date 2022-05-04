@@ -272,15 +272,17 @@ function solve!(solver)
                     cone_constraint=true,
                 )
 
-                cone!(problem, cone_methods, indices, solution,
+                cone!(problem, cone_methods, indices, candidate,
                     barrier=true,
                     barrier_gradient=true,
                 )
+
                 M̂ = merit(
                     problem.objective[1],
                     r̂, 
                     problem.barrier[1], 
                     κ[1], λ, ρ[1])
+                    
                 θ̂  = constraint_violation!(constraint_violation,
                     problem.equality_constraint, r̂, problem.cone_constraint, ŝ, indices,
                     norm_type=options.constraint_norm)
@@ -334,6 +336,9 @@ function solve!(solver)
                 ρ[1], 
                 step_size,
                 options) 
+
+            # callback 
+            callback(solver.problem.custom, solver)
             
             total_iterations += 1
         end

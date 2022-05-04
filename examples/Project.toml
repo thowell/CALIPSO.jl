@@ -2,11 +2,15 @@
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ECOS = "e2685f51-7e38-5353-a97d-a921fd2c8199"
+FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MATLAB = "10e44e05-a98a-55b3-a45b-ba969058deb6"
 MatrixEquations = "99c1a7ee-ab34-5fd5-8076-27c950a045f4"
 RoboDojo = "2859eb88-988f-4613-a49e-c643bedbc906"
 SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SparseDiffTools = "47a9eef4-7e08-11e9-0b38-333d64bd3804"
+SparsityDetection = "684fba80-ace3-11e9-3d08-3bc7ed6f96df"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]

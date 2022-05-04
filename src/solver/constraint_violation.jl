@@ -9,5 +9,5 @@ function constraint_violation!(c, g, r, h, s, idx;
         c[jj] = h[j] - s[j] 
     end
 
-    return norm(c, norm_type)
+    return norm(c, norm_type) / length(c)
 end

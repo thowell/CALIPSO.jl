@@ -10,7 +10,7 @@ Base.@kwdef mutable struct Options{T}
     max_iterative_refinement::Int=10
     min_iterative_refinement::Int=1
     iterative_refinement_tolerance::T=1.0e-10
-    central_path_initial::T=1.0e-1
+    central_path_initial::T=1.0
     central_path_update_tolerance::T=10.0
     central_path_scaling::T=0.2
     central_path_exponent::T=1.5
@@ -45,5 +45,7 @@ Base.@kwdef mutable struct Options{T}
     codegen_checkbounds::Bool=false
     codegen_threads::Bool=false
     differentiate::Bool=true
+    print_frequency::Int=10
+    callback::Bool=false
     verbose::Bool=true
 end
