@@ -499,9 +499,17 @@
     # ## solution
     x_sol, u_sol = CALIPSO.get_trajectory(solver)
 
-    @test norm(solver.data.residual, Inf) ./ length(solver.data.residual) <= solver.options.residual_tolerance
-    @test norm(solver.problem.equality_constraint, Inf) < solver.options.equality_tolerance 
-    @test norm(solver.problem.cone_product, Inf) < solver.options.complementarity_tolerance
+    # test solution
+    @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
+
+    slack_norm = max(
+                    norm(solver.data.residual.equality_dual, Inf),
+                    norm(solver.data.residual.cone_dual, Inf),
+    )
+    @test slack_norm < solver.options.slack_tolerance
+
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 end    
 
 # # ## visualize 
