@@ -14,10 +14,10 @@ T = 51
 
 # ## rocket
 num_state = 6
-num_action = 7 # [tx;ty;tz;g+;g-;c+;c-]
+num_action = 7 + 4 # [tx;ty;tz;g+;g-;c+;c-]
 num_parameter = 0
 
-function rocket(x, u, w)
+function rocket(x, u)
     mass = 1.0
     gravity = -9.81
 
@@ -32,34 +32,28 @@ function rocket(x, u, w)
     ]
 end
 
-function midpoint_implicit(y, x, u, w)
+function midpoint_implicit(y, x, u)
     h = 0.05 # timestep
-    y - (x + h * rocket(0.5 * (x + y), u, w))
+    y - (x + h * rocket(0.5 * (x + y), u))
 end
 
-# ## model
-dt = Dynamics(
-    midpoint_implicit,
-    num_state,
-    num_state,
-    num_action,
-    num_parameter=num_parameter)
-dyn = [dt for t = 1:T-1]
+# ## dimensions
+num_states = [num_state for t = 1:T]
+num_actions = [num_action for t = 1:T-1]
 
-# ## initialization
+dynamics = [midpoint_implicit for t = 1:T-1]
+
+# # ## initialization
 x1 = [-5.0;0;5;0;0;0]
 xT = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0]
+#
+# # ## objective
+ot = (x, u) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)]) + 0.1 * dot(u[1:3], u[1:3])
+oT = (x, u) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)])
 
-# ## objective
-ot = (x, u, w) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)]) + 0.1 * dot(u, u)
-oT = (x, u, w) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)])
-ct = Cost(ot, num_state, num_action,
-    num_parameter=num_parameter)
-cT = Cost(oT, num_state, 0,
-    num_parameter=num_parameter)
-obj = [[ct for t = 1:T-1]..., cT]
+objective = [[ot for t = 1:T-1]..., oT]
 
-# ## constraints
+# # ## constraints
 Fx_min = -10.0#-8.0
 Fx_max = 10.0#8.0
 Fy_min = -10.0#-8.0
@@ -67,110 +61,158 @@ Fy_max = 10.0#8.0
 Fz_min = 0.0#6.0
 Fz_max = 20.0#12.5
 
-
-# state triggered constraints
-# if g(x) > 0, then c(x) ≧ 0
-# g(x) = -x[1] + a > 0
-# c(x) = x[3] - b ≧ 0
-#
-# this is handled by introducing 4 new variables at each time step as controls
-# g+,g-,c+,c- all ≥ 0
-# g+ - g- = g(x)
-# c+ - c- = c(x)
-# g+ ⋅ c- = 0
-
 a = -0.5
 b = 3.0
+c = 0.3
+d = 3.0
 
 function stc_con(x,u)
-    tx,ty,tz,gp,gm,cp,cm = u
+    tx,ty,tz,g1p,g1m,c1p,c1m,g2p,g2m,c2p,c2m = u
 
-    g = -x[1] + a # ≧ 0
-    c = x[3] - b  # ≧ 0
+    g1 = -x[1] + a # ≧ 0
+    c1 = x[3] - b  # ≧ 0
 
-    [gp - gm - g;
-     cp - cm - c;
-     gp*cm]
+    g2 = x[1] - c
+    c2 = x[3] - d
+
+    [g1p - g1m - g1;
+     c1p - c1m - c1;
+     g1p*c1m;
+     g2p - g2m - g2;
+     c2p - c2m - c2;
+     g2p*c2m]
 end
-eq1 = Constraint((x, u, w) -> x - x1, num_state, num_action)
-eqT = Constraint((x, u, w) -> x - xT, num_state, 0)
-eqSTC = Constraint((x,u,w) -> stc_con(x,u),                 # g+ ⋅ c- = 0
-                               num_state,num_action)
-eq = [eq1, [eqSTC for t = 2:T-1]...,eqT]
 
+equality = [(x, u) -> x - x1,[stc_con for t = 2:T-1]...,(x, u) -> x - xT]
 
-ineq = [[Constraint((x, u, w) ->
+ineq = [[(x, u) ->
     [
         u[1] - Fx_min; Fx_max - u[1];
         u[2] - Fy_min; Fy_max - u[2];
         u[3] - Fz_min; Fz_max - u[3];
-        u[4:7]                         # g+,g-,c+,c- all ≥ 0
-    ], num_state, num_action
-) for t = 1:T-1]..., Constraint()]
-
-so = [[Constraint()] for t = 1:T]
-
-# ## problem
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so)
-
-# ## initialize
+        u[4:7];
+        u[8:11]                         # g+,g-,c+,c- all ≥ 0
+    ] for t = 1:T-1]..., empty_constraint]
 x_interpolation = linear_interpolation(x1, xT, T)
 for i = 1:T
-    h = 0.05
+    h = 0.05/2
     x_interpolation[i][4:6] = (xT[1:3]-x1[1:3])/(h*T)
 end
 u_guess = [zeros(num_action) for t = 1:T-1]
 for i = 1:T-1
     u_guess[i][1:3] = [0;0;9.8]
-    g = -x_interpolation[i][1] + a
-    if g >= 0
-        u_guess[i][4] = g
+    g1 = -x_interpolation[i][1] + a
+    if g1 >= 0
+        u_guess[i][4] = g1
         u_guess[i][5] = 0
     else
         u_guess[i][4] = 0
-        u_guess[i][5] = -g
+        u_guess[i][5] = -g1
     end
-    c =  x_interpolation[i][3] - b
-    if c >= 0
-        u_guess[i][6] = c
+    c1 =  x_interpolation[i][3] - b
+    if c1 >= 0
+        u_guess[i][6] = c1
         u_guess[i][7] = 0
     else
         u_guess[i][6] = 0
-        u_guess[i][7] = -c
+        u_guess[i][7] = -c1
+    end
+
+    g2 = x_interpolation[i][1] - c
+    if g2 >= 0
+        u_guess[i][4+4] = g2
+        u_guess[i][5+4] = 0
+    else
+        u_guess[i][4+4] = 0
+        u_guess[i][5+4] = -g2
+    end
+    c2 =  x_interpolation[i][3] - d
+    if c2 >= 0
+        u_guess[i][6+4] = c2
+        u_guess[i][7+4] = 0
+    else
+        u_guess[i][6+4] = 0
+        u_guess[i][7+4] = -c2
     end
 end
 
-methods = ProblemMethods(trajopt)
 
-solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
-    options=Options(verbose=true,penalty_initial=1.0e3))
-initialize_states!(solver, trajopt, x_interpolation)
-initialize_controls!(solver, trajopt, u_guess)
-
-# ## solve
+solver = Solver(objective, dynamics, num_states, num_actions;equality = equality, nonnegative = ineq, options=Options(verbose=true,penalty_initial=1.0e3))
+initialize_states!(solver, x_interpolation)
+initialize_controls!(solver, u_guess)
 solve!(solver)
-norm(solver.data.residual, Inf) < 1.0e-5
 
-# ## solution
-x_sol, u_sol = get_trajectory(solver, trajopt)
-
-@show x_sol[1]
-@show x_sol[T]
+x_sol, u_sol  = get_trajectory(solver)
 
 Xm = hcat(x_sol...)
 Um = hcat(u_sol...)
-
+#
 using MATLAB
+# mat"
+# figure
+# hold on
+# plot($Xm(1,:),$Xm(3,:),'bo')
+# s = 10;
+# for i = 1:$T-1
+#     quiver($Xm(1,i),$Xm(3,i),$Um(1,i)/s,$Um(3,i)/s,'r')
+# end
+# patch([-5 $a $a -5],[0 0 $b $b],'b')
+# %patch([$c 5 5 $c],[0 0 $d $d],'b')
+# hold off
+# "
+#
+# mat"
+# figure
+# hold on
+# plot($Um(4:7)')
+# hold off
+# "
+
+num_actions = [3 for t = 1:T-1]
+equality = [(x, u) -> x - x1,[empty_constraint for t = 2:T-1]...,(x, u) -> x - xT]
+
+ineq = [[(x, u) ->
+    [
+        u[1] - Fx_min; Fx_max - u[1];
+        u[2] - Fy_min; Fy_max - u[2];
+        u[3] - Fz_min; Fz_max - u[3]                         # g+,g-,c+,c- all ≥ 0
+    ] for t = 1:T-1]..., empty_constraint]
+
+u_guess = [[0;0;9.8] for i = 1:T-1]
+# solve without STC constraints
+solver = Solver(objective, dynamics, num_states, num_actions;equality = equality, nonnegative = ineq, options=Options(verbose=true,penalty_initial=1.0e3))
+initialize_states!(solver, x_interpolation)
+initialize_controls!(solver, u_guess)
+solve!(solver)
+
+x_sol, u_sol  = get_trajectory(solver)
+
+Xm2 = hcat(x_sol...)
+Um2 = hcat(u_sol...)
+
 mat"
+addpath('~/devel/julia_research/fun/gauss_newton/matlab2tikz-master/src')
 figure
 hold on
-plot($Xm(1,:),$Xm(3,:),'bo')
+a1 = patch([-5 $a-0.1 $a-0.1 -5],[0 0 $b-0.1 $b-0.1],'k');
+a2 = patch([$c 5 5 $c],[0 0 $d-0.1 $d-0.1],'k');
+a1.FaceAlpha = 0.2;
+a2.FaceAlpha = 0.2;
+p1 = plot($Xm(1,:),$Xm(3,:),'color','k','linewidth',2)
+p2 = plot($Xm2(1,:),$Xm2(3,:),'b--','linewidth',2)
 s = 10;
 for i = 1:$T-1
-    quiver($Xm(1,i),$Xm(3,i),$Um(1,i)/s,$Um(3,i)/s,'r')
+    aa = quiver($Xm(1,i),$Xm(3,i),$Um(1,i)/s,$Um(3,i)/s,'color','#D95319','linewidth',1.5);
 end
-patch([-5 $a $a -5],[0 0 $b $b],'b')
+axis equal
+xlim([-5.2,0.7])
+ylim([0,5.5])
+yticks([0 1 2 3 4 5])
+xlabel('X')
+ylabel('Y')
+legend([a2 p2 p1 aa],'keepout zone','unconstrained','constrained','thrust vector','location','northeast')
 hold off
+%matlab2tikz('FIND_ME.tikz')
 "
 
 mat"
