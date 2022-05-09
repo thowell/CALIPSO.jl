@@ -1,7 +1,9 @@
 function solve!(solver)
     # initialize
-    initialize_slacks!(solver)
-    initialize_duals!(solver)
+    if !solver.options.warmstart
+        initialize_slacks!(solver)
+        initialize_duals!(solver)
+    end
     initialize_interior_point!(solver)
     initialize_augmented_lagrangian!(solver)
 

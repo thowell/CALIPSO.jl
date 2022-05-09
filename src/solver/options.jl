@@ -27,6 +27,7 @@ Base.@kwdef mutable struct Options{T}
     dual_regularization_initial::T=1.0e-7
     max_regularization::T=1.0e40
     dual_regularization::T=1.0e-8
+    dual_regularization_exponent::T=0.25
     scaling_regularization_initial::T=100.0
     scaling_regularization::T=8.0
     scaling_regularization_last::T=(1.0 / 3.0)
@@ -47,5 +48,6 @@ Base.@kwdef mutable struct Options{T}
     differentiate::Bool=true
     print_frequency::Int=10
     callback::Bool=false
+    warmstart::Bool=false
     verbose::Bool=true
 end

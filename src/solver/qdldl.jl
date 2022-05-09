@@ -307,7 +307,7 @@ function factor!(workspace::QDLDLWorkspace{Tf,Ti},logical::Bool) where {Tf<:Abst
                               )
 
     if(posDCount < 0)
-        error("Zero entry in D (matrix is not quasidefinite)")
+        @warn "Zero entry in D (matrix is not quasidefinite)"
     end
 
     workspace.positive_inertia[] = posDCount

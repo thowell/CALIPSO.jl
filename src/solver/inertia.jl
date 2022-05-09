@@ -41,7 +41,7 @@ function inertia_correction!(s)
     # IC-2
     if s.linear_solver.inertia.zero != 0
         s.options.verbose ? (@warn "$(s.linear_solver.inertia.zero) zero eigen values - rank deficient constraints") : nothing
-        s.dual_regularization[1] = s.options.dual_regularization * s.central_path[1]^s.options.exponent_dual_regularization
+        s.dual_regularization[1] = s.options.dual_regularization * s.central_path[1]^s.options.dual_regularization_exponent
     end
 
     # IC-3

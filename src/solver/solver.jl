@@ -12,6 +12,7 @@ struct Solver{T,X,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,C
     dimensions::Dimensions
 
     linear_solver::LDLSolver{T,Int}
+    lu_factorization::ILU0Precon{T,Int,T}
 
     central_path::Vector{T} 
     fraction_to_boundary::Vector{T}
@@ -67,9 +68,23 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     penalty = [10.0] 
     dual = zeros(num_equality) 
 
-    # linear solver TODO: constructor
+    # random initialization for symmetric system factorization
     random_solution = Point(dim, idx)
     random_solution.all .= randn(dim.total)
+
+    if !isempty(idx.cone_nonnegative)
+        for i in idx.cone_nonnegative 
+            random_solution.cone_slack[i] = max(1.0, random_solution.cone_slack[i])
+            random_solution.cone_slack_dual[i] = max(1.0, random_solution.cone_slack_dual[i])  
+        end
+    end
+
+    for so in idx.cone_second_order 
+        if !isempty(so)
+            random_solution.cone_slack[so[1]] = 10.0 * norm(random_solution.cone_slack[so[2:end]]) 
+            random_solution.cone_slack_dual[so[1]] = 10.0 * norm(random_solution.cone_slack_dual[so[2:end]]) 
+        end
+    end
 
     evaluate!(p_data, methods, idx, random_solution, parameters,
         objective_jacobian_variables_variables=true,
@@ -86,6 +101,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
     residual_jacobian_variables_symmetric!(s_data.jacobian_variables_symmetric, s_data.jacobian_variables, idx, 
         p_data.second_order_jacobians, p_data.second_order_jacobians)
     
+    lu_factorization = ilu0(s_data.jacobian_variables)
     linear_solver = ldl_solver(s_data.jacobian_variables_symmetric)
 
     # regularization 
@@ -104,6 +120,7 @@ function Solver(methods, num_variables, num_parameters, num_equality, num_cone;
         idx, 
         dim,
         linear_solver,
+        lu_factorization,
         central_path,
         fraction_to_boundary,
         penalty, 

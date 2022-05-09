@@ -101,11 +101,9 @@
     # end
 
     # ## visualize
-    vis = Visualizer()
-    render(vis)
-    RoboDojo.visualize!(vis, RoboDojo.box, x_sol, Δt=timestep, r=0.5);
-
-
+    # vis = Visualizer()
+    # render(vis)
+    # RoboDojo.visualize!(vis, RoboDojo.box, x_sol, Δt=timestep, r=0.5);
 end
 
 # # ## visualize

@@ -3,15 +3,23 @@ function search_direction!(solver)
     inertia_correction!(solver)
 
     # compute search direction
-    search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 
-        solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
-        solver.indices, 
-        solver.data.step_second_order, solver.data.residual_second_order,
-        solver.linear_solver;
-        update=solver.options.update_factorization)
+    if solver.options.linear_solver == :QDLDL
+        search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 
+            solver.data.step_symmetric, solver.data.residual_symmetric, solver.data.jacobian_variables_symmetric, 
+            solver.indices, 
+            solver.data.step_second_order, solver.data.residual_second_order,
+            solver.linear_solver;
+            update=solver.options.update_factorization)
+    else 
+        search_direction_nonsymmetric!(
+            solver.data.step, 
+            solver.data.jacobian_variables, 
+            solver.data.residual,
+            solver.lu_factorization)
+    end
  
     # refine search direction
-    solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data))
+    solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data.jacobian_variables, solver.data.residual, solver.lu_factorization; update_factorization=true))
 end
 
 function search_direction_symmetric!(
@@ -95,8 +103,17 @@ function search_direction_symmetric!(
     return 
 end
 
-function search_direction_nonsymmetric!(step, data::SolverData)
-    # fill!(step, 0.0)
-    step.all .= data.jacobian_variables \ data.residual.all
+function search_direction_nonsymmetric!(step::Point{T}, matrix::SparseMatrixCSC{T,Int}, residual::Point{T}, lu_factorization::ILU0Precon{T,Int,T}; 
+    update_factorization=false) where T
+
+    # if update_factorization 
+    #     lu_factorization = ilu0(matrix)
+    # else
+    #     ilu0!(lu_factorization, matrix)
+    # end
+    # # lu_factorization = ilu0(matrix)
+    # fill!(step.all, 0.0)
+    # ldiv!(step.all, lu_factorization, residual.all)
+    step.all .= matrix \ residual.all
     return 
 end

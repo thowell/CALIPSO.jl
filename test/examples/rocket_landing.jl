@@ -69,7 +69,7 @@
     action_guess = [1.0e-3 * randn(num_actions[t]) for t = 1:horizon-1]
     initialize_states!(solver, state_guess) 
     initialize_controls!(solver, action_guess)
-
+    
     # ## solve 
     solve!(solver)
 

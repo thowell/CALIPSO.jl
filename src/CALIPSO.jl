@@ -6,6 +6,7 @@ using SparseArrays
 using Scratch
 # using QDLDL
 using AMD
+using ILUZero
 
 using Printf
 using Crayons

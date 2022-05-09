@@ -31,18 +31,26 @@ function differentiate!(solver)
             solver.data.jacobian_parameters_vectors[i].all[k] = solver.data.jacobian_parameters[k, i]
         end
      
-        search_direction_symmetric!(
-            solver.data.solution_sensitivity_vectors[i],
-            solver.data.jacobian_parameters_vectors[i],
-            solver.data.jacobian_variables, 
-            solver.data.step_symmetric, 
-            solver.data.residual_symmetric, 
-            solver.data.jacobian_variables_symmetric, 
-            solver.indices, 
-            solver.data.solution_sensitivity_vectors_second_order[i],
-            solver.data.jacobian_parameters_vectors_second_order[i],
-            solver.linear_solver,
-            )
+        if solver.options.linear_solver == :QDLDL
+            search_direction_symmetric!(
+                solver.data.solution_sensitivity_vectors[i],
+                solver.data.jacobian_parameters_vectors[i],
+                solver.data.jacobian_variables, 
+                solver.data.step_symmetric, 
+                solver.data.residual_symmetric, 
+                solver.data.jacobian_variables_symmetric, 
+                solver.indices, 
+                solver.data.solution_sensitivity_vectors_second_order[i],
+                solver.data.jacobian_parameters_vectors_second_order[i],
+                solver.linear_solver,
+                )
+        else 
+            search_direction_nonsymmetric!(
+                solver.data.solution_sensitivity_vectors[i], 
+                solver.data.jacobian_variables, 
+                solver.data.jacobian_parameters_vectors[i], 
+                solver.lu_factorization)
+        end
  
         for (k, s) in enumerate(solver.data.solution_sensitivity_vectors[i].all) 
             solver.data.solution_sensitivity[k, i] = -1.0 * s
