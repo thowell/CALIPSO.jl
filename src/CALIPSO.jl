@@ -61,6 +61,7 @@ include("trajectory_optimization/dimensions.jl")
 include("trajectory_optimization/problem.jl")
 include("trajectory_optimization/evaluate.jl")
 include("trajectory_optimization/solver.jl")
+include("trajectory_optimization/callback.jl")
 include("trajectory_optimization/utilities.jl")
 
 # Interface

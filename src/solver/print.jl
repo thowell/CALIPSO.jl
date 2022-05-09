@@ -27,7 +27,7 @@ function iteration_status(
         ) 
 
     # header
-    if rem(total_iterations - 1, 10) == 0
+    if rem(total_iterations - 1, options.print_frequency) == 0
         @printf "------------------------------------------------------------------------------------------------\n"
         @printf "total  outer  inner |residual| |equality|  |comp|    |slack|  central path   penalty      step  \n"
         @printf "------------------------------------------------------------------------------------------------\n"

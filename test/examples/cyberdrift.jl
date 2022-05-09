@@ -272,7 +272,7 @@
 
     # ## initialize
     state_guess = linear_interpolation(state_initial, state_goal, horizon)
-    action_guess = [[1.0e-3 * randn(2); 1.0e-5 * ones(6 * nc)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
+    action_guess = [[1.0e-3 * randn(2); vcat([[1.0; 0.1; 0.1] for i = 1:(2 * nc)]...)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
     initialize_states!(solver, state_guess) 
     initialize_controls!(solver, action_guess)
 
@@ -296,6 +296,7 @@
     @test !CALIPSO.cone_violation(solver.solution.cone_slack, zero(solver.solution.cone_slack), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
     @test !CALIPSO.cone_violation(solver.solution.cone_slack_dual, zero(solver.solution.cone_slack_dual), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
 end
+
 # # plot
 # using Plots
 # plot(hcat(x_sol...)[4:6, :]', label="")
