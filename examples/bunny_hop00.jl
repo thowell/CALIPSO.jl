@@ -262,7 +262,7 @@ initialize_states!(solver, x_interpolation)
 u_guess = [(usref[i] + 0*randn(2)) for i = 1:N-2]
 initialize_controls!(solver, u_guess)
 solver.options.max_residual_iterations = 200
-solver.options.penalty_initial = 1e0
+solver.options.penalty_initial = 1e-2
 solver.options.update_factorization = false
 solver.options.linear_solver = :LU
 solve!(solver)

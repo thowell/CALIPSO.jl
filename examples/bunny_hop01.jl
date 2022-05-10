@@ -11,19 +11,11 @@ using LinearAlgebra
 
 
 # bunny hop dynamics
-const m_b = 6.0
-
-const r_eq = 1.5
-const kp = 10.0
-const kb = 1
-
+const m_b = 4.0
 const m1 = 1.0
 const m2 = 1.0
 const h = 0.1
 const gravity = [0;-9.8]
-
-const joint_min = 1.3
-const joint_max = 4
 
 const r_wheel_base = 2.0
 
@@ -52,44 +44,13 @@ function Dc(q)
     # transpose(g)
 end
 function d(q)
-    [q[2];q[4]]
-end
-function JC(q)
-    r1 = q[1:2]
-    r2 = q[3:4]
-    r3 = q[5:6]
-    # [
-    #     norm(r1-r3)  - joint_min;
-    #     norm(r2-r3)  - joint_min;
-    #     -norm(r1-r3) + joint_max;
-    #     -norm(r2-r3) + joint_max
-    # ]
-    [
-        dot(r1-r3,r1-r3)  - joint_min^2;
-        dot(r2-r3,r2-r3)  - joint_min^2;
-        -dot(r1-r3,r1-r3) + joint_max^2;
-        -dot(r2-r3,r2-r3) + joint_max^2
-    ]
-end
-
-function DJC(q)
-    r1 = q[1:2]
-    r2 = q[3:4]
-    r3 = q[5:6]
-    t0 = transpose(r1-r3)
-    t1 = transpose(r2-r3)
-    2*[
-        t0 zeros(1,2) -t0;
-        zeros(1,2)  t1 -t1;
-        -t0 zeros(1,2) t0;
-        zeros(1,2)  -t1 t1;
-    ]
+    [q[2];q[4];q[6]-0.3]
 end
 
 function Dd(q)
     [0 1 0 0 0 0;
-     0 0 0 1 0 0]
-     # 0 0 0 0 0 1]
+     0 0 0 1 0 0;
+     0 0 0 0 0 1]
 end
 
 function DEL(q1,q2,q3,λ,u₋,u₊)
@@ -124,12 +85,12 @@ function DEL(q1,q2,q3,λ,u₋,u₊)
     ] + (h/2.0)*F₋ + (h/2.0)*F₊
 end
 
-function contact_kkt(q1,q2,q3,λ,η,y,u1,u2,κ)
+function contact_kkt(q1,q2,q3,λ,η,u1,u2,κ)
     [#  DEL               LINK          CONTACT
-        DEL(q1,q2,q3,λ,u1,u2) + h*transpose(Dc(q2))*λ + h*transpose(Dd(q2))*η + h*transpose(DJC(q2))*y; # 6
+        DEL(q1,q2,q3,λ,u1,u2) + h*transpose(Dc(q2))*λ + h*transpose(Dd(q2))*η; # 6
         c(q3);            # LINK CONSTRAINT     # 1
-        η .* d(q3) .- κ;  # CONTACT CONSTRAINT  # 2
-        y .* JC(q3) .- κ  # joint limits comp
+        η .* d(q3) .- κ  # CONTACT CONSTRAINT  # 3
+        # y .* JC(q3) .- κ  # joint limits comp
     ]
 end
 
@@ -142,21 +103,6 @@ N = 10  # 30 time steps
 28 dynamics constraints
 28 control inputs
 """
-
-# bidx_q = [(i-1)*6 .+ (1:6) for i = 1:N]
-# bidx_u = [(bidx_q[end][end] + (i-1)*2) .+ (1:2) for i = 1:N-1]
-# bidx_λ = [(bidx_u[end][end] + (i-1)*1) .+ (1:1) for i = 1:N-2]
-# bidx_y = [(bidx_λ[end][end] + (i-1)*4) .+ (1:4) for i = 1:N-2]
-# bidx_η = [(bidx_y[end][end] + (i-1)*2) .+ (1:2) for i = 1:N-2]
-# nz = bidx_η[end][end]
-# bidx_c = [(i-1)*13 .+ (1:13) for i = 1:N-2] # dynamics constraints
-# push!(bidx_c, bidx_c[end][end] .+ (1:6)) # q1 constraint
-# push!(bidx_c, bidx_c[end][end] .+ (1:6)) # q2 constraint
-# nc = bidx_c[end][end]
-#
-# bidx_h = [(i-1)*6 .+ (1:6) for i = 1:N-2] # here is y > 0 and η > 0
-# bidx_h2 = [(bidx_h[end][end] + (i-1)*6) .+ (1:6) for i = 1:N] # [d(q);Jc(q)] >0
-# nh = bidx_h2[end][end]
 
 q0 = [
         -r_wheel_base/2,
@@ -191,17 +137,19 @@ function midpoint_implicit(x2, x, u)
     q2₋ = x[7:12]
 
     λ = x[13:13]
-    η = x[14:15]
-    y = x[16:19]
+    η = x[14:16]
+    # u1 = x[17:18]
+    # y = x[16:19]
 
     q2₊ = x2[1:6]
     q3  = x2[7:12]
 
-    r = contact_kkt(q1,q2₋,q3,λ,η,y,u,u,1e-4)
+    r = contact_kkt(q1,q2₋,q3,λ,η,u,u,0e-4)
 
     [
         r;
-        q2₊ - q2₋
+        q2₊ - q2₋;
+        # x2[17:18] - u2 # make u come out the next term
     ]
 end
 
@@ -210,7 +158,7 @@ R = .01*[1,1]
 
 
 # ## dimensions
-num_states = [19 for t = 1:N-1]
+num_states = [16 for t = 1:N-1]
 num_actions = [2 for t = 1:N-2]
 
 dynamics = [midpoint_implicit for t = 1:N-2]
@@ -231,20 +179,15 @@ objective = [[(x,u) -> cost_function(x,u,qsref[i],qsref[i+1],usref[i]) for i = 1
 
 function ineq_constraint(x)
     q1  = x[1:6]
-    q2₋ = x[7:12]
-
-    λ = x[13:13]
-    η = x[14:15]
-    y = x[16:19]
+    # q2₋ = x[7:12]
+    #
+    # λ = x[13:13]
+    η = x[14:16]
+    # y = x[16:19]
 
     [
-        y;
         η;
         d(q1);
-        # d(q2₋);
-        # JC(q1)
-        # q1[6];
-        # JC(q2₋);
     ]
 end
 ineq = [(x,u)-> ineq_constraint(x) for t = 1:N-1]
@@ -253,30 +196,29 @@ ineq = [(x,u)-> ineq_constraint(x) for t = 1:N-1]
 #          [(x,u)-> ineq_constraint(x) for t = 1:N-(6)]...]
 # ineq[5] = (x,u) -> [ineq_constraint(x);x[2] - .5;x[4] - .5]
 
-# eq = [(x,u)-> (x[1:12] - [q0;q1]), [empty_constraint for t = 1:N-2]...]
-eq = [(x,u)-> (x[1:12] - [q0;q1]), [empty_constraint for t = 1:4]..., (x,u) -> [x[2] - .5;x[4]-.5], [empty_constraint for t = 1:3]... ]
+eq = [(x,u)-> (x[1:12] - [q0;q1]), [empty_constraint for t = 1:N-2]...]
+# eq = [(x,u)-> (x[1:12] - [q0;q1]), [empty_constraint for t = 1:4]..., (x,u) -> [x[2] - .2;x[4]-.2], [empty_constraint for t = 1:3]... ]
+# eq = [empty_constraint, [empty_constraint for t = 1:4]..., (x,u) -> [x[2] - .2;x[4]-.2], [empty_constraint for t = 1:3]... ]
 
-solver = Solver(objective, dynamics, num_states, num_actions;equality = eq, nonnegative = ineq,options=Options(
-            verbose=true,
-            update_factorization=false,
-    ))
-# solver = Solver(objective, dynamics, num_states, num_actions;equality = eq,options=Options(
+# solver = Solver(objective, dynamics, num_states, num_actions;equality = eq, nonnegative = ineq,options=Options(
 #             verbose=true,
 #             update_factorization=false,
 #     ))
+solver = Solver(objective, dynamics, num_states, num_actions;equality = eq,options=Options(
+            verbose=true,
+            update_factorization=false,
+    ))
 # solver = Solver(objective,dynamics,num_states,num_actions)
-x_interpolation = [[qsref[i];qsref[i+1];.1*ones(7)] + 0.1*(ones(19)) for i = 1:N-1]
+x_interpolation = [[qsref[i];qsref[i+1];zeros(4)] + .00001*(ones(16)) for i = 1:N-1]
 initialize_states!(solver, x_interpolation)
 u_guess = [(usref[i] + 0.1*randn(2)) for i = 1:N-2]
 initialize_controls!(solver, u_guess)
 solver.options.max_residual_iterations = 200
-solver.options.penalty_initial = 1e3
-solver.options.update_factorization = false
-solver.options.linear_solver = :LU
+solver.options.penalty_initial = 1e4
 solve!(solver)
 
 
-x_sol, u_sol  = get_trajectory(solver)
+x_sol, u_sol  = get_trajectory(solver)d
 
 Xm = hcat(x_sol...)
 Um = hcat(u_sol...)
