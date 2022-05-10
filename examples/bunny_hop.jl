@@ -141,7 +141,7 @@ qsref = [q0 + 3*h*(i-1)*[1,0,1,0,1,0] for i = 1:N]
 #     global scale_down += 1
 # end
 
-Q = Diagonal([0, 1, 0, 1, 0, 1])
+Q = Diagonal([0, 1, 0, 1, 0, .1])
 R = .01*Diagonal(ones(2))
 
 
@@ -162,7 +162,7 @@ function equality_constraint(z)
 
     c[bidx_c[N-1]] = z[bidx_q[1]] - q0
     c[bidx_c[N]] = z[bidx_q[2]] - q1
-    c[bidx_c[N+1]] = z[bidx_q[10]][[2,4]] - [.3;.3]
+    c[bidx_c[N+1]] = z[bidx_q[10]][[2,4]] - [.5;.5]
     return c
 end
 
@@ -228,7 +228,7 @@ qs = [solver.solution.variables[bidx_q[i]] for i = 1:N]
 Qm = hcat(qs...)
 #
 using JLD2
-jldsave("bunny_hop_v2.jld2";qs)
+jldsave("bunny_hop_v6.jld2";qs)
 
 using MATLAB
 mat"
