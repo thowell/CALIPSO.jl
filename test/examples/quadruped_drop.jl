@@ -6,7 +6,7 @@
     # ## RoboDojo dynamics 
     include("robodojo.jl")
 
-    model = RoboDojo.quadruped # NOTE: all contacts turned on
+    model = RoboDojo.quadruped4 # NOTE: all contacts turned on
     sim = RoboDojo.Simulator(model, 1, 
         h=timestep)
 
@@ -17,7 +17,7 @@
     dynamics = [(y, x, u) -> robodojo_dynamics(sim, y, x, u) for t = 1:horizon-1]
 
     # ## states
-    function initial_configuration(model::RoboDojo.Quadruped, θ1, θ2, θ3)
+    function initial_configuration(model::RoboDojo.Quadruped4, θ1, θ2, θ3)
         q1 = zeros(11)
         q1[3] = 0.0
         q1[4] = -θ1
@@ -41,10 +41,10 @@
     θ2 = pi / 4.0
     θ3 = pi / 3.0
 
-    q1 = initial_configuration(RoboDojo.quadruped, θ1, θ2, θ3)
+    q1 = initial_configuration(model, θ1, θ2, θ3)
     q1[2] += 0.25
     q1[3] += 0.2
-    qT = initial_configuration(RoboDojo.quadruped, θ1, θ2, θ3)
+    qT = initial_configuration(model, θ1, θ2, θ3)
 
     # ## objective
     function obj1(x, u)
@@ -52,8 +52,10 @@
         q = x[model.nq .+ (1:model.nq)]
 
         J = 0.0 
-        J += 1.0 * dot(u_ctrl, u_ctrl)
-        # J += 1.0 * dot(q - qT, q - qT)
+        v = q - x[collect(1:model.nq)]
+        J += 1.0 * dot(v, v)
+        J += 1.0e-3 * dot(u_ctrl, u_ctrl)
+        J += 1.0 * dot(q - qT, q - qT)
         return J
     end
 
@@ -62,8 +64,10 @@
         q = x[model.nq .+ (1:model.nq)]
 
         J = 0.0 
-        J += 1.0 * dot(u_ctrl, u_ctrl)
-        # J += 1.0 * dot(q - qT, q - qT)
+        v = q - x[collect(1:model.nq)]
+        J += 1.0 * dot(v, v)
+        J += 1.0e-3 * dot(u_ctrl, u_ctrl)
+        J += 1.0 * dot(q - qT, q - qT)
         return J
     end
 
@@ -71,8 +75,9 @@
         q = x[model.nq .+ (1:model.nq)]
 
         J = 0.0 
-        # J += 1.0 * dot(q - qT, q - qT)
-        # J += 1.0e-5 * dot(x, x)
+        v = q - x[collect(1:model.nq)]
+        J += 1.0 * dot(v, v)
+        J += 1.0 * dot(q - qT, q - qT)
         return J
     end
 
@@ -84,8 +89,8 @@
 
     # control limits
     equality = [
-        (x, u) -> [x[1:11] - q1; x[11 .+ (1:11)] - q1], 
-        [empty_constraint for t = 2:horizon-1]..., 
+        (x, u) -> [x[1:11] - q1; x[11 .+ (1:11)] - q1; u[1:3]], 
+        [(x, u) -> u[1:3] for t = 2:horizon-1]..., 
         empty_constraint,
     ];
 
@@ -96,7 +101,7 @@
     options = Options(
             verbose=true,        
             constraint_tensor=true,
-            update_factorization=true,
+            update_factorization=false,
     )
 
     # ## solver 
@@ -106,8 +111,6 @@
         second_order=second_order,
         options=options,
     );
-
-    solver.options.update_factorization = false
 
     # ## initialize
     configurations = CALIPSO.linear_interpolation(q1, q1, horizon+1)
