@@ -340,7 +340,7 @@ function solve!(solver)
                 options) 
 
             # callback 
-            callback(solver.problem.custom, solver)
+            solver.options.callback_inner && callback_inner(solver.problem.custom, solver)
             
             total_iterations += 1
         end
@@ -359,6 +359,9 @@ function solve!(solver)
 
         # reset filter
         reset!(filter)
+
+        # callback 
+        solver.options.callback_outer && callback_outer(solver.problem.custom, solver)
     end
 
     # failure

@@ -47,7 +47,8 @@ Base.@kwdef mutable struct Options{T}
     codegen_threads::Bool=false
     differentiate::Bool=true
     print_frequency::Int=10
-    callback::Bool=false
+    callback_inner::Bool=false
+    callback_outer::Bool=false
     warmstart::Bool=false
     verbose::Bool=true
 end

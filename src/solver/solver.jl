@@ -155,4 +155,6 @@ function Solver(objective, equality, cone, num_variables::Int;
     return solver
 end
 
-callback(custom, solver::Solver) = nothing
+callback_inner(custom, solver) = nothing
+callback_outer(custom, solver) = nothing
+

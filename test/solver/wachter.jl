@@ -17,6 +17,18 @@
     # ## solve 
     solve!(solver)
 
+    # ## callbacks 
+    solver.options.callback_inner = true 
+    solver.options.callback_outer = true 
+
+    function callback_inner(custom, solver)
+        println("inner callback")
+    end
+
+    function callback_outer(custom, solver)
+        println("outer callback")
+    end
+
     # ## solution 
     @show solver.solution.variables # x* = [1.0, 0.0, 0.5]
 

@@ -48,7 +48,7 @@ include("solver/iterative_refinement.jl")
 
 export
     ProblemMethods, Solver, solve!, initialize!, Options,
-    empty_constraint
+    empty_constraint, callback_inner, callback_outer
 
 # Trajectory Optimization
 include("trajectory_optimization/costs.jl")
@@ -62,7 +62,6 @@ include("trajectory_optimization/dimensions.jl")
 include("trajectory_optimization/problem.jl")
 include("trajectory_optimization/evaluate.jl")
 include("trajectory_optimization/solver.jl")
-include("trajectory_optimization/callback.jl")
 include("trajectory_optimization/utilities.jl")
 
 # Interface
