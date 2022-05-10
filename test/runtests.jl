@@ -1,5 +1,6 @@
 using Test
 using ForwardDiff 
+using FiniteDiff
 using SparseArrays
 using Symbolics
 using LinearAlgebra
@@ -38,7 +39,7 @@ include("examples/ball_in_cup.jl")
 include("examples/hopper_gait.jl")
 include("examples/cyberdrift.jl")
 include("examples/double_integrator.jl")
-include("examples/quadruped_drop.jl")
+# include("examples/quadruped_drop.jl")
 # include("examples/quadruped_gait.jl")
 
 

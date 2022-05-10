@@ -76,7 +76,7 @@
 
     # ## initialize
     configurations = CALIPSO.linear_interpolation(q1, q1, horizon+1)
-    state_guess = robodojo_state_initialization(sim, configurations, horizon)
+    state_guess = robodojo_configuration_initialization(sim, configurations, horizon)
     action_guess = [0.0 * randn(sim.model.nu) for t = 1:horizon-1] # may need to run more than once to get good trajectory
     initialize_states!(solver, state_guess) 
     initialize_controls!(solver, action_guess)

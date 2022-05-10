@@ -119,17 +119,21 @@ function robodojo_second_order(sim::RoboDojo.Simulator, horizon;
     return idx
 end
 
-function robodojo_state_initialization(sim::RoboDojo.Simulator, configurations, horizon)
-    configuration_stack = [[configurations[t]; configurations[t+1]] for t = 1:horizon]
-    states = [t == 1 ? configuration_stack[t] : [
-            configuration_stack[t]; 
-            ones(sim.model.nc); 
-            ones(sim.model.nc); 
-            ones(sim.model.nc); 
-            0.1 * ones(sim.model.nc); 
-            ones(sim.model.nc); 
-            0.1 * ones(sim.model.nc);
+function robodojo_state_initialization(sim::RoboDojo.Simulator, states, horizon)
+    states_contacts = [t == 1 ? states[t] : [
+            states[t]; 
+            1.0e-3 * ones(sim.model.nc); 
+            1.0e-3 * ones(sim.model.nc); 
+            1.0e-3 * ones(sim.model.nc); 
+            1.0e-4 * ones(sim.model.nc); 
+            1.0e-3 * ones(sim.model.nc); 
+            1.0e-4 * ones(sim.model.nc);
     ] for t = 1:horizon]
 
-    return states 
+    return states_contacts
 end
+
+function robodojo_configuration_initialization(sim::RoboDojo.Simulator, configurations, horizon)
+    robodojo_state_initialization(sim, [[configurations[t]; configurations[t+1]] for t = 1:horizon], horizon)
+end
+

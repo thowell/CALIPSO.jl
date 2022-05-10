@@ -34,7 +34,7 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
     num_equality_general = num_constraint(data.equality_general)
     num_nonnegative = num_constraint(data.nonnegative)
     
-    total_variables = sum(num_state) + sum(num_actions)
+    total_variables = sum(num_states) + sum(num_actions)
     total_parameters = sum(num_parameters) 
 
     # constraint Jacobian sparsity

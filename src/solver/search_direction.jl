@@ -19,7 +19,7 @@ function search_direction!(solver)
     end
  
     # refine search direction
-    solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data.jacobian_variables, solver.data.residual, solver.lu_factorization; update_factorization=true))
+    solver.options.iterative_refinement && (!iterative_refinement!(solver.data.step, solver) && search_direction_nonsymmetric!(solver.data.step, solver.data.jacobian_variables, solver.data.residual, solver.lu_factorization; update_factorization=false))
 end
 
 function search_direction_symmetric!(

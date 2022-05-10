@@ -34,7 +34,7 @@ function EqualityGeneral(constraint::Function, num_variables::Int;
     #TODO: option to load/save methods
     @variables z[1:num_variables], w[1:num_parameters]
 
-    c = num_parameter > 0 ? constraint(z, w) : constraint(z)
+    c = num_parameters > 0 ? constraint(z, w) : constraint(z)
     cz = Symbolics.sparsejacobian(c, z)
     cw = Symbolics.sparsejacobian(c, w)
 
