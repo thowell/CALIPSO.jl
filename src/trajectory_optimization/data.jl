@@ -8,6 +8,7 @@ struct TrajectoryOptimizationData{T}
     objective::Vector{Cost{T}}
     dynamics::Vector{Dynamics{T}}
     equality::Vector{Constraint{T}}
+    equality_general::EqualityGeneral{T}
     nonnegative::Vector{Constraint{T}}
     second_order::Vector{Vector{Constraint{T}}}
 
@@ -16,6 +17,7 @@ struct TrajectoryOptimizationData{T}
 
     duals_dynamics::Vector{SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}} 
     duals_equality::Vector{SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}}
+    duals_equality_general
     duals_nonnegative::Vector{SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}}
     duals_second_order::Vector{Vector{SubArray{T,1,Vector{T},Tuple{Vector{Int}},false}}}
 end
@@ -24,8 +26,9 @@ function TrajectoryOptimizationData(
     dynamics, 
     objective, 
     equality, 
+    equality_general,
     nonnegative,
-    second_order; 
+    second_order;
     parameters=[zeros(num_parameter) for num_parameter in dimensions(dynamics)[3]])
 
     state_dimensions, action_dimensions, parameter_dimensions = dimensions(dynamics,
@@ -33,12 +36,13 @@ function TrajectoryOptimizationData(
 
     dynamics_dimensions = num_constraint(dynamics)
     equality_dimensions = num_constraint(equality) 
+    equality_general_dimensions = num_constraint(equality_general)    
     nonnegative_dimensions = num_constraint(nonnegative)
     second_order_dimensions = sum(num_constraint(second_order))
 
     state_action_trajectory = zeros(sum(state_dimensions) + sum(action_dimensions)) 
     parameter_trajectory = vcat(parameters...) 
-    duals_equality_trajectory = zeros(dynamics_dimensions + equality_dimensions) 
+    duals_equality_trajectory = zeros(dynamics_dimensions + equality_dimensions + equality_general_dimensions) 
     duals_cone_trajectory = zeros(nonnegative_dimensions + second_order_dimensions)
 
     x_idx = state_indices(dynamics)
@@ -47,6 +51,8 @@ function TrajectoryOptimizationData(
     d_idx = constraint_indices(dynamics)
     e_idx = constraint_indices(equality,
         shift=num_constraint(dynamics))
+    eg_idx = constraint_indices(equality_general,
+        shift=(num_constraint(dynamics) + num_constraint(equality)))
     nn_idx = constraint_indices(nonnegative)
     so_idx = constraint_indices(second_order, 
         shift=num_constraint(nonnegative))
@@ -57,6 +63,8 @@ function TrajectoryOptimizationData(
 
     duals_dynamics = [@views duals_equality_trajectory[idx] for idx in d_idx]
     duals_equality = [@views duals_equality_trajectory[idx] for idx in e_idx]
+
+    duals_equality_general = @views duals_equality_trajectory[eg_idx]
     duals_nonnegative = [@views duals_cone_trajectory[idx] for idx in nn_idx]
     duals_second_order = [[@views duals_cone_trajectory[idx] for idx in so] for so in so_idx]
    
@@ -69,12 +77,14 @@ function TrajectoryOptimizationData(
         objective, 
         dynamics, 
         equality,
+        equality_general,
         nonnegative,
         second_order, 
         duals_equality_trajectory, 
         duals_cone_trajectory,
         duals_dynamics, 
         duals_equality, 
+        duals_equality_general,
         duals_nonnegative,
         duals_second_order,
     )
@@ -85,8 +95,10 @@ function TrajectoryOptimizationData(dynamics, objective)
         dynamics, 
         objective, 
         [Constraint() for t = 1:length(dynamics)], 
+        EqualityGeneral(),
         [Constraint() for t = 1:length(dynamics)],
-        [[Constraint()] for t = 1:length(dynamics)])
+        [[Constraint()] for t = 1:length(dynamics)],
+    )
 end
 
 

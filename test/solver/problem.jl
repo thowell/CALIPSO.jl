@@ -30,9 +30,11 @@
 
     # methods
     objective, equality, inequality, flag = generate_random_qp(num_variables, num_equality, num_cone);
-
+    
     # solver
     solver = Solver(objective, equality, inequality, num_variables);
+
+    # solver.options.linear_solver = :QDLDL
 
     solver.solution.variables .= randn(num_variables)
     solver.solution.equality_slack .= rand(solver.dimensions.equality_slack)
@@ -189,7 +191,7 @@
     # step
     fill!(solver.data.residual.all, 0.0)
     CALIPSO.residual!(solver.data, solver.problem, solver.indices, solver.solution, κ, ρ, λ)
-    CALIPSO.search_direction_nonsymmetric!(solver.data.step, solver.data)
+    CALIPSO.search_direction_nonsymmetric!(solver.data.step, solver.data.jacobian_variables, solver.data.residual, solver.lu_factorization)
     Δ = deepcopy(solver.data.step)
 
     CALIPSO.search_direction_symmetric!(solver.data.step, solver.data.residual, solver.data.jacobian_variables, 

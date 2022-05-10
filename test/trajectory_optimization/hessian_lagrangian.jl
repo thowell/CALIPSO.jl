@@ -118,6 +118,8 @@
     ]
     eq = CALIPSO.generate_methods(equality, num_states, num_actions, num_parameters, :Constraint)
 
+    eg = CALIPSO.EqualityGeneral()
+
     # nonnegative constraints
     inequality = [
             [(x, u) -> sin.(x) .- sum(u) for t = 1:horizon-1]..., 
@@ -137,7 +139,7 @@
             num_parameter=num_parameters[t]) for s in second_order[t]] for t = 1:horizon]
 
     # data 
-    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so, constraint_tensor=true);
+    trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, eg, ineq, so, constraint_tensor=true);
 
     # dimensions 
     np = num_state + num_action + num_state + num_action + num_state

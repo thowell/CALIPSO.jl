@@ -96,6 +96,15 @@ function equality!(violations, trajopt::TrajectoryOptimizationProblem, variables
             trajopt.data.actions, 
             trajopt.data.parameters)
     end
+    if trajopt.dimensions.equality_general_constraints > 0
+        constraints!(
+            violations, 
+            trajopt.indices.equality_general_constraints, 
+            trajopt.data.equality_general, 
+            variables,
+            parameters,
+        )
+    end
     return 
 end
 
@@ -148,6 +157,15 @@ function equality_jacobian_variables!(jacobian, trajopt::TrajectoryOptimizationP
             trajopt.data.actions, 
             trajopt.data.parameters)
     end
+    if trajopt.dimensions.equality_general_constraints > 0
+        jacobian_variables!(
+            jacobian, 
+            (length(vcat(trajopt.sparsity.dynamics_jacobian_variables...)) + length(vcat(trajopt.sparsity.equality_jacobian_variables...))), 
+            trajopt.data.equality_general, 
+            variables, 
+            parameters,
+        )
+    end
     return
 end
 
@@ -172,6 +190,15 @@ function equality_jacobian_parameters!(jacobian, trajopt::TrajectoryOptimization
             trajopt.data.states, 
             trajopt.data.actions, 
             trajopt.data.parameters)
+    end
+    if trajopt.dimensions.equality_general_constraints > 0
+        jacobian_parameters!(
+            jacobian, 
+            (length(vcat(trajopt.sparsity.dynamics_jacobian_parameters...)) + length(vcat(trajopt.sparsity.equality_jacobian_parameters...))), 
+            trajopt.data.equality_general, 
+            variables, 
+            parameters,
+        )
     end
     return
 end
@@ -200,6 +227,15 @@ function equality_dual_jacobian_variables!(gradient, trajopt::TrajectoryOptimiza
             trajopt.data.actions, 
             trajopt.data.parameters,
             trajopt.data.duals_equality)
+    end
+    if trajopt.dimensions.equality_general_constraints > 0
+        constraint_dual_jacobian_variables!(
+            gradient, 
+            trajopt.data.equality_general, 
+            variables,
+            parameters,
+            trajopt.data.duals_equality_general,
+)
     end
     return
 end
@@ -315,6 +351,16 @@ function equality_jacobian_variables_variables!(jacobian, trajopt::TrajectoryOpt
             trajopt.data.parameters, 
             trajopt.data.duals_equality)
     end
+    if trajopt.dimensions.equality_general_constraints > 0 
+        jacobian_variables_variables!(
+            jacobian, 
+            (length(vcat(trajopt.sparsity.dynamics_jacobian_variables_variables...)) + length(vcat(trajopt.sparsity.equality_jacobian_variables_variables...))), 
+            trajopt.data.equality_general, 
+            variables, 
+            parameters, 
+            trajopt.data.duals_equality,
+        )
+    end
     return 
 end
 
@@ -342,6 +388,16 @@ function equality_jacobian_variables_parameters!(jacobian, trajopt::TrajectoryOp
             trajopt.data.actions, 
             trajopt.data.parameters, 
             trajopt.data.duals_equality)
+    end
+    if trajopt.dimensions.equality_general_constraints > 0 
+        jacobian_variables_parameters!(
+            jacobian, 
+            (length(vcat(trajopt.sparsity.dynamics_jacobian_variables_parameters...)) + length(vcat(trajopt.sparsity.equality_jacobian_variables_parameters...))), 
+            trajopt.data.equality_general, 
+            variables, 
+            parameters,
+            trajopt.data.duals_equality,
+        )
     end
     return 
 end

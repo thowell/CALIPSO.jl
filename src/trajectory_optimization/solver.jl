@@ -1,5 +1,6 @@
 function Solver(objective, dynamics, num_states::Vector{Int}, num_actions::Vector{Int};
     equality=[empty_constraint for t = 1:length(num_states)],
+    equality_general=empty_constraint,
     nonnegative=[empty_constraint for t = 1:length(num_states)],
     second_order=[[empty_constraint] for t = 1:length(num_states)],
     parameters=[zeros(0) for t = 1:length(num_states)],
@@ -18,6 +19,9 @@ function Solver(objective, dynamics, num_states::Vector{Int}, num_actions::Vecto
     @assert length(nonnegative) ==  H
     @assert length(second_order) == H
     @assert length(parameters) ==   H
+
+    # variables 
+    num_variables = sum(num_states) + sum(num_actions)
 
     # parameters 
     num_parameters = [length(p) for p in parameters]
@@ -46,10 +50,17 @@ function Solver(objective, dynamics, num_states::Vector{Int}, num_actions::Vecto
     # TODO: more efficient generate method 
     so = [[Constraint(s, num_states[t], t == H ? 0 : num_actions[t]; 
         num_parameter=num_parameters[t],
+        checkbounds=options.codegen_checkbounds,
         constraint_tensor=options.constraint_tensor) for s in second_order[t]] for t = 1:H]
 
+    # general equality
+    eg = EqualityGeneral(equality_general, num_variables; 
+        num_parameters=sum(num_parameters),
+        checkbounds=options.codegen_checkbounds,
+        constraint_tensor=options.constraint_tensor)
+
     # trajectory optimization problem
-    trajopt = TrajectoryOptimizationProblem(dyn, obj, eq, nn, so;
+    trajopt = TrajectoryOptimizationProblem(dyn, obj, eq, eg, nn, so;
         parameters=parameters)
 
     # CALIPSO methods

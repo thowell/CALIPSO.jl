@@ -106,14 +106,14 @@ end
 function search_direction_nonsymmetric!(step::Point{T}, matrix::SparseMatrixCSC{T,Int}, residual::Point{T}, lu_factorization::ILU0Precon{T,Int,T}; 
     update_factorization=false) where T
 
-    # if update_factorization 
-    #     lu_factorization = ilu0(matrix)
-    # else
-    #     ilu0!(lu_factorization, matrix)
-    # end
-    # # lu_factorization = ilu0(matrix)
-    # fill!(step.all, 0.0)
-    # ldiv!(step.all, lu_factorization, residual.all)
-    step.all .= matrix \ residual.all
+    if update_factorization 
+        ilu0!(lu_factorization, matrix)
+        ldiv!(step.all, lu_factorization, residual.all)
+    else
+        step.all .= matrix \ residual.all
+    end
+
+    # step.all .= matrix \ residual.all
+
     return 
 end

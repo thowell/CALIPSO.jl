@@ -17,7 +17,8 @@ function TrajectoryOptimizationProblem(data::TrajectoryOptimizationData;
     idx = indices(
         data.objective, 
         data.dynamics, 
-        data.equality, 
+        data.equality,
+        data.equality_general, 
         data.nonnegative,
         data.second_order,
         spar.jacobian_variables_variables_key, 
@@ -40,12 +41,13 @@ function TrajectoryOptimizationProblem(
     dynamics, 
     objective, 
     equality, 
+    equality_general,
     nonnegative,
     second_order; 
     constraint_tensor=true, 
     parameters=[[zeros(num_parameter) for num_parameter in dimensions(dynamics)[3]]..., zeros(0)])
 
-    data = TrajectoryOptimizationData(dynamics, objective, equality, nonnegative, second_order,
+    data = TrajectoryOptimizationData(dynamics, objective, equality, equality_general, nonnegative, second_order,
         parameters=parameters)
 
     trajopt = TrajectoryOptimizationProblem(data, 

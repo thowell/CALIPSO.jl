@@ -7,6 +7,7 @@ struct TrajectoryOptimizationDimensions
     total_equality::Int 
     equality_dynamics::Int 
     equality_constraints::Int
+    equality_general_constraints::Int
     total_cone::Int
     cone_nonnegative::Int
     cone_second_order::Int
@@ -40,24 +41,27 @@ function TrajectoryOptimizationDimensions(data::TrajectoryOptimizationData;
     # number of constraints
     num_dynamics = num_constraint(data.dynamics)
     num_equality = num_constraint(data.equality) 
+    num_equality_general = num_constraint(data.equality_general)
     num_nonnegative = num_constraint(data.nonnegative)
     num_second_order = sum(num_constraint(data.second_order))
-    total_equality = num_dynamics + num_equality 
+    total_equality = num_dynamics + num_equality + num_equality_general
     total_cone = num_nonnegative + num_second_order
 
     # number of nonzeros in constraint Jacobian
     num_dynamics_jacobian_variables = num_jacobian_variables(data.dynamics)
     num_dynamics_jacobian_parameters = num_jacobian_parameters(data.dynamics)
     num_equality_jacobian_variables = num_jacobian_variables(data.equality)  
-    num_equality_jacobian_parameters = num_jacobian_parameters(data.equality)  
+    num_equality_jacobian_parameters = num_jacobian_parameters(data.equality)
+    num_equality_general_jacobian_variables = num_jacobian_variables(data.equality_general)  
+    num_equality_general_jacobian_parameters = num_jacobian_parameters(data.equality_general)  
     num_nonnegative_jacobian_variables = num_jacobian_variables(data.nonnegative)
     num_nonnegative_jacobian_parameters = num_jacobian_parameters(data.nonnegative)
 
     num_second_order_jacobian_variables = sum(num_jacobian_variables(data.second_order))
     num_second_order_jacobian_parameters = sum(num_jacobian_parameters(data.second_order))
 
-    total_equality_jacobians_variables = num_dynamics_jacobian_variables + num_equality_jacobian_variables 
-    total_equality_jacobians_parameters = num_dynamics_jacobian_parameters + num_equality_jacobian_parameters 
+    total_equality_jacobians_variables = num_dynamics_jacobian_variables + num_equality_jacobian_variables + num_equality_general_jacobian_variables 
+    total_equality_jacobians_parameters = num_dynamics_jacobian_parameters + num_equality_jacobian_parameters + num_equality_general_jacobian_parameters 
 
     total_cone_jacobians_variables = num_nonnegative_jacobian_variables + num_second_order_jacobian_variables
     total_cone_jacobians_parameters = num_nonnegative_jacobian_parameters + num_second_order_jacobian_parameters
@@ -71,6 +75,7 @@ function TrajectoryOptimizationDimensions(data::TrajectoryOptimizationData;
         total_equality,
         num_dynamics, 
         num_equality,
+        num_equality_general,
         total_cone,
         num_nonnegative, 
         num_second_order, 

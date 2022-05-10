@@ -11,6 +11,11 @@ struct TrajectoryOptimizationIndices
     equality_jacobians_parameters::Vector{Vector{Int}} 
     equality_jacobians_variables_variables::Vector{Vector{Int}}
     equality_jacobians_variables_parameters::Vector{Vector{Int}}
+    equality_general_constraints::Vector{Int} 
+    equality_general_jacobians_variables::Vector{Int} 
+    equality_general_jacobians_parameters::Vector{Int} 
+    equality_general_jacobians_variables_variables::Vector{Int}
+    equality_general_jacobians_variables_parameters::Vector{Int}
     nonnegative_constraints::Vector{Vector{Int}} 
     nonnegative_jacobians_variables::Vector{Vector{Int}} 
     nonnegative_jacobians_parameters::Vector{Vector{Int}} 
@@ -23,6 +28,7 @@ struct TrajectoryOptimizationIndices
     second_order_jacobians_variables_parameters::Vector{Vector{Vector{Int}}}
     dynamics_duals::Vector{Vector{Int}}
     equality_duals::Vector{Vector{Int}} 
+    equality_general_duals::Vector{Int}
     nonnegative_duals::Vector{Vector{Int}}
     second_order_duals::Vector{Vector{Vector{Int}}}
     states::Vector{Vector{Int}}
@@ -36,6 +42,7 @@ function indices(
     objective, 
     dynamics, 
     equality,
+    equality_general,
     nonnegative, 
     second_order,
     jacobian_variables_variables_key::Vector{Tuple{Int,Int}}, 
@@ -45,8 +52,12 @@ function indices(
     num_parameter::Vector{Int},
     num_trajectory::Int) 
     
+    # variables 
+    num_variables = sum(num_state) + sum(num_action) 
+
     # parameters 
     parameters = [sum(num_parameter[1:(t-1)]) .+ collect(1:num_parameter[t]) for t = 1:length(num_parameter)]
+    num_parameters = sum(num_parameter) 
 
     # dynamics
     dynamics_constraints = constraint_indices(dynamics, 
@@ -63,6 +74,14 @@ function indices(
         shift=num_jacobian_variables(dynamics))
     equality_jacobians_parameters = jacobian_parameters_indices(equality, 
         shift=num_jacobian_parameters(dynamics))
+
+    # equality general constraints
+    equality_general_constraints = constraint_indices(equality_general, 
+        shift=(num_constraint(dynamics) + num_constraint(equality)))
+    equality_general_jacobians_variables = jacobian_variables_indices(equality_general, 
+        shift=(num_jacobian_variables(dynamics) + num_jacobian_variables(equality)))
+    equality_general_jacobians_parameters = jacobian_parameters_indices(equality_general, 
+        shift=(num_jacobian_parameters(dynamics) + num_jacobian_parameters(equality)))
     
     # nonnegative constraints
     nonnegative_constraints = constraint_indices(nonnegative, 
@@ -84,6 +103,8 @@ function indices(
     dynamics_duals = constraint_indices(dynamics)
     equality_duals = constraint_indices(equality,
         shift=num_constraint(dynamics))
+    equality_general_duals = constraint_indices(equality_general,
+        shift=(num_constraint(dynamics) + num_constraint(equality)))
 
     # nonnegative duals
     nonnegative_duals = constraint_indices(nonnegative)
@@ -101,6 +122,9 @@ function indices(
 
     equality_jacobian_variables_variables = jacobian_variables_variables_indices(equality, jacobian_variables_variables_key, num_state, num_action)
     equality_jacobian_variables_parameters = jacobian_variables_parameters_indices(equality, jacobian_variables_parameters_key, num_state, num_action, num_parameter)
+
+    equality_general_jacobian_variables_variables = jacobian_variables_variables_indices(equality_general, jacobian_variables_variables_key, num_variables)
+    equality_general_jacobian_variables_parameters = jacobian_variables_parameters_indices(equality_general, jacobian_variables_parameters_key, num_variables, num_parameters)
 
     nonnegative_jacobian_variables_variables = jacobian_variables_variables_indices(nonnegative, jacobian_variables_variables_key, num_state, num_action)
     nonnegative_jacobian_variables_parameters = jacobian_variables_parameters_indices(nonnegative, jacobian_variables_parameters_key, num_state, num_action, num_parameter)
@@ -127,6 +151,11 @@ function indices(
         equality_jacobians_parameters, 
         equality_jacobian_variables_variables,
         equality_jacobian_variables_parameters,
+        equality_general_constraints, 
+        equality_general_jacobians_variables, 
+        equality_general_jacobians_parameters, 
+        equality_general_jacobian_variables_variables,
+        equality_general_jacobian_variables_parameters,
         nonnegative_constraints, 
         nonnegative_jacobian_variables_variables, 
         nonnegative_jacobian_variables_parameters, 
@@ -139,6 +168,7 @@ function indices(
         second_order_jacobian_variables_parameters,
         dynamics_duals,
         equality_duals, 
+        equality_general_duals,
         nonnegative_duals,
         second_order_duals,
         x_idx, 

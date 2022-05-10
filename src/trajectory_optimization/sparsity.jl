@@ -3,6 +3,8 @@ struct TrajectoryOptimizationSparsity
     dynamics_jacobian_parameters
     equality_jacobian_variables
     equality_jacobian_parameters
+    equality_general_jacobian_variables
+    equality_general_jacobian_parameters
     nonnegative_jacobian_variables
     nonnegative_jacobian_parameters
     second_order_jacobian_variables
@@ -15,6 +17,8 @@ struct TrajectoryOptimizationSparsity
     dynamics_jacobian_variables_parameters
     equality_jacobian_variables_variables
     equality_jacobian_variables_parameters
+    equality_general_jacobian_variables_variables
+    equality_general_jacobian_variables_parameters
     nonnegative_jacobian_variables_variables
     nonnegative_jacobian_variables_parameters
     second_order_jacobian_variables_variables
@@ -26,13 +30,20 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
     num_states, num_actions, num_parameters = dimensions(data.dynamics,
         parameters=[length(p) for p in data.parameters])
     num_dynamics = num_constraint(data.dynamics)
+    num_equality = num_constraint(data.equality) 
+    num_equality_general = num_constraint(data.equality_general)
     num_nonnegative = num_constraint(data.nonnegative)
+    
+    total_variables = sum(num_state) + sum(num_actions)
+    total_parameters = sum(num_parameters) 
 
     # constraint Jacobian sparsity
     sparsity_dynamics_jacobian_variables = sparsity_jacobian_variables(data.dynamics, num_states, num_actions, 
         row_shift=0)
     sparsity_equality_jacobian_variables = sparsity_jacobian_variables(data.equality, num_states, num_actions, 
         row_shift=num_dynamics)
+    sparsity_equality_general_jacobian_variables = sparsity_jacobian_variables(data.equality_general, total_variables, 
+        row_shift=(num_dynamics + num_equality))
     sparsity_nonnegative_jacobian_variables = sparsity_jacobian_variables(data.nonnegative, num_states, num_actions, 
         row_shift=0)
     sparsity_second_order_jacobian_variables = sparsity_jacobian_variables(data.second_order, num_states, num_actions, 
@@ -42,6 +53,8 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
         row_shift=0)
     sparsity_equality_jacobian_parameters = sparsity_jacobian_parameters(data.equality, num_states, num_actions, num_parameters, 
         row_shift=num_dynamics)
+    sparsity_equality_general_jacobian_parameters = sparsity_jacobian_parameters(data.equality_general, total_variables, total_parameters, 
+        row_shift=(num_dynamics + num_equality))
     sparsity_nonnegative_jacobian_parameters = sparsity_jacobian_parameters(data.nonnegative, num_states, num_actions, num_parameters, 
         row_shift=0)
     sparsity_second_order_jacobian_parameters = sparsity_jacobian_parameters(data.second_order, num_states, num_actions, num_parameters, 
@@ -49,14 +62,20 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
 
     # Hessian of Lagrangian sparsity 
     sparsity_objective_jacobian_variables_variables = sparsity_jacobian_variables_variables(data.objective, num_states, num_actions)
+    
     sparsity_dynamics_jacobian_variables_variables = sparsity_jacobian_variables_variables(data.dynamics, num_states, num_actions)
     sparsity_equality_jacobian_variables_variables = sparsity_jacobian_variables_variables(data.equality, num_states, num_actions)
+    sparsity_equality_general_jacobian_variables_variables = sparsity_jacobian_variables_variables(data.equality_general, total_variables)
+
     sparsity_nonnegative_jacobian_variables_variables = sparsity_jacobian_variables_variables(data.nonnegative, num_states, num_actions)
     sparsity_second_order_jacobian_variables_variables = sparsity_jacobian_variables_variables(data.second_order, num_states, num_actions)
 
     sparsity_objective_jacobian_variables_parameters = sparsity_jacobian_variables_parameters(data.objective, num_states, num_actions, num_parameters)
+    
     sparsity_dynamics_jacobian_variables_parameters = sparsity_jacobian_variables_parameters(data.dynamics, num_states, num_actions, num_parameters)
     sparsity_equality_jacobian_variables_parameters = sparsity_jacobian_variables_parameters(data.equality, num_states, num_actions, num_parameters)
+    sparsity_equality_general_jacobian_variables_parameters = sparsity_jacobian_variables_parameters(data.equality_general, total_variables, total_parameters)
+
     sparsity_nonnegative_jacobian_variables_parameters = sparsity_jacobian_variables_parameters(data.nonnegative, num_states, num_actions, num_parameters)
     sparsity_second_order_jacobian_variables_parameters = sparsity_jacobian_variables_parameters(data.second_order, num_states, num_actions, num_parameters)
 
@@ -64,6 +83,7 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
         (sparsity_objective_jacobian_variables_variables...)..., 
         (sparsity_dynamics_jacobian_variables_variables...)..., 
         (sparsity_equality_jacobian_variables_variables...)..., 
+        sparsity_equality_general_jacobian_variables_variables..., 
         (sparsity_nonnegative_jacobian_variables_variables...)...,
         ((sparsity_second_order_jacobian_variables_variables...)...)...,
     ]
@@ -74,6 +94,7 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
         (sparsity_objective_jacobian_variables_parameters...)..., 
         (sparsity_dynamics_jacobian_variables_parameters...)..., 
         (sparsity_equality_jacobian_variables_parameters...)..., 
+        sparsity_equality_general_jacobian_variables_parameters...,
         (sparsity_nonnegative_jacobian_variables_parameters...)...,
         ((sparsity_second_order_jacobian_variables_parameters...)...)...,
     ]
@@ -85,6 +106,8 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
         sparsity_dynamics_jacobian_parameters,
         sparsity_equality_jacobian_variables,
         sparsity_equality_jacobian_parameters,
+        sparsity_equality_general_jacobian_variables,
+        sparsity_equality_general_jacobian_parameters,
         sparsity_nonnegative_jacobian_variables,
         sparsity_nonnegative_jacobian_parameters,
         sparsity_second_order_jacobian_variables,
@@ -97,6 +120,8 @@ function TrajectoryOptimizationSparsity(data::TrajectoryOptimizationData)
         sparsity_dynamics_jacobian_variables_parameters,
         sparsity_equality_jacobian_variables_variables,
         sparsity_equality_jacobian_variables_parameters,
+        sparsity_equality_general_jacobian_variables_variables,
+        sparsity_equality_general_jacobian_variables_parameters,
         sparsity_nonnegative_jacobian_variables_variables,
         sparsity_nonnegative_jacobian_variables_parameters,
         sparsity_second_order_jacobian_variables_variables,
