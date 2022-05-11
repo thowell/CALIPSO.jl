@@ -166,6 +166,7 @@ function equality_constraint(z)
     c[bidx_c[N-1]] = z[bidx_q[1]] - q0
     c[bidx_c[N]] = z[bidx_q[2]] - q1
     c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [.7;.7]
+    # c[bidx_c[N+1]] = [z[bidx_q[5][2]];z[bidx_q[6][4]]] - [.7;.7]
     # c[bidx_c[N+2]] = z[bidx_q[N]][[6]] - [1.0]
     return c
 end
@@ -194,6 +195,12 @@ function cost_function(z)
         else
             J += .5*transpose(dq)*Q1*dq
         end
+
+        qq = z[bidx_q[i]]
+        x1 = qq[1]
+        x2 = qq[3]
+        xb = qq[5]
+        J += 10*(xb - 0.5*(x1 + x2))^2
     end
     for i = 1:N-1
         du = z[bidx_u[i]] - usref[i]
@@ -237,10 +244,11 @@ qs = [solver.solution.variables[bidx_q[i]] for i = 1:N]
 us = [solver.solution.variables[bidx_u[i]] for i = 1:N-1]
 
 Qm = hcat(qs...)
+Um = hcat(us...)
 Qreffm = hcat(qsref...)
 #
 using JLD2
-jldsave("bunny_hop_simple_v12.jld2";qs)
+jldsave("bunny_hop_simple_v14.jld2";qs)
 
 using MATLAB
 mat"
@@ -248,6 +256,13 @@ figure
 hold on
 plot($Qm([2,4,6],:)')
 legend('m1','m2','mb')
+hold off
+"
+
+mat"
+figure
+hold on
+plot($Um')
 hold off
 "
 
