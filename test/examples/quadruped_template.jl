@@ -1,3 +1,6 @@
+
+using FiniteDiff 
+ 
 function trotting_configuration(model::RoboDojo.Quadruped4, Tm::Int, mode::Symbol; timestep=0.01,
     velocity=0.15, body_height=0.30, body_forward_position=0.00,
     foot_height=0.08)
