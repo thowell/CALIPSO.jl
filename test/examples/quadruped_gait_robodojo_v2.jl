@@ -230,8 +230,9 @@ slack_norm = max(
 @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 # end 
 
-# using JLD2
+using JLD2
 # @save joinpath(@__DIR__, "quadruped_gait.jld2") x_sol u_sol
+@load joinpath(@__DIR__, "quadruped_gait.jld2") x_sol u_sol
 
 # # ## visualize 
 function mirror_gait(q, u, horizon)
@@ -251,29 +252,134 @@ render(vis)
 q_vis = [x_sol[1][1:model.nq], [x[model.nq .+ (1:model.nq)] for x in x_sol]...]
 u_vis = [ut[3 .+ (1:8)] for ut in u_sol]
 for i = 1:3
-    horizon = length(q_vis) - 1
-    q_vis, u_vis = mirror_gait(q_vis, u_vis, horizon)
+    _horizon = length(q_vis) - 1
+    q_vis, u_vis = mirror_gait(q_vis, u_vis, _horizon)
 end
 RoboDojo.visualize!(vis, model, q_vis, Δt=timestep)
 
-using Plots
-plot(hcat(u_vis...)')
-
+# using Plots
+# plot(hcat(u_vis...)')
 
 # ## open-loop rollout 
-x_hist = [copy(state_reference[1])]
-for i = 1:11
+x_hist = [[q_vis[2]; (q_vis[2] - q_vis[1]) ./ timestep]]
+u_vis[1]
+for t = 1:horizon-1
     y = zeros(22)
-    RoboDojo.dynamics(sim, y, x_hist[end], [slack_reference; 0*ones(8)], zeros(0))
+    RoboDojo.dynamics(sim, y, x_hist[end], [zeros(3); u_vis[t] ./ timestep], zeros(0))
     push!(x_hist, y)
 end
 # using Plots
 # plot(hcat(x_hist...)'[:,1:3])
 
-s = Simulator(model, 11-1, h=timestep)
-for i = 1:11
+s = Simulator(model, horizon-1, h=timestep)
+for i = 1:horizon-1
     q = x_hist[i][1:11]
     v = x_hist[i][11 .+ (1:11)]
     RoboDojo.set_state!(s, q, v, i)
 end
 visualize!(vis, s)
+
+# ## reference solution 
+z̄_mpc = [x_sol[t][11 .+ (1:35)] for t = 2:horizon]
+θ̄_mpc = [zeros(length(sim.ip.θ)) for t = 1:horizon-1]
+for t = 1:horizon-1 
+    RoboDojo.initialize_θ!(θ̄_mpc[t], sim.model, sim.idx_θ, x_sol[t][1:11], x_sol[t][11 .+ (1:11)], [zeros(3); u_sol[t][3 .+ (1:8)]], sim.dist.w, sim.f, sim.h)
+end
+
+parameters_mpc = [[z̄_mpc[t]; θ̄_mpc[t]] for t = 1:horizon-1]
+num_parameters_mpc = [length(parameters_mpc[t]) for t = 1:horizon-1]
+
+function dynamics_linearized(y, x, u, w)
+    z̄ = w[1:35]
+    θ̄ = w[35 .+ (1:44)]
+    robodojo_linearized_dynamics(sim, z̄, θ̄, y, x, [zeros(3); u])
+end
+
+using Symbolics
+@variables z̄[1:35] θ̄[1:44] y[1:num_states_mpc[2]] x[1:num_states_mpc[1]] u[1:11]
+# robodojo_linearized_dynamics(sim, rand(35), rand(44), rand(num_states_mpc[2]), rand(num_states_mpc[1]), [zeros(3); rand(num_actions[1])])
+robodojo_linearized_dynamics(sim, rand(35), rand(44), y, x, u)
+
+sim.ip.z
+sim.ip.θ
+sim.idx_θ
+
+# ## mpc policy 
+horizon_mpc = 3 
+num_states_mpc, num_actions_mpc = state_action_dimensions(sim, horizon_mpc)
+num_actions_mpc = [8 for t = 1:horizon_mpc-1]
+
+# dynamics
+dynamics_mpc = [dynamics_linearized for t = 1:horizon_mpc-1]
+
+# objective
+function objt_mpc(x, u, w) 
+    x̄ = [w[35 + 11 .+ (1:11)]; w[1:11]] 
+    ū = w[35 + 22 .+ (1:8)]
+    J = 0.0 
+    J += 0.5 * transpose(x[1:22] - x̄) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x[1:22] - x̄)
+    J += 0.5 * transpose(u[1:8] - ū) * Diagonal([1.0e-2; 1.0e-2; 1.0e-2; 1.0e-2; 1.0e-2; 1.0e-2; 1.0e-2; 1.0e-2; 1.0e-2; 1.0e-2]) * (u[1:8] - ū)
+    return J 
+end
+
+function objT_mpc(x, u, w) 
+    x̄ = [w[35 + 11 .+ (1:11)]; w[1:11]] 
+    ū = w[35 + 22 .+ (1:8)]
+    J = 0.0 
+    J += 0.5 * transpose(x[1:22] - x̄) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x[1:22] - x̄)
+    return J 
+end
+
+objective_mpc = [[objt_mpc for t = 1:horizon_mpc-1]..., objT_mpc]
+equality_mpc = [(x, u, w) -> x[1:22] - w[35 .+ (1:22)], [empty_constraint for t = 2:horizon_mpc]...]
+inequality_mpc = [[(x, u, w) -> [2.0 .- u[1:8]; u[1:8] .+ 2.0] for t = 1:horizon_mpc-1]..., empty_constraint]
+
+options_mpc = Options(
+    constraint_tensor=true,
+    residual_tolerance=1.0e-3,
+    optimality_tolerance=1.0e-2, 
+    equality_tolerance=1.0e-2, 
+    complementarity_tolerance=1.0e-2,
+    slack_tolerance=1.0e-2,
+    update_factorization=true,
+)
+
+# ## solver 
+solver_mpc = Solver(objective_mpc, dynamics_mpc, num_states_mpc, num_actions_mpc;
+    parameters=parameters_mpc[1:horizon_mpc],
+    equality=equality_mpc,
+    options=options_mpc);
+
+# ## initialize
+# state_guess = x_mpc[1:horizon_mpc]
+# action_guess = u_mpc[1:horizon_mpc-1]
+# initialize_states!(solver_mpc, state_guess) 
+# initialize_controls!(solver_mpc, action_guess)
+
+# # ## solve 
+# solve!(solver_mpc)
+
+function policy(x, τ)
+
+    # set parameters (reference and initial state)
+    p = vcat([[x_mpc[t]; u_mpc[t]] for t = 1:horizon_mpc]...)
+    p[1:4] .= copy(x) 
+    solver_mpc.parameters .= p
+
+    # initialize
+    initialize_states!(solver_mpc, x_mpc[1:horizon_mpc]) 
+    initialize_controls!(solver_mpc, u_mpc[1:horizon_mpc])
+
+    # optimize
+    solve!(solver_mpc)
+
+    # solution 
+    x_s, u_s = get_trajectory(solver_mpc)
+
+    # shift reference 
+    x_mpc .= [x_mpc[2:end]..., x_mpc[1]]
+    u_mpc .= [u_mpc[2:end]..., u_mpc[1]] 
+
+    # return first control
+    return u_s[1] 
+end
