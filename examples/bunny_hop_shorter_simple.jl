@@ -45,7 +45,7 @@ function Dc(q)
     # transpose(g)
 end
 function d(q)
-    [q[2];q[4];q[6]-0.7]
+    [q[2];q[4];q[6]-0.3]
 end
 function Dd(q)
     [0 1 0 0 0 0;
@@ -108,13 +108,13 @@ bidx_c = [(i-1)*10 .+ (1:10) for i = 1:N-2] # dynamics constraints
 push!(bidx_c, bidx_c[end][end] .+ (1:6)) # q1 constraint
 push!(bidx_c, bidx_c[end][end] .+ (1:6)) # q2 constraint
 push!(bidx_c, bidx_c[end][end] .+ (1:2)) # jump_constraint constraint
-push!(bidx_c, bidx_c[end][end] .+ (1:1)) # jump_constraint constraint
+# push!(bidx_c, bidx_c[end][end] .+ (1:1)) # jump_constraint constraint
 nc = bidx_c[end][end]
 
 bidx_h = [(i-1)*3 .+ (1:3) for i = 1:N-2] # here is η > 0
 bidx_h2 = [(bidx_h[end][end] + (i-1)*3) .+ (1:3) for i = 1:N] # Jc(q) >0
-bidx_h3 = bidx_h2[end][end] .+ (1:3) # Jc(q) >0
-nh = bidx_h3[end][end]
+# bidx_h3 = bidx_h2[end][end] .+ (1:3) # Jc(q) >0
+nh = bidx_h2[end][end]
 
 q0 = [
         -r_wheel_base/2,
@@ -143,7 +143,8 @@ qsref = [q0 + 3*h*(i-1)*[1,0,1,0,1,0] for i = 1:N]
 #     global scale_down += 1
 # end
 
-Q = Diagonal([0, 1, 0, 1, 0, 1])
+Q1 = Diagonal([0, 1, 0, 1, 0, .1])
+Q2 = Diagonal([0, 1, 0, 1, 0, 1e4])
 R = .01*Diagonal(ones(2))
 
 
@@ -164,8 +165,8 @@ function equality_constraint(z)
 
     c[bidx_c[N-1]] = z[bidx_q[1]] - q0
     c[bidx_c[N]] = z[bidx_q[2]] - q1
-    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [.3;.3]
-    c[bidx_c[N+2]] = z[bidx_q[N]][[6]] - [1.0]
+    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [.7;.7]
+    # c[bidx_c[N+2]] = z[bidx_q[N]][[6]] - [1.0]
     return c
 end
 
@@ -179,8 +180,8 @@ function inequality_constraints(z)
         qq = z[bidx_q[i]]
         ineq[bidx_h2[i]] = d(qq)  # 4
     end
-    qn = z[bidx_q[N]]
-    ineq[bidx_h3] = [qn[5] - qn[1]; -qn[5] + qn[3]]
+    # qn = z[bidx_q[N]]
+    # ineq[bidx_h3] = [qn[5] - qn[1]; -qn[5] + qn[3]]
     return ineq
 end
 
@@ -188,7 +189,11 @@ function cost_function(z)
     J = zero(eltype(z))
     for i = 1:N
         dq = z[bidx_q[i]] - qsref[i]
-        J += .5*transpose(dq)*Q*dq
+        if i > 6
+            J += .5*transpose(dq)*Q2*dq
+        else
+            J += .5*transpose(dq)*Q1*dq
+        end
     end
     for i = 1:N-1
         du = z[bidx_u[i]] - usref[i]
@@ -232,9 +237,10 @@ qs = [solver.solution.variables[bidx_q[i]] for i = 1:N]
 us = [solver.solution.variables[bidx_u[i]] for i = 1:N-1]
 
 Qm = hcat(qs...)
+Qreffm = hcat(qsref...)
 #
 using JLD2
-jldsave("bunny_hop_v11.jld2";qs)
+jldsave("bunny_hop_simple_v12.jld2";qs)
 
 using MATLAB
 mat"
@@ -244,6 +250,16 @@ plot($Qm([2,4,6],:)')
 legend('m1','m2','mb')
 hold off
 "
+
+mat"
+figure
+hold on
+plot($Qreffm([2,4,6],:)')
+legend('m1','m2','mb')
+hold off
+"
+
+
 mat"
 figure
 hold on
