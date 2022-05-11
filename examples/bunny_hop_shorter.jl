@@ -94,7 +94,7 @@ function contact_kkt(q1,q2,q3,λ,η,u1,u2,κ)
 end
 
 # problem indexing
-N = 20
+N = 10
 
 
 
@@ -162,7 +162,7 @@ function equality_constraint(z)
 
     c[bidx_c[N-1]] = z[bidx_q[1]] - q0
     c[bidx_c[N]] = z[bidx_q[2]] - q1
-    c[bidx_c[N+1]] = z[bidx_q[10]][[2,4]] - [.3;.3]
+    c[bidx_c[N+1]] = z[bidx_q[8]][[2,4]] - [.3;.3]
     return c
 end
 
