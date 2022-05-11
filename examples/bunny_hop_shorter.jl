@@ -15,7 +15,7 @@ const m_b = 3.0
 
 const m1 = 1.0
 const m2 = 1.0
-const h = 0.1
+const h = 0.2
 const gravity = [0;-9.8]
 
 const r_wheel_base = 2.0
@@ -108,6 +108,7 @@ bidx_c = [(i-1)*10 .+ (1:10) for i = 1:N-2] # dynamics constraints
 push!(bidx_c, bidx_c[end][end] .+ (1:6)) # q1 constraint
 push!(bidx_c, bidx_c[end][end] .+ (1:6)) # q2 constraint
 push!(bidx_c, bidx_c[end][end] .+ (1:2)) # jump_constraint constraint
+push!(bidx_c, bidx_c[end][end] .+ (1:1)) # jump_constraint constraint
 nc = bidx_c[end][end]
 
 bidx_h = [(i-1)*3 .+ (1:3) for i = 1:N-2] # here is η > 0
@@ -141,7 +142,7 @@ qsref = [q0 + 3*h*(i-1)*[1,0,1,0,1,0] for i = 1:N]
 #     global scale_down += 1
 # end
 
-Q = Diagonal([0, 1, 0, 1, 0, .01])
+Q = Diagonal([0, 1, 0, 1, 0, 1])
 R = .01*Diagonal(ones(2))
 
 
@@ -162,7 +163,8 @@ function equality_constraint(z)
 
     c[bidx_c[N-1]] = z[bidx_q[1]] - q0
     c[bidx_c[N]] = z[bidx_q[2]] - q1
-    c[bidx_c[N+1]] = z[bidx_q[8]][[2,4]] - [.3;.3]
+    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [.3;.3]
+    c[bidx_c[N+2]] = z[bidx_q[N]][[6]] - [1.0]
     return c
 end
 
@@ -224,11 +226,12 @@ solver.options.penalty_initial = 1e3
 solve!(solver)
 #
 qs = [solver.solution.variables[bidx_q[i]] for i = 1:N]
+us = [solver.solution.variables[bidx_u[i]] for i = 1:N-1]
 
 Qm = hcat(qs...)
 #
 using JLD2
-jldsave("bunny_hop_v6.jld2";qs)
+jldsave("bunny_hop_v7.jld2";qs)
 
 using MATLAB
 mat"
