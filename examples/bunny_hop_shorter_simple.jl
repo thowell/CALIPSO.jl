@@ -113,7 +113,7 @@ nc = bidx_c[end][end]
 
 bidx_h = [(i-1)*3 .+ (1:3) for i = 1:N-2] # here is η > 0
 bidx_h2 = [(bidx_h[end][end] + (i-1)*3) .+ (1:3) for i = 1:N] # Jc(q) >0
-# bidx_h3 = bidx_h2[end][end] .+ (1:3) # Jc(q) >0
+# bidx_h3 = bidx_h2[end][end] .+ (1:N) # Jc(q) >0
 nh = bidx_h2[end][end]
 
 q0 = [
@@ -165,8 +165,8 @@ function equality_constraint(z)
 
     c[bidx_c[N-1]] = z[bidx_q[1]] - q0
     c[bidx_c[N]] = z[bidx_q[2]] - q1
-    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [.7;.7]
-    # c[bidx_c[N+1]] = [z[bidx_q[5][2]];z[bidx_q[6][4]]] - [.7;.7]
+    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - .7*[1.0;1.0]
+    # c[bidx_c[N+1]] = [z[bidx_q[6][2]];z[bidx_q[5][4]]] - [.7;.7]
     # c[bidx_c[N+2]] = z[bidx_q[N]][[6]] - [1.0]
     return c
 end
@@ -180,7 +180,10 @@ function inequality_constraints(z)
     for i = 1:N
         qq = z[bidx_q[i]]
         ineq[bidx_h2[i]] = d(qq)  # 4
+
+        # ineq[bidx_h3[i]] = qq[3] - qq[1]
     end
+
     # qn = z[bidx_q[N]]
     # ineq[bidx_h3] = [qn[5] - qn[1]; -qn[5] + qn[3]]
     return ineq
@@ -236,7 +239,7 @@ solver = Solver(cost_function, equality_constraint, inequality_constraints, nz; 
 
 
 initialize!(solver,initial_z + .001*randn(nz))
-solver.options.penalty_initial = 1e3
+solver.options.penalty_initial = 1e0
 #
 solve!(solver)
 #
@@ -248,7 +251,7 @@ Um = hcat(us...)
 Qreffm = hcat(qsref...)
 #
 using JLD2
-jldsave("bunny_hop_simple_v14.jld2";qs)
+jldsave("bunny_hop_simple_v18.jld2";qs)
 
 using MATLAB
 mat"
