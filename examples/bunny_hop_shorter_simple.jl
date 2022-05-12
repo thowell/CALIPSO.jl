@@ -125,11 +125,11 @@ q0 = [
         sqrt(1.5^2-(r_wheel_base/2)^2)
 ] #- [5,0,5,0,5,0]
 
-q1 = 1*q0 + 3*h*[1,0,1,0,1,0]
+q1 = 1*q0 + 7*h*[1,0,1,0,1,0]
 
 
 usref = [ -0.95*sqrt(2)*.5*m_b*9.8*ones(2) for i = 1:N-1]
-qsref = [q0 + 3*h*(i-1)*[1,0,1,0,1,0] for i = 1:N]
+qsref = [q0 + 7*h*(i-1)*[1,0,1,0,1,0] for i = 1:N]
 
 # jump_length = 4
 # scale_up = 1
@@ -254,7 +254,7 @@ Um = hcat(us...)
 Qreffm = hcat(qsref...)
 #
 using JLD2
-jldsave("bunny_hop_simple_v23.jld2";qs)
+jldsave("bunny_hop_simple_v26.jld2";qs)
 
 using MATLAB
 mat"
