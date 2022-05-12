@@ -50,7 +50,7 @@ function robodojo_linearized_dynamics(sim::RoboDojo.Simulator, z̄, θ̄, y, x, 
     r_nonlinear = zeros(eltype(y), nz)
     z = y[sim.model.nq .+ (1:nz)] 
     θ = zeros(eltype(y), nθ)
-    RoboDojo.initialize_θ!(θ, sim.model, sim.idx_θ, q1, q2⁻, [zeros(3); u], sim.dist.w, sim.f, sim.h)
+    RoboDojo.initialize_θ!(θ, sim.model, sim.idx_θ, q1, q2⁻, u, sim.dist.w, sim.f, sim.h)
     sim.ip.methods.r!(r_nonlinear, z, θ, [0.0])
 
     # linearization 
