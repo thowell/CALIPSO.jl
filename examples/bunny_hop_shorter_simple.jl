@@ -125,11 +125,11 @@ q0 = [
         sqrt(1.5^2-(r_wheel_base/2)^2)
 ] #- [5,0,5,0,5,0]
 
-q1 = 1*q0 + 7*h*[1,0,1,0,1,0]
+q1 = 1*q0 + 11*h*[1,0,1,0,1,0]
 
 
 usref = [ -0.95*sqrt(2)*.5*m_b*9.8*ones(2) for i = 1:N-1]
-qsref = [q0 + 7*h*(i-1)*[1,0,1,0,1,0] for i = 1:N]
+qsref = [q0 + 11*h*(i-1)*[1,0,1,0,1,0] for i = 1:N]
 
 # jump_length = 4
 # scale_up = 1
@@ -165,7 +165,7 @@ function equality_constraint(z)
 
     c[bidx_c[N-1]] = z[bidx_q[1]] - q0
     c[bidx_c[N]] = z[bidx_q[2]] - q1
-    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [1.0;1.05]
+    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [1.1;1.15]
     # c[bidx_c[N+1]] = [z[bidx_q[6][2]];z[bidx_q[5][4]]] - [.7;.7]
     # c[bidx_c[N+2]] = z[bidx_q[N]][[6]] - [1.0]
     return c
@@ -210,7 +210,14 @@ function cost_function(z)
         J += .5*transpose(du)*R*du
         qq1 = z[bidx_q[i]]
         qq2 = z[bidx_q[i+1]]
-        J += .01*transpose(qq1-qq2)*(qq1-qq2)
+        J += .005*transpose(qq1-qq2)*(qq1-qq2)
+    end
+    for i = 1:N-2
+        qq1 = z[bidx_q[i]][[1,3,5]]
+        qq2 = z[bidx_q[i+1]][[1,3,5]]
+        qq3 = z[bidx_q[i+2]][[1,3,5]]
+        a = (qq3 - 2*qq2 + qq1)
+        J += 10*transpose(a)*a
     end
     return J
 end
@@ -254,7 +261,7 @@ Um = hcat(us...)
 Qreffm = hcat(qsref...)
 #
 using JLD2
-jldsave("bunny_hop_simple_v26.jld2";qs)
+jldsave("bunny_hop_simple_v30.jld2";qs)
 
 using MATLAB
 mat"
