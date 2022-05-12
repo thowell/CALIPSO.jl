@@ -89,7 +89,7 @@
    
     # ## states
     state_initial = [0.0; 0.0; 0.0; 0.0] 
-    state_goal = [0.0; π; 0.0; 0.0] 
+    state_goal = [π; 0.0; 0.0; 0.0] 
 
     # ## objective 
     objective = [
