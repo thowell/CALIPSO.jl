@@ -122,7 +122,7 @@ q0 = [
         r_wheel_base/2,
         0,
         0,
-        sqrt(2.0^2-(r_wheel_base/2)^2)
+        sqrt(1.5^2-(r_wheel_base/2)^2)
 ] #- [5,0,5,0,5,0]
 
 q1 = 1*q0 + 3*h*[1,0,1,0,1,0]
@@ -165,7 +165,7 @@ function equality_constraint(z)
 
     c[bidx_c[N-1]] = z[bidx_q[1]] - q0
     c[bidx_c[N]] = z[bidx_q[2]] - q1
-    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [1.0;1.0]
+    c[bidx_c[N+1]] = z[bidx_q[5]][[2,4]] - [1.0;1.05]
     # c[bidx_c[N+1]] = [z[bidx_q[6][2]];z[bidx_q[5][4]]] - [.7;.7]
     # c[bidx_c[N+2]] = z[bidx_q[N]][[6]] - [1.0]
     return c
@@ -242,7 +242,7 @@ solver = Solver(cost_function, equality_constraint, inequality_constraints, nz; 
 
 
 initialize!(solver,initial_z + .001*randn(nz))
-solver.options.penalty_initial = 1e3
+solver.options.penalty_initial = 1e2
 #
 solve!(solver)
 #
@@ -254,7 +254,7 @@ Um = hcat(us...)
 Qreffm = hcat(qsref...)
 #
 using JLD2
-jldsave("bunny_hop_simple_v21.jld2";qs)
+jldsave("bunny_hop_simple_v23.jld2";qs)
 
 using MATLAB
 mat"
