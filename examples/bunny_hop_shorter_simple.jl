@@ -208,6 +208,9 @@ function cost_function(z)
     for i = 1:N-1
         du = z[bidx_u[i]] - usref[i]
         J += .5*transpose(du)*R*du
+        qq1 = z[bidx_q[i]]
+        qq2 = z[bidx_q[i+1]]
+        J += .01*transpose(qq1-qq2)*(qq1-qq2)
     end
     return J
 end
