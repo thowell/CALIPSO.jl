@@ -1,14 +1,14 @@
-# CALIPSO
-using Pkg
-Pkg.activate(joinpath(@__DIR__, ".."))
-Pkg.instantiate()
-using CALIPSO
-
-# Examples
-Pkg.activate(@__DIR__)
-Pkg.instantiate()
-using LinearAlgebra
-
+cd("/Users/kevintracy/devel/TrustRegionSQP/PDAL")
+Pkg.activate(".")
+using LinearAlgebra, ForwardDiff
+using StaticArrays
+const FD = ForwardDiff
+using Printf
+using MATLAB
+using Ipopt
+using MathOptInterface
+const MOI = MathOptInterface;
+using Random
 
 # bunny hop dynamics
 const m_b = 10.0
@@ -131,17 +131,6 @@ q1 = 1*q0 + 11*h*[1,0,1,0,1,0]
 usref = [ -0.95*sqrt(2)*.5*m_b*9.8*ones(2) for i = 1:N-1]
 qsref = [q0 + 11*h*(i-1)*[1,0,1,0,1,0] for i = 1:N]
 
-# jump_length = 4
-# scale_up = 1
-# for i = 11:(11 + jump_length - 1)
-#     qsref[i] = qsref[i] + (scale_up)*[0,1,0,1,0,1]/jump_length
-#     global scale_up += 1
-# end
-# scale_down = 1
-# for i = (11+jump_length):(11 + 2*jump_length - 1)
-#     qsref[i] = qsref[i] + (jump_length - scale_down)*[0,1,0,1,0,1]/jump_length
-#     global scale_down += 1
-# end
 
 Q1 = Diagonal([0, 1, 0, 1, 0, .1])
 Q2 = Diagonal([0, 1, 0, 1, 0, 1e4])
@@ -245,24 +234,181 @@ end
 # @show minimum(inequality_constraints(z0))
 
 
-solver = Solver(cost_function, equality_constraint, inequality_constraints, nz; nonnegative_indices = collect(1:nh))
 
 using Random
 Random.seed!(1234)
-initialize!(solver,initial_z + .001*randn(nz))
-solver.options.penalty_initial = 1e2
-#
-solve!(solver)
-#
-qs = [solver.solution.variables[bidx_q[i]] for i = 1:N]
-us = [solver.solution.variables[bidx_u[i]] for i = 1:N-1]
+initial_z += .001*randn(nz)
+
+
+
+function con!(cv,z)
+    cv[1:nc] .= equality_constraint(z)
+    cv[(nc + 1):(nc + nh)] .= inequality_constraints(z)
+end
+struct ProblemMOI <: MOI.AbstractNLPEvaluator
+    n_nlp::Int
+    m_nlp::Int
+    idx_ineq
+    obj_grad::Bool
+    con_jac::Bool
+    sparsity_jac
+    sparsity_hess
+    primal_bounds
+    constraint_bounds
+    hessian_lagrangian::Bool
+end
+
+function ProblemMOI(n_nlp,m_nlp;
+        idx_ineq=(1:0),
+        obj_grad=true,
+        con_jac=true,
+        sparsity_jac=sparsity_jacobian(n_nlp,m_nlp),
+        sparsity_hess=sparsity_hessian(n_nlp,m_nlp),
+        primal_bounds=primal_bounds(n_nlp),
+        constraint_bounds=constraint_bounds(m_nlp,idx_ineq=idx_ineq),
+        hessian_lagrangian=false)
+
+    ProblemMOI(n_nlp,m_nlp,
+        idx_ineq,
+        obj_grad,
+        con_jac,
+        sparsity_jac,
+        sparsity_hess,
+        primal_bounds,
+        constraint_bounds,
+        hessian_lagrangian)
+end
+
+function primal_bounds(n)
+    x_l = -Inf*ones(n)
+    x_u = Inf*ones(n)
+    return x_l, x_u
+end
+
+function constraint_bounds(m; idx_ineq=((nc + 1):(nc + nh)))
+    c_l = zeros(m)
+    c_l[(nc + 1):(nc + nh)] .= 0
+
+    c_u = zeros(m)
+    c_u[(nc + 1):(nc + nh)] .= Inf
+    return c_l, c_u
+end
+
+function row_col!(row,col,r,c)
+    for cc in c
+        for rr in r
+            push!(row,convert(Int,rr))
+            push!(col,convert(Int,cc))
+        end
+    end
+    return row, col
+end
+
+function sparsity_jacobian(n,m)
+
+    row = []
+    col = []
+
+    r = 1:m
+    c = 1:n
+
+    row_col!(row,col,r,c)
+
+    return collect(zip(row,col))
+end
+
+function sparsity_hessian(n,m)
+
+    row = []
+    col = []
+
+    r = 1:m
+    c = 1:n
+
+    row_col!(row,col,r,c)
+
+    return collect(zip(row,col))
+end
+
+function MOI.eval_objective(prob::MOI.AbstractNLPEvaluator, x)
+    cost_function(x)
+end
+
+function MOI.eval_objective_gradient(prob::MOI.AbstractNLPEvaluator, grad_f, x)
+    ForwardDiff.gradient!(grad_f,cost_function,x)
+    return nothing
+end
+
+function MOI.eval_constraint(prob::MOI.AbstractNLPEvaluator,g,x)
+    con!(g,x)
+    return nothing
+end
+
+function MOI.eval_constraint_jacobian(prob::MOI.AbstractNLPEvaluator, jac, x)
+    ForwardDiff.jacobian!(reshape(jac,prob.m_nlp,prob.n_nlp), con!, zeros(prob.m_nlp), x)
+    return nothing
+end
+
+function MOI.features_available(prob::MOI.AbstractNLPEvaluator)
+    return [:Grad, :Jac]
+end
+
+MOI.initialize(prob::MOI.AbstractNLPEvaluator, features) = nothing
+MOI.jacobian_structure(prob::MOI.AbstractNLPEvaluator) = prob.sparsity_jac
+
+function solve(x0,prob::MOI.AbstractNLPEvaluator;
+        tol=1.0e-6,c_tol=1.0e-6,max_iter=10000)
+    x_l, x_u = prob.primal_bounds
+    c_l, c_u = prob.constraint_bounds
+
+    nlp_bounds = MOI.NLPBoundsPair.(c_l,c_u)
+    block_data = MOI.NLPBlockData(nlp_bounds,prob,true)
+
+    solver = Ipopt.Optimizer()
+    solver.options["max_iter"] = max_iter
+    solver.options["tol"] = tol
+    solver.options["constr_viol_tol"] = c_tol
+
+    x = MOI.add_variables(solver,prob.n_nlp)
+
+    for i = 1:prob.n_nlp
+        xi = MOI.SingleVariable(x[i])
+        MOI.add_constraint(solver, xi, MOI.LessThan(x_u[i]))
+        MOI.add_constraint(solver, xi, MOI.GreaterThan(x_l[i]))
+        MOI.set(solver, MOI.VariablePrimalStart(), x[i], x0[i])
+    end
+
+    # Solve the problem
+    MOI.set(solver, MOI.NLPBlock(), block_data)
+    MOI.set(solver, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(solver)
+
+    # Get the solution
+    res = MOI.get(solver, MOI.VariablePrimal(), x)
+
+    return res
+end
+
+function solve_ipopt()
+
+
+    n_nlp = nz
+    m_nlp = nc + nh
+    prob = ProblemMOI(n_nlp,m_nlp)
+    z = solve(initial_z,prob)
+    return z
+end
+
+
+zopt = solve_ipopt()
+
+qs = [zopt[bidx_q[i]] for i = 1:N]
+us = [zopt[bidx_u[i]] for i = 1:N-1]
 
 Qm = hcat(qs...)
 Um = hcat(us...)
 Qreffm = hcat(qsref...)
 #
-using JLD2
-jldsave("bunny_hop_simple_v30_v2.jld2";qs)
 
 using MATLAB
 mat"
@@ -296,21 +442,3 @@ plot($Qm([1,3,5],:)')
 legend('m1','m2','mb')
 hold off
 "
-# using MeshCat, GeometryBasics, CoordinateTransformations, Rotations
-#
-# # /Users/kevintracy/devel/TrustRegionSQP/bunny_hop.jld2
-# using Colors
-# vis = Visualizer()
-# black_color = MeshPhongMaterial(color=RGBA(0, 0, 0, 0.5))
-# red_color = MeshPhongMaterial(color=RGBA(1, 0, 0, 0.5))
-# green_color = MeshPhongMaterial(color=RGBA(0, 1, 0, 0.5))
-# sphere2 = Sphere(Point3(0.0), .3)
-# setobject!(vis["m3"],sphere2)
-#
-# cyl = Cylinder(Point3(0,-.1,0.0),Point3(0,.1,0),0.5f0)
-# setobject!(vis["m1"],cyl,black_color)
-# setobject!(vis["m2"],cyl,black_color)
-# cyl2 = Cylinder(Point3f(-r_wheel_base/2,0,0.0),Point3f(r_wheel_base/2,0,0),0.1f0)
-# setobject!(vis["bike"],cyl2,red_color)
-#
-# anim = MeshCat.Animation(floor(Int,1/0.2))
