@@ -129,19 +129,22 @@ solve!(solver)
 # ## solution
 x_sol, u_sol = CALIPSO.get_trajectory(solver)
 
-# @test norm((x_sol[1] - x_sol[horizon][1:8])[[2; 3; 4; 6; 7; 8]], Inf) < 1.0e-3
+@show solver.problem.objective[1]
 
-# # test solution
-# @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
-# slack_norm = max(
-#                 norm(solver.data.residual.equality_dual, Inf),
-#                 norm(solver.data.residual.cone_dual, Inf),
-# )
-# @test slack_norm < solver.options.slack_tolerance
+@test norm((x_sol[1] - x_sol[horizon][1:8])[[2; 3; 4; 6; 7; 8]], Inf) < 1.0e-3
 
-# @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
-# @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+# test solution
+@test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
+
+slack_norm = max(
+                norm(solver.data.residual.equality_dual, Inf),
+                norm(solver.data.residual.cone_dual, Inf),
+)
+@test slack_norm < solver.options.slack_tolerance
+
+@test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+@test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
 # # end
 
 vis = Visualizer()

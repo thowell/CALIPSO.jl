@@ -261,11 +261,12 @@ visualize_elbow!(vis, nothing, state_solution, Δt=timestep)
 # ## simulate
 x_hist = [state_initial]
 u_hist = []
-for t = 1:horizon 
-    push!(u_hist, action_solution[1])
-    push!(x_hist, acrobot_discrete(x_hist[end], u_hist[end]))
+for t = 1:horizon-1
+    push!(u_hist, max.(min.(10.0, action_solution[1]), -10.0))
+    push!(x_hist, max.(min.(10.0, acrobot_discrete(x_hist[end], u_hist[end])), -10.0))
 end
 visualize_elbow!(vis, nothing, x_hist, Δt=timestep)
+cost_initial = acrobot_cost(x_hist, u_hist, Q, R)
 
 [acrobot_discrete(state_solution[t], action_solution[t]) - state_solution[t+1] for t = 1:horizon-1]
 
@@ -301,10 +302,12 @@ K, P = tvlqr(A, B, Q, R)
 x_hist = [state_initial]
 u_hist = []
 for t = 1:horizon-1
-    push!(u_hist, action_solution[1] - K[t] * (x_hist[t] - state_solution[t]))
-    push!(x_hist, acrobot_discrete(x_hist[end], u_hist[end]))
+    push!(u_hist, max.(min.(10.0, action_solution[1] - K[t] * (x_hist[t] - state_solution[t])), -10.0))
+    push!(x_hist, max.(min.(10.0, acrobot_discrete(x_hist[end], u_hist[end])), -10.0))
 end
 visualize_elbow!(vis, nothing, x_hist, Δt=timestep)
+
+cost_initial = acrobot_cost(x_hist, u_hist, Q, R)
 
 # ## mpc 
 horizon_mpc = 10
@@ -467,6 +470,9 @@ for t = 1:horizon-1
 end
 visualize_elbow!(vis, nothing, x_hist, Δt=timestep)
 
+cost_initial = acrobot_cost(x_hist, u_hist, Q, R)
+
+
 function acrobot_cost(X, U, Q, R) 
     J = 0.0 
     H = length(X)
@@ -573,7 +579,7 @@ X, U = simulate(state_initial, θ, horizon)
 ψθ(X, U, θ)
 c = [J_opt] 
 
-for i = 1:100
+for i = 1:10
     if i == 1 
         println("iteration: $(i)") 
         println("cost: $(c[end])") 
@@ -611,7 +617,7 @@ for i = 1:100
     J = J_cand 
     θ = θ_cand
 
-    norm(Jθ, Inf) < 1.0e-2 && break
+    norm(Jθ, Inf) < 1.0e-4 && break
 
     # evaluate
     if i % 1 == 0
@@ -639,3 +645,4 @@ end
 vis = Visualizer() 
 render(vis)
 visualize_elbow!(vis, nothing, x_hist, Δt=timestep)
+cost_initial = acrobot_cost(x_hist, u_hist, Q, R)

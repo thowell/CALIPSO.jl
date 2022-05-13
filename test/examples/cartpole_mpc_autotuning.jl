@@ -2,6 +2,7 @@
 # ## horizon 
 horizon = 51
 timestep = 0.05
+
 # ## dimensions 
 num_states = [4 for t = 1:horizon]
 num_actions = [1 for t = 1:horizon-1]
@@ -180,11 +181,12 @@ visualize_cartpole!(vis, nothing, state_solution, Δt=timestep)
 # ## simulate
 x_hist = [state_initial]
 u_hist = []
-for t = 1:horizon 
+for t = 1:horizon-1
     push!(u_hist, action_solution[1])
     push!(x_hist, cartpole_discrete(x_hist[end], u_hist[end]))
 end
 visualize_cartpole!(vis, nothing, x_hist, Δt=timestep)
+cost_initial = cartpole_cost(x_hist, u_hist, Q, R)
 
 [cartpole_discrete(state_solution[t], action_solution[t]) - state_solution[t+1] for t = 1:horizon-1]
 
@@ -224,6 +226,7 @@ for t = 1:horizon-1
     push!(x_hist, cartpole_discrete(x_hist[end], u_hist[end]))
 end
 visualize_cartpole!(vis, nothing, x_hist, Δt=timestep)
+cost_initial = cartpole_cost(x_hist, u_hist, Q, R)
 
 # ## mpc 
 horizon_mpc = 10
@@ -492,7 +495,7 @@ X, U = simulate(state_initial, θ, horizon)
 ψθ(X, U, θ)
 c = [J_opt] 
 
-for i = 1:100
+for i = 1:10
     if i == 1 
         println("iteration: $(i)") 
         println("cost: $(c[end])") 
@@ -558,3 +561,4 @@ end
 vis = Visualizer() 
 render(vis)
 visualize_cartpole!(vis, nothing, x_hist, Δt=timestep)
+cost_initial = cartpole_cost(x_hist, u_hist, Q, R)
