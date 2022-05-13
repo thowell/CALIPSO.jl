@@ -91,7 +91,7 @@ nc = 2 # number of contact points
 # ## Parameters
 body_mass = 1.0
 body_inertia = 0.1
-friction_body_world = [0.5; 0.5]  # coefficient of friction
+friction_body_world = [0.5; 0.25]  # coefficient of friction
 kinematics_front = [0.1; 0.0] 
 kinematics_rear =  [-0.1; 0.0]
 
@@ -102,7 +102,7 @@ cybertruck = CYBERTRUCK(nq, nu, nw, nc,
         friction_body_world, zeros(0))
 
 # ## horizon
-horizon = 26
+horizon = 15
 timestep = 0.1
 
 # ## Optimization Dimensions 
@@ -172,7 +172,7 @@ end
 dynamics = [(y, x, u) -> cybertruck_dynamics(cybertruck, [timestep], y, x, u) for t = 1:horizon-1]
 
 # ## states
-state_initial = [0.0; 1.0; -0.5 * π; 0.0; 1.0; -0.5 * π] 
+state_initial = [0.0; 1.5; -0.5 * π; 0.0; 1.5; -0.5 * π] 
 state_goal = [3.0; 0.0; 0.5 * π; 3.0; 0.0; 0.5 * π]
 
 # ## objective
@@ -200,7 +200,7 @@ end
 function objT(x, u)
     J = 0.0
     v = (x[4:6] - x[1:3]) ./ timestep[1]
-    J += 0.5 * 1.0e-3 * dot(v, v)
+    J += 0.5 * 5.0 * dot(v, v)
     J += 0.5 * 1.0e-3 * transpose(x - state_goal) * Diagonal([1.0; 1.0; 1.0; 1.0; 1.0; 1.0]) * (x - state_goal)
     return J
 end
@@ -227,7 +227,7 @@ end
 
 function equality_T(x, u)
     [
-        x - state_goal;
+        (x - state_goal)[1:3];
     ]
 end
 
@@ -238,16 +238,16 @@ equality = [
 ];
 
 u_min = [0.0; -0.5]
-u_max = [10.0;  0.5]
-# p_car1 = [3.0, 2.0 * 0.65]
-# p_car2 = [3.0, 2.0 * -0.65]
+u_max = [25.0;  0.5]
+p_car1 = [3.0, 1.0 * 0.65]
+p_car2 = [3.0, 1.0 * -0.65]
 circle_obstacle(x, p; r=0.5) = (x[1] - p[1])^2.0 + (x[2] - p[2])^2.0 - r^2.0
 nonnegative = [
         [(x, u) -> [
                 u_max - u[1:2]; 
                 u[1:2] - u_min;
-                # circle_obstacle(x, p_car1, r=0.1); 
-                # circle_obstacle(x, p_car2, r=0.1);
+                circle_obstacle(x, p_car1, r=0.1); 
+                circle_obstacle(x, p_car2, r=0.1);
             ] for t = 1:horizon-1]..., 
         empty_constraint,
 ]
@@ -270,6 +270,8 @@ solver = Solver(objective, dynamics, num_states, num_actions;
     second_order=second_order,
     );
 
+
+
 # ## initialize
 state_guess = linear_interpolation(state_initial, state_goal, horizon)
 action_guess = [[1.0e-3 * randn(2); vcat([[1.0; 0.1; 0.1] for i = 1:(2 * nc)]...)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
@@ -277,24 +279,31 @@ initialize_states!(solver, state_guess)
 initialize_controls!(solver, action_guess)
 
 # ## solve
+solver.options.linear_solver = :LU
+solver.options.residual_tolerance=1.0e-3
+solver.options.optimality_tolerance=1.0e-3
+solver.options.equality_tolerance=1.0e-3
+solver.options.complementarity_tolerance=1.0e-3
+solver.options.slack_tolerance=1.0e-3
 solve!(solver)
 
 x_sol, u_sol = CALIPSO.get_trajectory(solver)
+@show (x_sol[end][4:6] - x_sol[end][1:3]) ./ timestep
 
 # test solution
-@test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
+# @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
-slack_norm = max(
-                norm(solver.data.residual.equality_dual, Inf),
-                norm(solver.data.residual.cone_dual, Inf),
-)
-@test slack_norm < solver.options.slack_tolerance
+# slack_norm = max(
+#                 norm(solver.data.residual.equality_dual, Inf),
+#                 norm(solver.data.residual.cone_dual, Inf),
+# )
+# @test slack_norm < solver.options.slack_tolerance
 
-@test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
-@test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+# @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+# @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
     
-@test !CALIPSO.cone_violation(solver.solution.cone_slack, zero(solver.solution.cone_slack), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
-@test !CALIPSO.cone_violation(solver.solution.cone_slack_dual, zero(solver.solution.cone_slack_dual), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
+# @test !CALIPSO.cone_violation(solver.solution.cone_slack, zero(solver.solution.cone_slack), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
+# @test !CALIPSO.cone_violation(solver.solution.cone_slack_dual, zero(solver.solution.cone_slack_dual), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
 # end
 
 # # plot
@@ -303,8 +312,8 @@ slack_norm = max(
 # plot(hcat(u_sol...)[1:2, :]', label=["v" "ω"])
 
 # # meshes
-# vis = Visualizer()
-# open(vis)
+vis = Visualizer()
+open(vis)
 
 # function set_background!(vis::Visualizer; top_color=RoboDojo.RGBA(1,1,1.0), bottom_color=RoboDojo.RGBA(1,1,1.0))
 #     RoboDojo.MeshCat.setprop!(vis["/Background"], "top_color", top_color)
@@ -323,6 +332,12 @@ slack_norm = max(
 #     RoboDojo.MeshCat.setobject!(vis["cybertruck"]["mesh"], obj)
 #     RoboDojo.MeshCat.settransform!(vis["cybertruck"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
 
+#     RoboDojo.MeshCat.setobject!(vis["cybertruck1"]["mesh"], obj)
+#     RoboDojo.MeshCat.settransform!(vis["cybertruck1"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
+
+#     RoboDojo.MeshCat.setobject!(vis["cybertruck2"]["mesh"], obj)
+#     RoboDojo.MeshCat.settransform!(vis["cybertruck2"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
+
 #     anim = RoboDojo.MeshCat.Animation(convert(Int,floor(1.0 / Δt)))
 
 #     for t = 1:length(q)
@@ -336,18 +351,32 @@ slack_norm = max(
     
 #     # # add parked cars
     
-#     # RoboDojo.MeshCat.setobject!(vis["cybertruck_park1"], obj)
-#     # RoboDojo.MeshCat.settransform!(vis["cybertruck_park1"]["mesh"],
-#     #     RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation([p_car1...; 0.0]),
-#     #     RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(pi + pi / 2) * RoboDojo.Rotations.RotX(pi / 2.0))))
+    
+#     RoboDojo.MeshCat.settransform!(vis["cybertruck1"],
+#         RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation([p_car1...; 0.0]),
+#         RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(0.5 * π) * RoboDojo.Rotations.RotX(0))))
 
-#     # RoboDojo.MeshCat.setobject!(vis["cybertruck_park2"], obj)
-#     # RoboDojo.MeshCat.settransform!(vis["cybertruck_park2"]["mesh"],
-#     #     RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation([p_car2...; 0.0]),
-#     #     RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(pi + pi / 2) * RoboDojo.Rotations.RotX(pi / 2.0))))
+#     RoboDojo.MeshCat.settransform!(vis["cybertruck2"],
+#         RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation([p_car2...; 0.0]),
+#         RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(0.5 * π) * RoboDojo.Rotations.RotX(0))))
 
 #     RoboDojo.MeshCat.setanimation!(vis, anim)
 # end
 
-# visualize!(vis, cybertruck, x_sol, Δt=timestep)
-# set_background!(vis)
+visualize!(vis, cybertruck, [[x_sol[1] for t = 1:10]..., x_sol..., [x_sol[end] for t = 1:10]...], Δt=timestep)
+set_background!(vis)
+
+RoboDojo.settransform!(vis["/Cameras/default"],
+	RoboDojo.compose(RoboDojo.Translation(0.0, 0.0, 10.0), RoboDojo.LinearMap(RoboDojo.RotY(-pi/2.5))))
+RoboDojo.setprop!(vis["/Cameras/default/rotated/<object>"], "zoom", 3)
+
+path_meshes = joinpath(@__DIR__, "..", "..", "..", "robot_meshes")
+meshfile = joinpath(path_meshes, "cybertruck", "cybertruck_transparent.obj")
+obj = RoboDojo.MeshCat.MeshFileObject(meshfile);
+
+q_sol = [x_sol[1][1:3], [x[4:6] for x in x_sol]...]
+for (t, q) in enumerate(q_sol)
+    RoboDojo.MeshCat.setobject!(vis["cybertruck_t$t"]["mesh"], obj)
+    RoboDojo.MeshCat.settransform!(vis["cybertruck_t$t"]["mesh"], RoboDojo.MeshCat.LinearMap(0.1 * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
+    RoboDojo.MeshCat.settransform!(vis["cybertruck_t$t"], RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation(q[1:2]..., 0.0), RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(q[3]))))
+end
