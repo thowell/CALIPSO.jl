@@ -1,3 +1,19 @@
+# CALIPSO
+using Pkg 
+Pkg.activate(joinpath(@__DIR__, ".."))
+Pkg.instantiate()
+using CALIPSO 
+
+# Examples
+Pkg.activate(@__DIR__) 
+Pkg.instantiate()
+using LinearAlgebra
+using RoboDojo
+using DirectTrajectoryOptimization
+const DTO = DirectTrajectoryOptimization
+using RoboDojo 
+const RD = RoboDojo 
+
 # @testset "Examples: Ball-in-cup" begin
 struct BallInCup{T} 
     num_configuration::Int 
@@ -173,6 +189,12 @@ equality = [
         end,
 ]
 
+num_eq = [
+    length(x1), 
+    [t == tM1 ? 2 : (t == tM2 ? 2 : 0) for t = 2:horizon-1]..., 
+    6,
+]
+
 nonnegative = [
         empty_constraint, 
         [(x, u) -> begin
@@ -182,40 +204,61 @@ nonnegative = [
         end for t = 2:horizon]..., 
 ]
 
+num_ineq = [0, [2 for t = 2:horizon]...]
+
+# ## DTO objects 
+eval_hess = true
+o1 = DTO.Cost((x, u, w) -> objective[1](x, u), num_states[1], num_actions[1],
+    evaluate_hessian=eval_hess)
+ot = DTO.Cost((x, u, w) -> objective[2](x, u), num_states[2], num_actions[2],
+    evaluate_hessian=eval_hess)
+oT = DTO.Cost((x, u, w) -> objective[horizon](x, u), num_states[horizon], 0,
+    evaluate_hessian=eval_hess)
+obj = [o1, [ot for t = 2:horizon-1]..., oT]
+
+d1 = DTO.Dynamics((y, x, u, w) -> dynamics[1](y, x, u), num_states[2], num_states[1], num_actions[1], 
+    evaluate_hessian=eval_hess) 
+dt = DTO.Dynamics((y, x, u, w) -> dynamics[2](y, x, u), num_states[3], num_states[2], num_actions[2], 
+    evaluate_hessian=eval_hess) 
+dyn = [d1, [dt for t = 2:horizon-1]...]
+
+cons = [DTO.Constraint((x, u, w) -> [equality[t](x, u); nonnegative[t](x, u)], num_states[t], t == horizon ? 0 : num_actions[t], indices_inequality=collect(num_eq[t] .+ (1:num_ineq[t])), 
+    evaluate_hessian=eval_hess) for t = 1:horizon]
+
+bnd1 = Bound(num_states[1], num_actions[1])
+bndt = Bound(num_states[2], num_actions[2])
+bndT = Bound(num_states[horizon], 0)
+bounds = [bnd1, [bndt for t = 2:horizon-1]..., bndT]
+
+# ## problem 
+solver = DTO.Solver(dyn, obj, cons, bounds,
+    evaluate_hessian=eval_hess,
+    options=DTO.Options(
+        max_iter=2000,
+        tol=1.0e-4,
+        constr_viol_tol=1.0e-4))
+
 # ## solver 
-solver = Solver(objective, dynamics, num_states, num_actions,
-    equality=equality,
-    nonnegative=nonnegative,
-    options=Options()
-    );
+# solver = Solver(objective, dynamics, num_states, num_actions,
+#     equality=equality,
+#     nonnegative=nonnegative,
+#     options=Options()
+#     );
 
 # ## initialize
 x_interpolation = [linear_interpolation(x1, xM1, 11)..., linear_interpolation(xM1, xM2, 6)[2:end]..., linear_interpolation(xM2, xT, 6)[2:end]...]
 state_guess = [x_interpolation[1], [[x_interpolation[t]; 1.0e-3 * ones(2)] for t = 2:horizon]...]
 action_guess = [1.0e-3 * randn(2) for t = 1:horizon-1] # may need to run more than once to get good trajectory
-initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+DTO.initialize_states!(solver, state_guess) 
+DTO.initialize_controls!(solver, action_guess)
+
 
 # ## solve
-solve!(solver)
+@time DTO.solve!(solver)
 
 # ## solution
-x_sol, u_sol = get_trajectory(solver)
+x_sol, u_sol = DTO.get_trajectory(solver)
 
-@show solver.problem.objective[1]
-
-# ## test
-@test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
-
-slack_norm = max(
-                norm(solver.data.residual.equality_dual, Inf),
-                norm(solver.data.residual.cone_dual, Inf),
-)
-@test slack_norm < solver.options.slack_tolerance
-
-@test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
-@test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
-# end
 
 function build_robot!(vis, model::BallInCup;
     r_cup=0.1,
@@ -300,6 +343,3 @@ visualize_ballincup!(vis, ballincup,
     Δt=timestep,
     r_cup=0.1,
     r_ball=0.05)
-
-using JLD2
-@save joinpath(@__DIR__, "ballincup.jl") q_sol

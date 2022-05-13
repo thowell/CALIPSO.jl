@@ -287,23 +287,24 @@ solver.options.complementarity_tolerance=1.0e-3
 solver.options.slack_tolerance=1.0e-3
 solve!(solver)
 
+@show solver.problem.objective[1]
 x_sol, u_sol = CALIPSO.get_trajectory(solver)
 @show (x_sol[end][4:6] - x_sol[end][1:3]) ./ timestep
 
-# test solution
-# @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
+# test solution?
+@test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
-# slack_norm = max(
-#                 norm(solver.data.residual.equality_dual, Inf),
-#                 norm(solver.data.residual.cone_dual, Inf),
-# )
-# @test slack_norm < solver.options.slack_tolerance
+slack_norm = max(
+                norm(solver.data.residual.equality_dual, Inf),
+                norm(solver.data.residual.cone_dual, Inf),
+)
+@test slack_norm < solver.options.slack_tolerance
 
-# @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
-# @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+@test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
+@test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
     
-# @test !CALIPSO.cone_violation(solver.solution.cone_slack, zero(solver.solution.cone_slack), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
-# @test !CALIPSO.cone_violation(solver.solution.cone_slack_dual, zero(solver.solution.cone_slack_dual), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
+@test !CALIPSO.cone_violation(solver.solution.cone_slack, zero(solver.solution.cone_slack), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
+@test !CALIPSO.cone_violation(solver.solution.cone_slack_dual, zero(solver.solution.cone_slack_dual), 0.0, solver.indices.cone_nonnegative, solver.indices.cone_second_order)
 # end
 
 # # plot

@@ -1,5 +1,6 @@
 [deps]
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
+DirectTrajectoryOptimization = "a9f42406-efe7-414c-8b71-df971cc98041"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ECOS = "e2685f51-7e38-5353-a97d-a921fd2c8199"
 FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
