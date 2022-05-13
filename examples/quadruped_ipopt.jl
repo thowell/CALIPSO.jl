@@ -332,6 +332,7 @@ DTO.initialize_controls!(solver, action_guess)
 # ## solve
 @time DTO.solve!(solver)
 
+x_sol, u_sol = DTO.get_trajectory(solver)
 
 
 
@@ -357,9 +358,9 @@ DTO.initialize_controls!(solver, action_guess)
 #     options=options);
 
 # ## callbacks 
-# vis = Visualizer()
-# render(vis)
-# RoboDojo.visualize!(vis, RoboDojo.quadruped4, state_guess, Δt=timestep);
+vis = Visualizer()
+render(vis)
+RoboDojo.visualize!(vis, RoboDojo.quadruped4, x_sol, Δt=timestep);
 
 # function callback_inner(trajopt, solver) 
 #     println("callback inner")
