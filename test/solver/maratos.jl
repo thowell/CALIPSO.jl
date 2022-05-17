@@ -1,4 +1,4 @@
-@testset "Solver problem: Maratos" begin
+# @testset "Solver problem: Maratos" begin
     # ## problem 
     obj(x) = 2.0 * (x[1]^2 + x[2]^2 - 1.0) - x[1]
     eq(x) = [x[1]^2 + x[2]^2 - 1.0]

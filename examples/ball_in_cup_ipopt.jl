@@ -101,7 +101,7 @@ function ballincup_dynamics(model::BallInCup, timestep, y, x, u)
     # impact 
     γ = y[8 .+ (1:1)]
     sγ = y[9 .+ (1:1)]
-    ϕ = signed_distance(model, q2⁺)
+    ϕ = signed_distance(model, q3⁺)
 
     J = impact_jacobian(model, q2⁺)
     λ = transpose(J) * γ[1]
@@ -199,7 +199,7 @@ nonnegative = [
         empty_constraint, 
         [(x, u) -> begin
             [
-                x[8 .+ (1:2)];
+                -1.0 * x[8 .+ (1:2)];
             ]
         end for t = 2:horizon]..., 
 ]
@@ -343,3 +343,7 @@ visualize_ballincup!(vis, ballincup,
     Δt=timestep,
     r_cup=0.1,
     r_ball=0.05)
+
+minimum([signed_distance(ballincup, q) for q in q_sol])
+minimum([q[9] for q in x_sol[2:end-1]])
+minimum([q[10] for q in x_sol[2:end-1]])
