@@ -261,7 +261,7 @@ p_car1 = [3.0, 1.0 * 0.65]
 p_car2 = [3.0, 1.0 * -0.65]
 circle_obstacle(x, p; r=0.5) = (x[1] - p[1])^2.0 + (x[2] - p[2])^2.0 - r^2.0
 nonnegative = [
-        [(x, u) -> [
+        [(x, u) -> -1.0 * [
                 u_max - u[1:2]; 
                 u[1:2] - u_min;
                 circle_obstacle(x, p_car1, r=0.1); 
@@ -333,14 +333,15 @@ solver = DTO.Solver(dyn, obj, cons, bounds,
 #     options=Options()
 #     );
 
-state_guess = linear_interpolation(state_initial, state_goal, horizon)
-action_guess = [[1.0e-3 * randn(2); vcat([[1.0; 0.1; 0.1] for i = 1:(2 * nc)]...)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
-DTO.initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+state_guess = linear_interpolation(state_initial, state_goal, horizon);
+action_guess = [[1.0e-3 * randn(2); vcat([[1.0; 0.1; 0.1] for i = 1:(2 * nc)]...)] for t = 1:horizon-1]; # may need to run more than once to get good trajectory
+DTO.initialize_states!(solver, state_guess);
+DTO.initialize_controls!(solver, action_guess);
 
 
 # ## solve
 @time DTO.solve!(solver)
+x_sol, u_sol = DTO.get_trajectory(solver);
 
 
 # ## initialize
@@ -382,55 +383,55 @@ initialize_controls!(solver, action_guess)
 
 # # meshes
 vis = Visualizer()
-open(vis)
+render(vis)
 
-# function set_background!(vis::Visualizer; top_color=RoboDojo.RGBA(1,1,1.0), bottom_color=RoboDojo.RGBA(1,1,1.0))
-#     RoboDojo.MeshCat.setprop!(vis["/Background"], "top_color", top_color)
-#     RoboDojo.MeshCat.setprop!(vis["/Background"], "bottom_color", bottom_color)
-# end
+function set_background!(vis::Visualizer; top_color=RoboDojo.RGBA(1,1,1.0), bottom_color=RoboDojo.RGBA(1,1,1.0))
+    RoboDojo.MeshCat.setprop!(vis["/Background"], "top_color", top_color)
+    RoboDojo.MeshCat.setprop!(vis["/Background"], "bottom_color", bottom_color)
+end
 
-# function visualize!(vis, model::CYBERTRUCK, q;
-#     scale=0.1,
-#     Δt = 0.1)
+function visualize!(vis, model::CYBERTRUCK, q;
+    scale=0.1,
+    Δt = 0.1)
 
-#     # default_background!(vis)
-#     path_meshes = joinpath(@__DIR__, "..", "..", "..", "robot_meshes")
-#     meshfile = joinpath(path_meshes, "cybertruck", "cybertruck.obj")
-#     obj = RoboDojo.MeshCat.MeshFileObject(meshfile);
+    # default_background!(vis)
+    path_meshes = joinpath(@__DIR__, "..", "..", "robot_meshes")
+    meshfile = joinpath(path_meshes, "cybertruck", "cybertruck.obj")
+    obj = RoboDojo.MeshCat.MeshFileObject(meshfile);
     
-#     RoboDojo.MeshCat.setobject!(vis["cybertruck"]["mesh"], obj)
-#     RoboDojo.MeshCat.settransform!(vis["cybertruck"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
+    RoboDojo.MeshCat.setobject!(vis["cybertruck"]["mesh"], obj)
+    RoboDojo.MeshCat.settransform!(vis["cybertruck"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
 
-#     RoboDojo.MeshCat.setobject!(vis["cybertruck1"]["mesh"], obj)
-#     RoboDojo.MeshCat.settransform!(vis["cybertruck1"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
+    RoboDojo.MeshCat.setobject!(vis["cybertruck1"]["mesh"], obj)
+    RoboDojo.MeshCat.settransform!(vis["cybertruck1"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
 
-#     RoboDojo.MeshCat.setobject!(vis["cybertruck2"]["mesh"], obj)
-#     RoboDojo.MeshCat.settransform!(vis["cybertruck2"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
+    RoboDojo.MeshCat.setobject!(vis["cybertruck2"]["mesh"], obj)
+    RoboDojo.MeshCat.settransform!(vis["cybertruck2"]["mesh"], RoboDojo.MeshCat.LinearMap(scale * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
 
-#     anim = RoboDojo.MeshCat.Animation(convert(Int,floor(1.0 / Δt)))
+    anim = RoboDojo.MeshCat.Animation(convert(Int,floor(1.0 / Δt)))
 
-#     for t = 1:length(q)
-#         RoboDojo.MeshCat.atframe(anim, t) do
-#             RoboDojo.MeshCat.settransform!(vis["cybertruck"], RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation(q[t][1:2]..., 0.0), RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(q[t][3]))))
-#         end
-#     end
+    for t = 1:length(q)
+        RoboDojo.MeshCat.atframe(anim, t) do
+            RoboDojo.MeshCat.settransform!(vis["cybertruck"], RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation(q[t][1:2]..., 0.0), RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(q[t][3]))))
+        end
+    end
 
-#     RoboDojo.MeshCat.settransform!(vis["/Cameras/default"],
-#         RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation(2.0, 0.0, 1.0),RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(0.0))))
+    RoboDojo.MeshCat.settransform!(vis["/Cameras/default"],
+        RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation(2.0, 0.0, 1.0),RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(0.0))))
     
-#     # # add parked cars
+    # # add parked cars
     
     
-#     RoboDojo.MeshCat.settransform!(vis["cybertruck1"],
-#         RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation([p_car1...; 0.0]),
-#         RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(0.5 * π) * RoboDojo.Rotations.RotX(0))))
+    RoboDojo.MeshCat.settransform!(vis["cybertruck1"],
+        RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation([p_car1...; 0.0]),
+        RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(0.5 * π) * RoboDojo.Rotations.RotX(0))))
 
-#     RoboDojo.MeshCat.settransform!(vis["cybertruck2"],
-#         RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation([p_car2...; 0.0]),
-#         RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(0.5 * π) * RoboDojo.Rotations.RotX(0))))
+    RoboDojo.MeshCat.settransform!(vis["cybertruck2"],
+        RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation([p_car2...; 0.0]),
+        RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(0.5 * π) * RoboDojo.Rotations.RotX(0))))
 
-#     RoboDojo.MeshCat.setanimation!(vis, anim)
-# end
+    RoboDojo.MeshCat.setanimation!(vis, anim)
+end
 
 visualize!(vis, cybertruck, [[x_sol[1] for t = 1:10]..., x_sol..., [x_sol[end] for t = 1:10]...], Δt=timestep)
 set_background!(vis)
@@ -449,3 +450,5 @@ for (t, q) in enumerate(q_sol)
     RoboDojo.MeshCat.settransform!(vis["cybertruck_t$t"]["mesh"], RoboDojo.MeshCat.LinearMap(0.1 * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
     RoboDojo.MeshCat.settransform!(vis["cybertruck_t$t"], RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation(q[1:2]..., 0.0), RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(q[3]))))
 end
+
+

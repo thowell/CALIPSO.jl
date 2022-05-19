@@ -194,7 +194,7 @@ end
 
 inequality = [
     empty_constraint,
-    [(x, u) -> [
+    [(x, u) -> -1.0 * [
         x[sim.model.nq .+ sim.idx_z.γ];
         x[sim.model.nq .+ sim.idx_z.sγ];
         vcat([x[[sim.model.nq + sim.idx_z.ψ[i]; sim.model.nq + sim.idx_z.b[i]]][1] - norm(x[[sim.model.nq + sim.idx_z.ψ[i]; sim.model.nq + sim.idx_z.b[i]]][2:end])  for i = 1:sim.model.nc]...);
@@ -204,7 +204,6 @@ inequality = [
 
 num_ineq = [length(inequality[t](rand(num_states[t]), rand(t == horizon ? 0 : num_actions[t]))) for t = 1:horizon]
 
-inequality[2](rand(num_states[end]), rand(num_actions[end]))
 # ## DTO objects 
 
 eval_hess = true
@@ -362,6 +361,7 @@ vis = Visualizer()
 render(vis)
 RoboDojo.visualize!(vis, RoboDojo.quadruped4, x_sol, Δt=timestep);
 
+
 # function callback_inner(trajopt, solver) 
 #     println("callback inner")
 #     x_sol, u_sol = CALIPSO.get_trajectory(solver)
@@ -405,6 +405,7 @@ RoboDojo.visualize!(vis, RoboDojo.quadruped4, x_sol, Δt=timestep);
 using JLD2
 # @save joinpath(@__DIR__, "quadruped_gait.jld2") x_sol u_sol
 @load joinpath(@__DIR__, "quadruped_gait.jld2") x_sol u_sol
+q_reference
 
 # ## mirror trajectories 
 nq = model.nq
