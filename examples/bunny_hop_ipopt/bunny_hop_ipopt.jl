@@ -10,6 +10,7 @@ using MathOptInterface
 const MOI = MathOptInterface;
 using Random
 
+Random.seed!(1234)
 # bunny hop dynamics
 const m_b = 10.0
 
