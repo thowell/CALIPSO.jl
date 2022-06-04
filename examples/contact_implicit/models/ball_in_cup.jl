@@ -1,4 +1,3 @@
-# @testset "Examples: Ball-in-cup" begin
 struct BallInCup{T} 
     num_configuration::Int 
     num_action::Int 
@@ -11,8 +10,6 @@ struct BallInCup{T}
     gravity_cup::T 
     gravity_ball::T 
 end
-
-ballincup = BallInCup(4, 2, 0, 1.0, 0.01, 1.0, 0.0, 10.0)
 
 function mass_matrix(model::BallInCup, q::Vector)
     Diagonal([
@@ -83,10 +80,7 @@ function ballincup_dynamics(model::BallInCup, timestep, y, x, u)
     u_control = u[1:2]
 
     # impact 
-    γ = y[8 .+ (1:1)]
-    sγ = y[9 .+ (1:1)]
-    ϕ = signed_distance(model, q2⁺)
-
+    γ = u[2 .+ (1:1)]
     J = impact_jacobian(model, q2⁺)
     λ = transpose(J) * γ[1]
 
@@ -94,129 +88,48 @@ function ballincup_dynamics(model::BallInCup, timestep, y, x, u)
         q2⁺ - q2⁻;
         implicit_dynamics(model,
             timestep, q1⁻, q2⁺, u_control, λ, q3⁺);
-        sγ - ϕ;
-        γ .* sγ; 
     ]
 end
 
-# ## horizon
-horizon = 21
-timestep = 0.075
-
-# ## dimensions
-num_states = [8, [10 for t = 2:horizon]...] 
-num_actions = [2 for t = 1:horizon-1] 
-
-# ## dynamics
-dynamics = [(y, x, u) -> ballincup_dynamics(ballincup, [timestep], y, x, u) for t = 1:horizon-1]
-
-# ## states
-x1 = [0.0; 0.0; 0.0; -0.99; 0.0; 0.0; 0.0; -0.99]
-xT = [0.0; 0.0; 0.0; 0.125; 0.0; 0.0; 0.0; 0.125]
-
-# ## intermediate states
-xM1 = [0.0; 0.0; 1.0; 0.0; 0.0; 0.0; 1.0; 0.0]
-dr = sqrt(0.5 * ballincup.string_length^2)
-xM2 = [0.0; 0.0; dr; dr; 0.0; 0.0; dr; dr]
-# xM2 = [0.0; 0.0; 0.0; 1.0; 0.0; 0.0; 0.0; 1.0]
-tM1 = 11
-tM2 = 16
-
-# ## objective
-objective = [
-    (x, u) -> begin 
-        J = 0.0
-        v = (x[4 .+ (1:4)] - x[1:4]) ./ timestep
-        J += 0.5 * 1.0e-1 * dot(v, v)
-        Δcup_goal = x[4 .+ (1:2)] - xT[4 .+ (1:2)]
-        J += 0.5 * 1.0 * dot(Δcup_goal, Δcup_goal)
-        J += 0.5 * transpose(u) * Diagonal([1.0e-1 * ones(2); 0.1 * ones(1)]) * u
-        return J
-    end,
+function ballincup_discrete(model::BallInCup, timestep, y, x, u)
     [
-        (x, u) -> begin
-            J = 0.0
-            v = (x[4 .+ (1:4)] - x[1:4]) ./ timestep
-            J += 0.5 * 1.0e-1 * dot(v, v)
-            Δcup_goal = x[4 .+ (1:2)] - xT[4 .+ (1:2)]
-            J += 0.5 * 1.0 * dot(Δcup_goal, Δcup_goal)
-            J += 0.5 * transpose(u) * Diagonal([1.0e-1 * ones(2); 0.1 * ones(1)]) * u
-            return J
-        end for t = 2:horizon-1
-    ]...,
-    (x, u) -> begin 
-        J = 0.0
-        v = (x[4 .+ (1:4)] - x[1:4]) ./ timestep
-        J += 0.5 * 1.0e-1 * dot(v, v)
-        Δcup_goal = x[4 .+ (1:2)] - xT[4 .+ (1:2)]
-        J += 0.5 * 1.0 * dot(Δcup_goal, Δcup_goal)
-        Δcup_ball = x[4 .+ (1:2)] - x[6 .+ (1:2)]
-        J += 0.5 * 1.0 * dot(Δcup_ball, Δcup_ball)
-        return J
-    end
-]
+        ballincup_dynamics(model, timestep, y, x, u);
+        y[8 .+ (1:1)] - u[2 .+ (1:1)];
+    ]
+end
 
-# ## constraints
-equality = [
-        (x, u) -> begin 
-            x - x1;
-        end, 
-        [t == tM1 ? (x, u) -> begin
-            x[6 .+ (1:2)] - xM1[6 .+ (1:2)];
-        end : (t == tM2 ? (x, u) -> begin x[6 .+ (1:2)] - xM2[6 .+ (1:2)]; end : empty_constraint) for t = 2:horizon-1]..., 
-        (x, u) -> begin 
-            [
-                x[1:2] - xT[1:2];
-                x[4 .+ (1:2)] - xT[4 .+ (1:2)];
-                x[6 .+ (1:2)] - xT[6 .+ (1:2)];
-            ]
-        end,
-]
+function contact_constraints_inequality_t(model, timestep, x, u)
+    q3 = x[4 .+ (1:4)]
+    γ = u[2 .+ (1:1)]
+    ϕ = signed_distance(model, q3)
+    [
+        ϕ; 
+        γ;
+    ]
+end
 
-nonnegative = [
-        empty_constraint, 
-        [(x, u) -> begin
-            [
-                x[8 .+ (1:2)];
-            ]
-        end for t = 2:horizon]..., 
-]
+function contact_constraints_inequality_T(model, timestep, x, u)
+    q3 = x[4 .+ (1:4)]
+    ϕ = signed_distance(model, q3)
+    [
+        ϕ; 
+    ]
+end
 
-# ## solver 
-solver = Solver(objective, dynamics, num_states, num_actions,
-    equality=equality,
-    nonnegative=nonnegative,
-    options=Options()
-    );
+function contact_constraints_equality_t(model, timestep, x, u)
+    q3 = x[4 .+ (1:4)]
+    γ⁻ = x[8 .+ (1:1)]
+    ϕ = signed_distance(model, q3)
+    
+    [
+        γ⁻ .* ϕ; 
+    ]
+end
 
-# ## initialize
-x_interpolation = [linear_interpolation(x1, xM1, 11)..., linear_interpolation(xM1, xM2, 6)[2:end]..., linear_interpolation(xM2, xT, 6)[2:end]...]
-state_guess = [x_interpolation[1], [[x_interpolation[t]; 1.0e-3 * ones(2)] for t = 2:horizon]...]
-action_guess = [1.0e-3 * randn(2) for t = 1:horizon-1] # may need to run more than once to get good trajectory
-initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+# model
+ballincup = BallInCup(4, 2, 0, 1.0, 0.01, 1.0, 0.0, 10.0)
 
-# ## solve
-solve!(solver)
-
-# ## solution
-x_sol, u_sol = get_trajectory(solver)
-
-@show solver.problem.objective[1]
-
-# ## test
-@test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
-
-slack_norm = max(
-                norm(solver.data.residual.equality_dual, Inf),
-                norm(solver.data.residual.cone_dual, Inf),
-)
-@test slack_norm < solver.options.slack_tolerance
-
-@test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
-@test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
-# end
-
+# visuals
 function build_robot!(vis, model::BallInCup;
     r_cup=0.1,
     r_ball=0.05,
@@ -249,7 +162,7 @@ function set_background!(vis::Visualizer;
     RoboDojo.MeshCat.setprop!(vis["/Background"], "bottom_color", bottom_color)
 end
 
-function visualize_ballincup!(vis, model::BallInCup, q;
+function visualize!(vis, model::BallInCup, q;
     r_cup=0.1,
     r_ball=0.05,
     tl=1.0,
@@ -288,18 +201,3 @@ function visualize_ballincup!(vis, model::BallInCup, q;
 
     RoboDojo.MeshCat.setanimation!(vis, anim)
 end
-
-## visualize
-vis = Visualizer()
-render(vis)
-
-q_sol = [[x[1:4] for x in x_sol]..., x_sol[end][4 .+ (1:4)]]
-visualize_ballincup!(vis, ballincup, 
-    q_sol, 
-    # x_interpolation,
-    Δt=timestep,
-    r_cup=0.1,
-    r_ball=0.05)
-
-using JLD2
-@save joinpath(@__DIR__, "ballincup.jl") q_sol

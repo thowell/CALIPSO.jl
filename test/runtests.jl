@@ -1,11 +1,8 @@
 using Test
-using ForwardDiff 
 using FiniteDiff
 using SparseArrays
 using Symbolics
 using LinearAlgebra
-using Random
-using BenchmarkTools
 using RoboDojo
 using CALIPSO
 
@@ -36,9 +33,9 @@ include("examples/acrobot.jl")
 include("examples/rocket_landing.jl")
 include("examples/box_move.jl")
 include("examples/ball_in_cup.jl")
-include("examples/hopper_gait.jl")
 include("examples/cyberdrift.jl")
 include("examples/double_integrator.jl")
+include("examples/hopper_gait_v2.jl")
 # include("examples/quadruped_drop.jl")
 # include("examples/quadruped_gait.jl")
 

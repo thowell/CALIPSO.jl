@@ -129,3 +129,21 @@ solve!(solver)
 # solution
 state_solution, action_solution = get_trajectory(solver);
 ```
+
+## Examples
+
+### ball-in-cup
+<img src="examples/animations/ball_in_cup.gif" alt="drawing" width="150"/> 
+
+### bunny hop
+<img src="examples/animations/atlas_bunnyhop.gif" alt="drawing" width="400"/> 
+
+### quadruped gait 
+<img src="examples/animations/quadruped_gait.gif" alt="drawing" width="250"/> 
+
+### cyberdrift 
+<img src="examples/animations/cyberdrift.gif" alt="drawing" width="250"/> 
+
+
+
+

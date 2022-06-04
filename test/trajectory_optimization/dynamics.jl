@@ -41,24 +41,24 @@
 
     dyn[1].constraint(dyn[1].constraint_cache, x1, x1, u1, w1) 
     # @benchmark $dt.constraint($dt.constraint_cache, $x1, $x1, $u1, $w1) 
-    @test norm(dyn[1].constraint_cache - pendulum_discrete(x1, x1, u1)) < 1.0e-8
+    @test norm(dyn[1].constraint_cache - pendulum_discrete(x1, x1, u1)) < 1.0e-6
     dyn[1].jacobian_variables(dyn[1].jacobian_variables_cache, x1, x1, u1, w1) 
     jac_dense = zeros(dyn[1].num_next_state, dyn[1].num_state + dyn[1].num_action + dyn[1].num_next_state)
     for (i, ji) in enumerate(dyn[1].jacobian_variables_cache)
         jac_dense[dyn[1].jacobian_variables_sparsity[1][i], dyn[1].jacobian_variables_sparsity[2][i]] = ji
     end
-    jac_fd = ForwardDiff.jacobian(a -> pendulum_discrete(a[num_states[1] + num_actions[1] .+ (1:num_states[2])], a[1:num_states[1]], a[num_states[1] .+ (1:num_actions[1])]), [x1; u1; x1])
-    @test norm(jac_dense - jac_fd) < 1.0e-8
+    jac_fd = FiniteDiff.finite_difference_jacobian(a -> pendulum_discrete(a[num_states[1] + num_actions[1] .+ (1:num_states[2])], a[1:num_states[1]], a[num_states[1] .+ (1:num_actions[1])]), [x1; u1; x1])
+    @test norm(jac_dense - jac_fd) < 1.0e-6
 
     CALIPSO.constraints!(d, idx_dyn, dyn, X, U, W)
-    @test norm(vcat(d...) - vcat([pendulum_discrete(X[t+1], X[t], U[t]) for t = 1:horizon-1]...)) < 1.0e-8
+    @test norm(vcat(d...) - vcat([pendulum_discrete(X[t+1], X[t], U[t]) for t = 1:horizon-1]...)) < 1.0e-6
     # info = @benchmark CALIPSO.constraints!($d, $idx_dyn, $dynamics, $X, $U, $W) 
 
     CALIPSO.jacobian_variables!(j, 0, dyn, X, U, W) 
     for (i, idx) in enumerate(vcat(sp...))
         J[idx...] = j[i] 
     end
-    @test norm(J - [jac_fd zeros(dyn[2].num_state, dyn[2].num_action + dyn[2].num_next_state); zeros(dyn[2].num_next_state, dyn[1].num_state + dyn[1].num_action) jac_fd]) < 1.0e-8
+    @test norm(J - [jac_fd zeros(dyn[2].num_state, dyn[2].num_action + dyn[2].num_next_state); zeros(dyn[2].num_next_state, dyn[1].num_state + dyn[1].num_action) jac_fd]) < 1.0e-6
     # info = @benchmark CALIPSO.jacobian!($j, $idx_jac, $dynamics, $X, $U, $W) 
 
     x_idx = CALIPSO.state_indices(dyn)
@@ -80,6 +80,6 @@
         z̄[idx] .= u[t] 
     end
 
-    @test norm(z - z̄) < 1.0e-8
+    @test norm(z - z̄) < 1.0e-6
 end
 

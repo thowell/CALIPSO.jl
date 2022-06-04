@@ -1,4 +1,4 @@
-# @testset "Solver problem: Knitro" begin
+@testset "Solver problem: Knitro" begin
     # ## problem
     objective(x) = (x[1] - 5)^2 + (2*x[2] + 1)^2
     equality(x) = [2*(x[2] - 1) - 1.5*x[2] + x[3] - 0.5*x[4] + x[5];
