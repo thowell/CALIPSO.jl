@@ -9,32 +9,63 @@ An augmented Lagrangian is employed for equality constraints and cones are handl
 
 ## Standard form
 Problems of the following form:
-```
-minimize     c(x; p)
-   x
-subject to   g(x; p)  = 0,
-             h(x; p) in K = R+ x Q^1 x ... x Q^k
-```
+
+$$
+\begin{align*}
+\underset{x}{\text{minimize}} & \quad c(x; \theta) \\
+\text{subject to} & \quad  g(x; \theta) = 0, \\
+                  & \quad  h(x; \theta) \in \mathcal{K},
+\end{align*}
+$$
+
 can be optimized for 
 
-- x: decision variables 
-- p: problem parameters 
-- K: Cartesian product of convex cones; nonnegative orthant R+ and second-order cones Q are currently implemented
+- $x$: decision variables 
+- $\theta$: problem parameters 
+- $\mathcal{K}$: Cartesian product of convex cones; nonnegative orthant $\mathbf{R}_+$ and second-order cones $\mathcal{Q}$ are currently implemented
 
 ## Trajectory optimization
 Additionally, trajectory optimization problems of the form:
-```
-minimize        cost_T(state_T; parameter_T) + sum(cost_t(state_t, action_t; parameter_t))
-states, actions
-subject to      dynamics_t(state_t+1, state_t, action_t; parameter_t)  = 0,        t = 1,...,T-1  
-                equality_t(state_t, action_t; parameter_t)             = 0,        t = 1,...,T
-                inequality_t(state_t, action_t; parameter_t)          >= 0,        t = 1,...,T
-                second_order_t(state_t, action_t; parameter_t)        in Q,        t = 1,...,T
-``` 
+
+$$ 
+\begin{align*}
+		\underset{X_{1:T}, U_{1:T-1}}{\mbox{minimize }} & C_T(X_T; \theta) + \sum \limits_{t = 1}^{T-1} C_t(X_t, U_t; \theta)\\
+		\mbox{subject to } & F_t(X_t, U_t; \theta) = X_{t+1}, \quad t = 1,\dots,T-1,\\
+		& E_t(X_t, U_t; \theta) = 0, \quad t = 1, \dots, T,\\
+		& H_t(X_t, U_t; \theta) \in \mathcal{K}_t, \quad t = 1, \dots, T,
+\end{align*}
+$$
+
 are automatically formulated, and fast gradients generated, for CALIPSO.
 
 ## Solution gradients
-The solver is differentiable, and gradients of the solution (including internal solver variables) with respect to the problem parameters are efficiently computed.
+The solver is differentiable, and gradients of the solution $w = (x, y, z, r, s, t)$, including internal solver variables:
+
+$$ 
+\partial w^*(\theta) / \partial \theta,
+$$
+
+with respect to the problem parameters are efficiently computed.
+
+## Examples
+
+### ball-in-cup
+<img src="examples/animations/ball_in_cup.gif" alt="drawing" width="150"/> 
+
+### bunny hop
+<img src="examples/animations/atlas_bunnyhop.gif" alt="drawing" width="400"/> 
+
+### quadruped gait 
+<img src="examples/animations/quadruped_gait.gif" alt="drawing" width="250"/> 
+
+### cyberdrift 
+<img src="examples/animations/cyberdrift.gif" alt="drawing" width="250"/> 
+
+### rocket landing with state-triggered constraints 
+
+### cart-pole auto-tuning
+
+### acrobot auto-tuning
 
 ## Quick start (non-convex problem)
 ```julia
@@ -129,20 +160,6 @@ solve!(solver)
 # solution
 state_solution, action_solution = get_trajectory(solver);
 ```
-
-## Examples
-
-### ball-in-cup
-<img src="examples/animations/ball_in_cup.gif" alt="drawing" width="150"/> 
-
-### bunny hop
-<img src="examples/animations/atlas_bunnyhop.gif" alt="drawing" width="400"/> 
-
-### quadruped gait 
-<img src="examples/animations/quadruped_gait.gif" alt="drawing" width="250"/> 
-
-### cyberdrift 
-<img src="examples/animations/cyberdrift.gif" alt="drawing" width="250"/> 
 
 
 
