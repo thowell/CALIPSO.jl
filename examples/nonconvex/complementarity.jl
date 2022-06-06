@@ -12,8 +12,9 @@ equality(x) = [2*(x[2] - 1) - 1.5*x[2] + x[3] - 0.5*x[4] + x[5];
             -x[1] - x[2] + 7.0 - x[8];
             x[3]*x[6];
             x[4]*x[7];
-            x[5]*x[8];]
-cone(x) = x #.- 1.0e-5
+            x[5]*x[8];
+]
+cone(x) = x
 
 # ## variables 
 num_variables = 8

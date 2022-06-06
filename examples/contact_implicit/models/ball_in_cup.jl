@@ -154,7 +154,7 @@ function set_robot!(vis, model::BallInCup, q)
         RoboDojo.Translation(q[3], 0.0, q[4]))
 end
 
-function set_background!(vis::Visualizer; 
+function set_background!(vis; 
     top_color=RoboDojo.RGBA(1,1,1.0), 
     bottom_color=RoboDojo.RGBA(1,1,1.0))
 

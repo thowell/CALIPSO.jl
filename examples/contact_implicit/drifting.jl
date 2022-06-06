@@ -4,6 +4,7 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 using CALIPSO
 using RoboDojo
+include("models/cybertruck.jl") 
 
 # ## horizon
 horizon = 15
@@ -137,21 +138,8 @@ solve!(solver)
 # ## solution trajectories
 x_sol, u_sol = CALIPSO.get_trajectory(solver)
 
-# ## visualize
-# visualize!(vis, cybertruck, [[x_sol[1] for t = 1:10]..., x_sol..., [x_sol[end] for t = 1:10]...], Δt=timestep)
+# ## visualize (NOTE: mesh not included)
+# vis = Visualizer()
+# render(vis)
 # set_background!(vis)
-
-# RoboDojo.settransform!(vis["/Cameras/default"],
-# 	RoboDojo.compose(RoboDojo.Translation(0.0, 0.0, 10.0), RoboDojo.LinearMap(RoboDojo.RotY(-pi/2.5))))
-# RoboDojo.setprop!(vis["/Cameras/default/rotated/<object>"], "zoom", 3)
-
-# path_meshes = joinpath(@__DIR__, "..", "..", "..", "robot_meshes")
-# meshfile = joinpath(path_meshes, "cybertruck", "cybertruck_transparent.obj")
-# obj = RoboDojo.MeshCat.MeshFileObject(meshfile);
-
-# q_sol = [x_sol[1][1:3], [x[4:6] for x in x_sol]...]
-# for (t, q) in enumerate(q_sol)
-#     RoboDojo.MeshCat.setobject!(vis["cybertruck_t$t"]["mesh"], obj)
-#     RoboDojo.MeshCat.settransform!(vis["cybertruck_t$t"]["mesh"], RoboDojo.MeshCat.LinearMap(0.1 * RoboDojo.Rotations.RotZ(1.0 * pi) * RoboDojo.Rotations.RotX(pi / 2.0)))
-#     RoboDojo.MeshCat.settransform!(vis["cybertruck_t$t"], RoboDojo.MeshCat.compose(RoboDojo.MeshCat.Translation(q[1:2]..., 0.0), RoboDojo.MeshCat.LinearMap(RoboDojo.Rotations.RotZ(q[3]))))
-# end
+# visualize!(vis, cybertruck, [[x_sol[1] for t = 1:10]..., x_sol..., [x_sol[end] for t = 1:10]...], Δt=timestep)

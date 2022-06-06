@@ -1,13 +1,14 @@
 function solver_info(solver) 
-    println(crayon"bold red","
-           _ _                 
+    println(crayon"bold red", 
+    "           _ _                 
           | (_)                
   ___ __ _| |_ _ __  ___  ___  
- / __/ _` | | | '_ \/ __|/ _ \ 
-| (_| (_| | | | |_) \__ \ (_) |
- \___\__,_|_|_| .__/|___/\___/ 
+ / __/ _` | | | '_ \\/ __|/ _ \\ 
+| (_| (_| | | | |_) \\__ \\ (_) |
+ \\___\\__,_|_|_| .__/|___/\\___/ 
               | |              
-              |_|              
+              |_|
+              
     ")
     println(crayon"reset bold black", 
     "Taylor Howell & Kevin Tracy & Simon Le Cleac'h")

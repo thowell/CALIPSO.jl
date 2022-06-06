@@ -22,7 +22,6 @@ Literate.notebook(joinpath(exampledir, "contact_implicit/drifting.jl"), exampled
 # state-triggered constraints 
 Literate.notebook(joinpath(exampledir, "state_triggered/rocket_landing.jl"), exampledir, execute=false, preprocess=preprocess)
 
-
 # auto-tuning
 Literate.notebook(joinpath(exampledir, "autotuning/cartpole.jl"), exampledir, execute=false, preprocess=preprocess)
 Literate.notebook(joinpath(exampledir, "autotuning/acrobot.jl"), exampledir, execute=false, preprocess=preprocess)
