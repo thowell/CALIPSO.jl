@@ -1,5 +1,6 @@
 [![CI](https://github.com/thowell/CALIPSO.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/thowell/CALIPSO.jl/actions/workflows/CI.yml)
 [![codecov](https://codecov.io/gh/thowell/CALIPSO.jl/branch/main/graph/badge.svg?token=RNX4943S70)](https://codecov.io/gh/thowell/CALIPSO.jl)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://thowell.github.io/CALIPSO.jl/dev)
 
 # CALIPSO.jl
 Conic Augmented Lagrangian Interior-Point SOlver: A solver for contact-implicit trajectory optimization
@@ -21,7 +22,7 @@ $$
 can be optimized for 
 
 - $x$: decision variables 
-- $\theta$: problem parameters 
+- $\theta$: problem data
 - $\mathcal{K}$: Cartesian product of convex cones; nonnegative orthant $\mathbf{R}_+$ and second-order cones $\mathcal{Q}$ are currently implemented
 
 ## Trajectory optimization
@@ -45,7 +46,7 @@ $$
 \partial w^*(\theta) / \partial \theta,
 $$
 
-with respect to the problem parameters are efficiently computed.
+with respect to the problem data are efficiently computed.
 
 ## Examples
 
