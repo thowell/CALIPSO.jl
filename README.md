@@ -25,7 +25,7 @@ can be optimized for
 - $\mathcal{K}$: Cartesian product of convex cones; nonnegative orthant $\mathbf{R}_+$ and second-order cones $\mathcal{Q}$ are currently implemented
 
 ## Trajectory optimization
-Additionally, problem with temporal structure of the form:
+Additionally, problems with temporal structure of the form:
 
 $$ 
 \begin{align*}
