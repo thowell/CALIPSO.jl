@@ -59,16 +59,21 @@ vis = Visualizer()
 render(vis)
 
 # ## visualize
-visualize_cartpole!(vis, nothing, state_solution, Δt=timestep)
+visualize_cartpole!(vis, nothing, 
+    [[state_solution[1] for t = 1:25]..., state_solution..., [state_solution[end] for t = 1:25]...], 
+    Δt=timestep)
 
 # ## simulate
-x_hist = [state_initial]
-u_hist = []
+state_openloop = [state_initial]
+action_openloop = []
 for t = 1:horizon-1
-    push!(u_hist, action_solution[1])
-    push!(x_hist, cartpole_discrete(x_hist[end], u_hist[end]))
+    push!(action_openloop, action_solution[1])
+    push!(state_openloop, cartpole_discrete(state_openloop[end], action_openloop[end]))
 end
-visualize_cartpole!(vis, nothing, x_hist, Δt=timestep)
+
+visualize_cartpole!(vis, nothing, 
+    [[state_openloop[1] for t = 1:25]..., state_openloop..., [state_openloop[end] for t = 1:25]...],
+    Δt=timestep)
 
 ###########
 ### MPC ###

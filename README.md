@@ -63,9 +63,17 @@ with respect to the problem parameters are efficiently computed.
 
 ### rocket landing with state-triggered constraints 
 
-### cart-pole auto-tuning
+### cart-pole auto-tuning (right)
+<p float="left">
+<img src="examples/animations/cartpole_openloop.gif" width="100"/>
+<img src="examples/animations/cartpole_tuned.gif" width="100"/>
+</p>
 
-### acrobot auto-tuning
+### acrobot auto-tuning (right)
+<p float="left">
+<img src="examples/animations/acrobot_openloop.gif" width="100"/>
+<img src="examples/animations/acrobot_tuned.gif" width="100"/>
+</p>
 
 ## Quick start (non-convex problem)
 ```julia

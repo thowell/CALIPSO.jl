@@ -66,16 +66,20 @@ vis = Visualizer()
 render(vis)
 
 # ## visualize
-visualize_acrobot!(vis, nothing, state_solution, Δt=timestep)
+visualize_acrobot!(vis, nothing, 
+    [[state_solution[1] for t = 1:50]..., state_solution..., [state_solution[end] for t = 1:50]...], 
+    Δt=timestep)
 
 # ## simulate
-x_hist = [state_initial]
-u_hist = []
+state_openloop = [state_initial]
+action_openloop = []
 for t = 1:horizon-1
-    push!(u_hist, max.(min.(10.0, action_solution[1]), -10.0))
-    push!(x_hist, max.(min.(10.0, acrobot_discrete(x_hist[end], u_hist[end])), -10.0))
+    push!(action_openloop, max.(min.(10.0, action_solution[1]), -10.0))
+    push!(state_openloop, max.(min.(10.0, acrobot_discrete(state_openloop[end], action_openloop[end])), -10.0))
 end
-visualize_acrobot!(vis, nothing, x_hist, Δt=timestep)
+visualize_acrobot!(vis, nothing, 
+    [[state_openloop[1] for t = 1:50]..., state_openloop..., [state_openloop[end] for t = 1:50]...], 
+    Δt=timestep)
 
 ###########
 ### MPC ###
@@ -244,7 +248,9 @@ state_untuned, action_untuned = rollout(state_initial, parameters_cost, horizon)
 @show total_loss(state_untuned, action_untuned, state_reference, action_reference, state_cost, action_cost)
 
 # ## visualize untuned
-visualize_acrobot!(vis, nothing, state_untuned, Δt=timestep)
+visualize_acrobot!(vis, nothing, 
+[[state_untuned[1] for t = 1:50]..., state_untuned..., [state_untuned[end] for t = 1:50]...], 
+    Δt=timestep)
 
 # ## autotune!
 autotune!(parameters_cost, state_reference, action_reference, state_cost, action_cost, horizon)

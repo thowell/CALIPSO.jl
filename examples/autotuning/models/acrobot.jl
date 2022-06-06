@@ -186,7 +186,7 @@ function visualize_acrobot!(vis, model, x;
     end
 
     RoboDojo.settransform!(vis["/Cameras/default"],
-       RoboDojo.compose(RoboDojo.Translation(0.0 , 0.0 , 0.0), RoboDojo.LinearMap(RoboDojo.RotZ(pi / 2.0))))
+       RoboDojo.compose(RoboDojo.Translation(0.0 , 0.0 , -1.0), RoboDojo.LinearMap(RoboDojo.RotZ(pi / 2.0))))
 
     RoboDojo.MeshCat.setanimation!(vis, anim)
 end
