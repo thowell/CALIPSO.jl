@@ -21,7 +21,7 @@ $$
 can be optimized for 
 
 - $x$: decision variables 
-- $\theta$: problem parameters 
+- $\theta$: problem data
 - $\mathcal{K}$: Cartesian product of convex cones; nonnegative orthant $\mathbf{R}_+$ and second-order cones $\mathcal{Q}$ are currently implemented
 
 ## Trajectory optimization
@@ -45,7 +45,7 @@ $$
 \partial w^*(\theta) / \partial \theta,
 $$
 
-with respect to the problem parameters are efficiently computed.
+with respect to the problem data are efficiently computed.
 
 ## Examples
 
