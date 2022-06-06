@@ -39,7 +39,7 @@ $$
 are automatically formulated, and fast gradients generated, for CALIPSO.
 
 ## Solution gradients
-The solver is differentiable, and gradients of the solution, including internal solver variables, $w = (x, y, z, r, s, t)$, :
+The solver is differentiable, and gradients of the solution, including internal solver variables, $w = (x, y, z, r, s, t)$ :
 
 $$ 
 \partial w^*(\theta) / \partial \theta,
