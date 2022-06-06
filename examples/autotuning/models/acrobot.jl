@@ -77,7 +77,6 @@ function acrobot_discrete(y, x, u)
     y - acrobot_discrete(x, u)
 end
 
-# visualsusing RoboDojo
 function cable_transform(y, z)
     v1 = [0.0, 0.0, 1.0]
     v2 = y[1:3,1] - z[1:3,1]
@@ -161,7 +160,7 @@ function kinematics_elbow(model, x)
 end
 
 # visualization
-function visualize_elbow!(vis, model, x;
+function visualize_acrobot!(vis, model, x;
     tl = 1.0,
     i = 0,
     color = RoboDojo.Colors.RGBA(0.0, 0.0, 0.0, 1.0),
