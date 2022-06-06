@@ -25,21 +25,21 @@ can be optimized for
 - $\mathcal{K}$: Cartesian product of convex cones; nonnegative orthant $\mathbf{R}_+$ and second-order cones $\mathcal{Q}$ are currently implemented
 
 ## Trajectory optimization
-Additionally, trajectory optimization problems of the form:
+Additionally, problem with temporal structure of the form:
 
 $$ 
 \begin{align*}
-		\underset{X_{1:T}, U_{1:T-1}}{\mbox{minimize }} & C_T(X_T; \theta) + \sum \limits_{t = 1}^{T-1} C_t(X_t, U_t; \theta)\\
-		\mbox{subject to } & F_t(X_t, U_t; \theta) = X_{t+1}, \quad t = 1,\dots,T-1,\\
-		& E_t(X_t, U_t; \theta) = 0, \quad t = 1, \dots, T,\\
-		& H_t(X_t, U_t; \theta) \in \mathcal{K}_t, \quad t = 1, \dots, T,
+		\underset{X_{1:T}, \phantom{\,} U_{1:T-1}}{\mbox{minimize }} & C_T(X_T; \theta) + \sum \limits_{t = 1}^{T-1} C_t(X_t, U_t; \theta)\\
+		\mbox{subject to } & F_t(X_t, U_t) = X_{t+1}, \quad t = 1,\dots,T-1,\\
+		& E_t(X_t, U_t) = 0, \phantom{\, _{t+1}} \quad t = 1, \dots, T,\\
+		& H_t(X_t, U_t) \in \mathcal{K}_t, \phantom{X} \quad t = 1, \dots, T,
 \end{align*}
 $$
 
 are automatically formulated, and fast gradients generated, for CALIPSO.
 
 ## Solution gradients
-The solver is differentiable, and gradients of the solution $w = (x, y, z, r, s, t)$, including internal solver variables:
+The solver is differentiable, and gradients of the solution, including internal solver variables, $w = (x, y, z, r, s, t)$ :
 
 $$ 
 \partial w^*(\theta) / \partial \theta,
