@@ -45,9 +45,8 @@ include("solver/differentiate.jl")
 include("solver/solve.jl")
 include("solver/iterative_refinement.jl")
 
-
 export
-    ProblemMethods, Solver, solve!, initialize!, Options,
+    Solver, solve!, initialize!, Options,
     empty_constraint, callback_inner, callback_outer
 
 # Trajectory Optimization

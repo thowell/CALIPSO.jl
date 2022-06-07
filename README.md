@@ -32,12 +32,18 @@ Additionally, problems with temporal structure of the form:
 
 $$ 
 \begin{align*}
-		\underset{X_{1:T}, \phantom{\,} U_{1:T-1}}{\mbox{minimize }} & C_T(X_T; \theta_T) + \sum \limits_{t = 1}^{T-1} C_t(X_t, U_t; \theta_t)\\
-		\mbox{subject to } & F_t(X_t, U_t; \theta_t) = X_{t+1}, \quad t = 1,\dots,T-1,\\
+		\underset{X_{1:T}, \phantom{\,} U_{1:T-1}}{\text{minimize }} & C_T(X_T; \theta_T) + \sum \limits_{t = 1}^{T-1} C_t(X_t, U_t; \theta_t)\\
+		\text{subject to } & F_t(X_t, U_t; \theta_t) = X_{t+1}, \quad t = 1,\dots,T-1,\\
 		& E_t(X_t, U_t; \theta_t) = 0, \phantom{\, _{t+1}} \quad t = 1, \dots, T,\\
 		& H_t(X_t, U_t; \theta_t) \in \mathcal{K}_t, \phantom{X} \quad t = 1, \dots, T,
 \end{align*}
 $$
+
+with
+
+- $X_{1:T}$: state trajectory 
+- $U_{1:T-1}$: action trajectory 
+- $\Theta_{1:T}$: problem-data trajectory 
 
 are automatically formulated, and fast gradients generated, for CALIPSO.
 
@@ -66,13 +72,13 @@ with respect to the problem data are efficiently computed.
 
 ### rocket landing with state-triggered constraints 
 
-### cart-pole auto-tuning (right)
+### cart-pole auto-tuning {open-loop (left) tuned MPC (right)}
 <p float="left">
 <img src="examples/animations/cartpole_openloop.gif" width="200"/>
 <img src="examples/animations/cartpole_tuned.gif" width="200"/>
 </p>
 
-### acrobot auto-tuning (right)
+### acrobot auto-tuning {open-loop (left) tuned MPC (right)}
 <p float="left">
 <img src="examples/animations/acrobot_openloop.gif" width="200"/>
 <img src="examples/animations/acrobot_tuned.gif" width="200"/>
