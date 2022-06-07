@@ -1,6 +1,6 @@
 push!(LOAD_PATH, "../src/")
 
-using Documenter, CALIPSO
+using Documenter#, CALIPSO
 
 makedocs(
     modules = [CALIPSO],

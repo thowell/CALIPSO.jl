@@ -8,6 +8,8 @@ Conic Augmented Lagrangian Interior-Point SOlver: A solver for contact-implicit 
 The CALIPSO algorithm is an infeasible-start, primal-dual augmented-Lagrangian interior-point solver for non-convex optimization problems. 
 An augmented Lagrangian is employed for equality constraints and cones are handled by interior-point methods.
 
+For more details, see our paper on [arXiv](https://arxiv.org/pdf/2205.09255.pdf).
+
 ## Standard form
 Problems of the following form:
 
@@ -30,10 +32,10 @@ Additionally, problems with temporal structure of the form:
 
 $$ 
 \begin{align*}
-		\underset{X_{1:T}, \phantom{\,} U_{1:T-1}}{\mbox{minimize }} & C_T(X_T; \theta) + \sum \limits_{t = 1}^{T-1} C_t(X_t, U_t; \theta)\\
-		\mbox{subject to } & F_t(X_t, U_t) = X_{t+1}, \quad t = 1,\dots,T-1,\\
-		& E_t(X_t, U_t) = 0, \phantom{\, _{t+1}} \quad t = 1, \dots, T,\\
-		& H_t(X_t, U_t) \in \mathcal{K}_t, \phantom{X} \quad t = 1, \dots, T,
+		\underset{X_{1:T}, \phantom{\,} U_{1:T-1}}{\mbox{minimize }} & C_T(X_T; \theta_T) + \sum \limits_{t = 1}^{T-1} C_t(X_t, U_t; \theta_t)\\
+		\mbox{subject to } & F_t(X_t, U_t; \theta_t) = X_{t+1}, \quad t = 1,\dots,T-1,\\
+		& E_t(X_t, U_t; \theta_t) = 0, \phantom{\, _{t+1}} \quad t = 1, \dots, T,\\
+		& H_t(X_t, U_t; \theta_t) \in \mathcal{K}_t, \phantom{X} \quad t = 1, \dots, T,
 \end{align*}
 $$
 
@@ -66,14 +68,14 @@ with respect to the problem data are efficiently computed.
 
 ### cart-pole auto-tuning (right)
 <p float="left">
-<img src="examples/animations/cartpole_openloop.gif" width="100"/>
-<img src="examples/animations/cartpole_tuned.gif" width="100"/>
+<img src="examples/animations/cartpole_openloop.gif" width="200"/>
+<img src="examples/animations/cartpole_tuned.gif" width="200"/>
 </p>
 
 ### acrobot auto-tuning (right)
 <p float="left">
-<img src="examples/animations/acrobot_openloop.gif" width="100"/>
-<img src="examples/animations/acrobot_tuned.gif" width="100"/>
+<img src="examples/animations/acrobot_openloop.gif" width="200"/>
+<img src="examples/animations/acrobot_tuned.gif" width="200"/>
 </p>
 
 ## Quick start (non-convex problem)
