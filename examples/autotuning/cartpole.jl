@@ -242,7 +242,9 @@ state_untuned, action_untuned = rollout(state_initial, parameters_cost, horizon)
 @show total_loss(state_untuned, action_untuned, state_reference, action_reference, state_cost, action_cost)
 
 # ## visualize untuned
-visualize_cartpole!(vis, nothing, state_untuned, Δt=timestep)
+visualize_cartpole!(vis, nothing, 
+    [[state_untuned[1] for t = 1:25]..., state_untuned..., [state_untuned[end] for t = 1:25]...], 
+    Δt=timestep)
 
 # ## autotune!
 autotune!(parameters_cost, state_reference, action_reference, state_cost, action_cost, horizon)
@@ -252,4 +254,6 @@ state_tuned, action_tuned = rollout(state_initial, parameters_cost, horizon)
 @show total_loss(state_tuned, action_tuned, state_reference, action_reference, state_cost, action_cost)
 
 # ## visualize tuned
-visualize_cartpole!(vis, nothing, state_tuned, Δt=timestep)
+visualize_cartpole!(vis, nothing, 
+    [[state_tuned[1] for t = 1:25]..., state_tuned..., [state_tuned[end] for t = 1:25]...], 
+    Δt=timestep)
