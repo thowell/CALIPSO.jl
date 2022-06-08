@@ -22,7 +22,6 @@ makedocs(
         ##############################################
         "index.md",
         "solver.md",
-        "options.md",
         "examples.md",
         "api.md",
         "contributing.md",

@@ -20,7 +20,7 @@ For a system modeled with $Q$ contact points, the smooth dynamics, as well as im
 
 with configurations $q_t \in \mathbf{R}^{n_q}$, smooth discrete-time dynamics $f_t : \mathbf{R}^{n_q} \times \mathbf{R}^{n_q} \rightarrow \mathbf{R}^{n_q}$, input Jacobian $B_t : \mathbf{R}^{n_q} \rightarrow \mathbf{R}^{n_q \times m}$, contact Jacobian $C_t : \mathbf{R}^{n_q} \rightarrow \mathbf{R}^{3P \times n_q}$, contact impulses $\lambda_t \in \mathbf{R}^{3Q}$, signed distance $\phi_t : \mathbf{R}^{n_q} \rightarrow \mathbf{R}^P$, impact impulses $\gamma_t \in \mathbf{R}^P$, friction primals and duals $\beta_t, \eta_t \in \mathbf{R}^3$, contact-point tangential velocity $v : \mathbf{R}^{n_q} \times \mathbf{R}^{n_q} \rightarrow \mathbf{R}^2$, and friction coefficient $\mu \in \mathbf{R}_+$, where $\lambda = (\beta_{(2:3)}, \gamma)$. For additional details, see: [[1](https://groups.csail.mit.edu/robotics-center/public_papers/Posa13.pdf)] [[2](https://agile.seas.harvard.edu/files/agile/files/variational.pdf)]
 
-We utilize this formulate to optimized motions for: 
+We utilize this formulation to optimize motions for: 
 
 ### ball-in-cup 
 ```@raw html

@@ -165,7 +165,7 @@ The solutions returned by CALIPSO are differentiable with respect to problem dat
     \frac{\partial w}{\partial \theta} = -\Big(\frac{\partial R}{\partial w}\Big)^{-1} \frac{\partial R}{\partial \theta}
 ```
 
-Sensitivities are efficienctly computing via the [implicit-function theorem](https://en.wikipedia.org/wiki/Implicit_function_theorem). This functionality can be utilized by setting the solver option: **differentiate = true**.
+Sensitivities are efficiently computing via the [implicit-function theorem](https://en.wikipedia.org/wiki/Implicit_function_theorem). This functionality can be utilized by setting the solver option: `differentiate = true`.
 
 ### Differentiable trajectory-optimization example 
 
