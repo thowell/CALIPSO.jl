@@ -89,5 +89,13 @@ function generate_gradients(func::Function, num_variables::Int, num_parameters::
     end
 end
 
-empty_constraint(x) = zeros(0) 
+""" 
+    empty_constraint(x, θ)
+
+    convenience method for empty constraints 
+
+    x: Vector{Real} - primal decision variables 
+    θ: Vector{Real} - problem data 
+"""
 empty_constraint(x, θ) = zeros(0) 
+empty_constraint(x) = zeros(0) 

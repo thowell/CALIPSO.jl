@@ -139,7 +139,7 @@ end
 
 solver = Solver(objective, dynamics, num_states, num_actions;equality = equality, nonnegative = ineq, options=Options(verbose=true,penalty_initial=1.0e3))
 initialize_states!(solver, x_interpolation)
-initialize_controls!(solver, u_guess)
+initialize_actions!(solver, u_guess)
 solve!(solver)
 
 x_sol, u_sol  = get_trajectory(solver)
@@ -182,7 +182,7 @@ u_guess = [[0;0;9.8] for i = 1:T-1]
 # solve without STC constraints
 solver = Solver(objective, dynamics, num_states, num_actions;equality = equality, nonnegative = ineq, options=Options(verbose=true,penalty_initial=1.0e3))
 initialize_states!(solver, x_interpolation)
-initialize_controls!(solver, u_guess)
+initialize_actions!(solver, u_guess)
 solve!(solver)
 
 x_sol, u_sol  = get_trajectory(solver)

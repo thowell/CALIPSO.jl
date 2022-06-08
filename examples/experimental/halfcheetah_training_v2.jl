@@ -357,7 +357,7 @@ for i = 1:T
 end
 visualize!(vis, s)
 
-iLQR.initialize_controls!(p, u_guess)
+iLQR.initialize_actions!(p, u_guess)
 iLQR.initialize_states!(p, x_guess)
 dynamics_model.ip.opts.r_tol = 1e-5
 dynamics_model.ip.opts.κ_tol = 3e-2

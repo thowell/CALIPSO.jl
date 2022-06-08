@@ -26,6 +26,23 @@ struct Solver{T,X,O,OX,OP,OXX,OXP,E,EX,EP,ED,EDX,EDXX,EDXP,C,CX,CP,CD,CDX,CDXX,C
     options::Options{T}
 end
 
+""" 
+    Solver(methods, num_variables, num_parameters, num_equality, num_cone;
+        parameters, nonnegative_indices, second_order_indices, custom, options)
+
+    CALIPSO solver 
+
+    methods: ProblemMethods - includes objective and constraint functions, as we as their derivatives 
+    num_variables: Int - dimension of primal decision variables 
+    num_parameters: Int - dimension of problem data 
+    num_equality: Int - dimension of equality constraints 
+    num_cone: Int - dimension of cone constraints 
+    parameters: Vector{Real} - problem data 
+    nonnegative_indices: Vector{Int} - indices of cone constraints corresponding to nonnegative orthant 
+    second_order_indices: Vector{Vector{Int}} - indices of cone constraints corresponding to second-order cones
+    custom: Any - user-provided type used for solver callbacks 
+    options: Options - solver settings 
+"""
 function Solver(methods, num_variables, num_parameters, num_equality, num_cone; 
     parameters=zeros(num_parameters),
     nonnegative_indices=collect(1:num_cone),
@@ -155,6 +172,23 @@ function Solver(objective, equality, cone, num_variables::Int;
     return solver
 end
 
+""" 
+    callback_inner(custom, solver)
+
+    method called during solver's inner iterations 
+
+    custom: Any - user-provided type used for solver callbacks
+    solver: Solver
+"""
 callback_inner(custom, solver) = nothing
+
+""" 
+    callback_outer(custom, solver)
+
+    method called during solver's outer updates 
+
+    custom: Any - user-provided type used for solver callbacks
+    solver: Solver
+"""
 callback_outer(custom, solver) = nothing
 

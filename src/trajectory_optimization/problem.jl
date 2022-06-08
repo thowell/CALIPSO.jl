@@ -62,7 +62,7 @@ function initialize_states!(trajopt::TrajectoryOptimizationProblem, states)
     end
 end 
 
-function initialize_controls!(trajopt::TrajectoryOptimizationProblem, actions)
+function initialize_actions!(trajopt::TrajectoryOptimizationProblem, actions)
     for (t, ut) in enumerate(actions) 
         trajopt.data.actions[t] .= ut
     end

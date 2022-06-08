@@ -134,7 +134,7 @@ function ϕ_calipso(x, θ)
     x_guess = [x for t = 1:H]
     u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, x_guess) 
-    initialize_controls!(solver, u_guess)
+    initialize_actions!(solver, u_guess)
     solver.parameters .= [x; θ]
     
     # solve
@@ -150,7 +150,7 @@ function ϕx_calipso(x, θ)
     x_guess = [x for t = 1:H]
     u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, x_guess) 
-    initialize_controls!(solver, u_guess)
+    initialize_actions!(solver, u_guess)
     solver.parameters .= [x; θ]
     
     # solve
@@ -166,7 +166,7 @@ function ϕθ_calipso(x, θ)
     x_guess = [x for t = 1:H]
     u_guess = [1.0e-1 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, x_guess) 
-    initialize_controls!(solver, u_guess)
+    initialize_actions!(solver, u_guess)
     solver.parameters .= [x; θ]
     
     # solve

@@ -250,7 +250,7 @@ x_interpolation = [linear_interpolation(x1, xM1, 11)..., linear_interpolation(xM
 state_guess = [x_interpolation[1], [[x_interpolation[t]; 1.0e-3 * ones(2)] for t = 2:horizon]...]
 action_guess = [1.0e-3 * randn(2) for t = 1:horizon-1] # may need to run more than once to get good trajectory
 DTO.initialize_states!(solver, state_guess) 
-DTO.initialize_controls!(solver, action_guess)
+DTO.initialize_actions!(solver, action_guess)
 
 
 # ## solve

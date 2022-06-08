@@ -323,7 +323,7 @@
     state_guess = [state_initial, [[state_initial; zeros(4); state_initial] for t = 2:horizon]...]
     action_guess = [[0.0; RoboDojo.hopper.gravity * RoboDojo.hopper.mass_body * 0.5 * timestep[1]; 1.0e-1 * ones(nu - 2)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
     initialize_states!(solver, state_guess) 
-    initialize_controls!(solver, action_guess)
+    initialize_actions!(solver, action_guess)
 
     # ## solve 
     solve!(solver)

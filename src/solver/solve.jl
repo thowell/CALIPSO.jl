@@ -1,3 +1,10 @@
+""" 
+    solve!(solver) 
+
+    method for optimizing a Solver 
+
+    solver: Solver 
+"""
 function solve!(solver)
     # initialize
     if !solver.options.warmstart

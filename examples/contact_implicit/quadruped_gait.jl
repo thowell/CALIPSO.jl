@@ -178,7 +178,7 @@ solver = Solver(objective, dynamics, num_states, num_actions;
 state_guess = robodojo_state_initialization(sim, state_reference, horizon)
 action_guess = [[slack_reference; 1.0e-3 * randn(8)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
 initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+initialize_actions!(solver, action_guess)
 
 # ## solve 
 solve!(solver)

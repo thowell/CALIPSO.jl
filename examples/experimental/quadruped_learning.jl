@@ -490,7 +490,7 @@ solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.
 # solver.options.central_path_initial = 1.0
 
 initialize_states!(solver, x_guess);
-initialize_controls!(solver, u_guess);
+initialize_actions!(solver, u_guess);
 println("solver instantiated and initialized!")
 
 # solve 

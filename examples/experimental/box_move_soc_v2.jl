@@ -83,7 +83,7 @@ state_guess = [state_interpolation[1],
 ]
 action_guess = [0.0 * randn(sim.model.nu) for t = 1:horizon-1] # may need to run more than once to get good trajectory
 initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+initialize_actions!(solver, action_guess)
 
 # ## solve
 solve!(solver)

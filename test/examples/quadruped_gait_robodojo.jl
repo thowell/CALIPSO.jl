@@ -266,7 +266,7 @@ for (t, s) in enumerate(state_guess)
 end
 action_guess = [1.0e-3 * randn(sim.model.nu) for t = 1:horizon-1] # may need to run more than once to get good trajectory
 initialize_states!(solver, state_augmented_guess) 
-initialize_controls!(solver, action_guess)
+initialize_actions!(solver, action_guess)
 
 # ## solve 
 solve!(solver)

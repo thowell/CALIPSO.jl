@@ -1,4 +1,11 @@
-# solver 
+""" 
+    initialize!(solver, guess) 
+
+    method for initializing primal decision variables 
+
+    solver: Solver 
+    guess: Vector{Real} - user-provided initialization for primal decision variables 
+"""
 function initialize!(solver::Solver, guess)
     # variables 
     solver.solution.variables .= guess 

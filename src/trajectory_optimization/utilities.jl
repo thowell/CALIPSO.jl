@@ -1,3 +1,12 @@
+"""
+    linear_interpolation(initial_state, final_state, horizon)
+
+    method for generating a linear interpolating trajectory 
+
+    initial_state: Vector{Real} - first state 
+    final_state: Vector{Real} - last state 
+    horizon: Int - length of trajectory
+"""
 function linear_interpolation(initial_state, final_state, horizon)
     n = length(initial_state)
     X = [copy(Array(initial_state)) for t = 1:horizon]

@@ -276,7 +276,7 @@
     state_guess = linear_interpolation(state_initial, state_goal, horizon)
     action_guess = [[1.0e-3 * randn(2); vcat([[1.0; 0.1; 0.1] for i = 1:(2 * nc)]...)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
     initialize_states!(solver, state_guess) 
-    initialize_controls!(solver, action_guess)
+    initialize_actions!(solver, action_guess)
 
     # ## solve
     solver.options.linear_solver = :LU

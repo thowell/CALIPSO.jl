@@ -39,7 +39,7 @@ Pages = ["api.md"]
     Constraints
     Dynamics
     initialize_states!
-    initialize_controls!
+    initialize_actions!
     get_trajectory
     linear_interpolation
 ```

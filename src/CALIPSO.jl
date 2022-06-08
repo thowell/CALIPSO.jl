@@ -77,7 +77,7 @@ export Constraint, Constraints
 export Dynamics
 
 # solver
-export initialize_states!, initialize_controls!, get_trajectory
+export initialize_states!, initialize_actions!, get_trajectory
 
 # utils
 export linear_interpolation

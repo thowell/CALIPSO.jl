@@ -117,7 +117,7 @@
     state_guess = robodojo_configuration_initialization(sim, configurations, horizon)
     action_guess = [1.0e-3 * randn(model.nu) for t = 1:horizon-1]
     initialize_states!(solver, state_guess)
-    initialize_controls!(solver, action_guess)
+    initialize_actions!(solver, action_guess)
 
     # ## solve 
     solve!(solver)

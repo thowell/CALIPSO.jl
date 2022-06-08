@@ -121,7 +121,7 @@ solver = Solver(objective, dynamics, num_states, num_actions;
 state_guess = robodojo_state_initialization(sim, linear_interpolation(state_initial, state_goal, horizon), horizon)
 action_guess = [[0.0; model.gravity * model.mass_body * 0.5 * timestep] for t = 1:horizon-1] # may need to run more than once to get good trajectory
 initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+initialize_actions!(solver, action_guess)
 
 # ## solve 
 solve!(solver)
@@ -315,7 +315,7 @@ state_guess = [t == 1 ? [q_mirror[t]; q_mirror[t+1]] : [q_mirror[t+1]; q_mirror[
     sb_mirror[t];] for t = 1:horizon_mpc]
 action_guess = [u_mirror[t] for t = 1:horizon_mpc-1] 
 initialize_states!(solver_mpc, state_guess) 
-initialize_controls!(solver_mpc, action_guess)
+initialize_actions!(solver_mpc, action_guess)
 
 solver_mpc.parameters .= vcat([[q_mirror[t+2]; 
     γ_mirror[t];
@@ -397,7 +397,7 @@ function policy(x, q_mpc, u_mpc, γ_mpc, sγ_mpc, ψ_mpc, b_mpc, sψ_mpc, sb_mpc
             sb_mpc[t];] for t = 1:horizon_mpc]
         action_guess = [u_mpc[t] for t = 1:horizon_mpc-1] 
         initialize_states!(solver_mpc, state_guess) 
-        initialize_controls!(solver_mpc, action_guess)
+        initialize_actions!(solver_mpc, action_guess)
 
         # optimize
         solver_mpc.options.verbose = false

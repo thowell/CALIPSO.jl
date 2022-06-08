@@ -96,7 +96,7 @@ function ϕ_calipso(x, θ)
     x_guess = [x for t = 1:H]
     u_guess = [randn(num_action) for t = 1:H-1]
     initialize_states!(solver, trajopt, x_guess) 
-    initialize_controls!(solver, trajopt, u_guess)
+    initialize_actions!(solver, trajopt, u_guess)
     solver.parameters .= [x; θ]
     
     # solve
@@ -111,7 +111,7 @@ function ϕx_calipso(x, θ)
     x_guess = [x for t = 1:H]
     u_guess = [1.0 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, trajopt, x_guess) 
-    initialize_controls!(solver, trajopt, u_guess)
+    initialize_actions!(solver, trajopt, u_guess)
     solver.parameters .= [x; θ]
     
     # solve
@@ -125,7 +125,7 @@ function ϕθ_calipso(x, θ)
     x_guess = [x for t = 1:H]
     u_guess = [1.0 * randn(num_action) for t = 1:H-1]
     initialize_states!(solver, trajopt, x_guess) 
-    initialize_controls!(solver, trajopt, u_guess)
+    initialize_actions!(solver, trajopt, u_guess)
     solver.parameters .= [x; θ]
     
     # solve

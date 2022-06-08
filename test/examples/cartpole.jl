@@ -67,7 +67,7 @@
     state_guess = linear_interpolation(state_initial, state_goal, horizon)
     action_guess = [0.01 * ones(num_actions[t]) for t = 1:horizon-1]
     initialize_states!(solver, state_guess) 
-    initialize_controls!(solver, action_guess)
+    initialize_actions!(solver, action_guess)
 
     # ## solve 
     solve!(solver)

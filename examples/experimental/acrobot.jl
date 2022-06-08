@@ -140,7 +140,7 @@ methods = ProblemMethods(trajopt)
 solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone, 
     options=Options())
 initialize_states!(solver, trajopt, x_interpolation)
-initialize_controls!(solver, trajopt, u_guess) 
+initialize_actions!(solver, trajopt, u_guess) 
 
 # solve 
 solve!(solver)

@@ -265,7 +265,7 @@ state_guess = [t == 1 ? x_interp[1] : [
     0.1 * ones(model.nc); 
     x_interp[1]] for t = 1:horizon]
 initialize_states!(solver, state_guess)
-initialize_controls!(solver, action_guess)
+initialize_actions!(solver, action_guess)
 
 # ## solve 
 solve!(solver)

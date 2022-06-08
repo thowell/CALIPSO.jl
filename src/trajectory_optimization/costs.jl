@@ -17,6 +17,19 @@ struct Cost{T}
     jacobian_variables_parameters_cache::Vector{T}
 end
 
+""" 
+    Cost(cost, num_state, num_action;
+        num_parameter, checkbounds, constraint_tensor)
+
+    stage-cost type 
+
+    cost: Function 
+    num_state: Int - dimension of state 
+    num_action: Int - dimension of action 
+    num_parameter: Int - dimension of problem data 
+    checkbounds: Bool - flag for checking @inbounds for codegen methods 
+    constraint_tensor: Bool - flag for generating second-derivative methods 
+"""
 function Cost(cost::Function, num_state::Int, num_action::Int; 
     num_parameter::Int=0,
     checkbounds=true,

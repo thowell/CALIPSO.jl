@@ -333,7 +333,7 @@ solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.
     second_order_indices=idx_soc,
     options=Options(verbose=true, residual_tolerance=1.0e-4))
 initialize_states!(solver, trajopt, x_interpolation)
-initialize_controls!(solver, trajopt, u_guess)
+initialize_actions!(solver, trajopt, u_guess)
 
 # solve 
 solve!(solver)

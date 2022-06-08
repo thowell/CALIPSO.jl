@@ -1,8 +1,5 @@
 abstract type LinearSolver end
 
-"""
-    QDLDL inplace functionality
-"""
 mutable struct LDLSolver{Tf<:AbstractFloat,Ti<:Integer} <: LinearSolver
     # QDLDL Factorization
     F::QDLDLFactorisation{Tf,Ti}
@@ -46,9 +43,6 @@ function compute_inertia!(ls::LDLSolver)
     return nothing
 end
 
-"""
-    LDL solver
-"""
 function ldl_solver(A::SparseMatrixCSC{T,Int}) where T
     LDLSolver(A, qdldl(A))
 end

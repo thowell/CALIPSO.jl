@@ -493,7 +493,7 @@ solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.
 ));
 
 initialize_states!(solver, trajopt, x_guess);
-initialize_controls!(solver, trajopt, u_guess);
+initialize_actions!(solver, trajopt, u_guess);
 println("solver instantiated and initialized!")
 
 # solve 

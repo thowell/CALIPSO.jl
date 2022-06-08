@@ -68,7 +68,7 @@ solver = Solver(objective, dynamics, num_states, num_actions;
 state_guess = linear_interpolation(state_initial, state_goal, horizon)
 action_guess = [0.01 * ones(num_actions[t]) for t = 1:horizon-1]
 initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+initialize_actions!(solver, action_guess)
 
 # ## solve 
 solve!(solver)
@@ -312,7 +312,7 @@ function policy(θ, x, τ)
     state_guess = deepcopy(state_reference[τ - 1 .+ (1:horizon_mpc)])
     action_guess = deepcopy(action_reference[τ - 1 .+ (1:horizon_mpc-1)])
     initialize_states!(solver_mpc, state_guess) 
-    initialize_controls!(solver_mpc, action_guess)
+    initialize_actions!(solver_mpc, action_guess)
 
     solver_mpc.options.verbose = false
     solver_mpc.options.differentiate = false
@@ -336,7 +336,7 @@ function policy_jacobian_parameters(θ, x, τ)
     state_guess = deepcopy(state_reference[τ - 1 .+ (1:horizon_mpc)])
     action_guess = deepcopy(action_reference[τ - 1 .+ (1:horizon_mpc-1)])
     initialize_states!(solver_mpc, state_guess) 
-    initialize_controls!(solver_mpc, action_guess)
+    initialize_actions!(solver_mpc, action_guess)
 
     solver_mpc.options.verbose = false
     solver_mpc.options.differentiate = true
@@ -362,7 +362,7 @@ function policy_jacobian_state(θ, x, τ)
     state_guess = deepcopy(state_reference[τ - 1 .+ (1:horizon_mpc)])
     action_guess = deepcopy(action_reference[τ - 1 .+ (1:horizon_mpc-1)])
     initialize_states!(solver_mpc, state_guess) 
-    initialize_controls!(solver_mpc, action_guess)
+    initialize_actions!(solver_mpc, action_guess)
 
     solver_mpc.options.verbose = false
     solver_mpc.options.differentiate = true

@@ -327,7 +327,7 @@ p = DTO.solver(dyn, obj, cons, bnds,
 x_interpolation = [x1, [[x1; zeros(5); x1] for t = 2:T]...]
 u_guess = [[0.0; RoboDojo.hopper.gravity * RoboDojo.hopper.mass_body * 0.5 * h[1]; 1.0e-1 * ones(nu - 2)] for t = 1:T-1] # may need to run more than once to get good trajectory
 DTO.initialize_states!(p, x_interpolation)
-DTO.initialize_controls!(p, u_guess);
+DTO.initialize_actions!(p, u_guess);
 
 # ## solve
 @time DTO.solve!(p);

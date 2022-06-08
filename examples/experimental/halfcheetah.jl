@@ -190,7 +190,7 @@ configurations = CALIPSO.linear_interpolation(q1, q1, horizon+1)
 state_guess = robodojo_state_initialization(sim, configurations, horizon)
 action_guess = [1.0 * ones(sim.model.nu - 3) for t = 1:horizon-1] # may need to run more than once to get good trajectory
 initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+initialize_actions!(solver, action_guess)
 
 # ## solve
 solve!(solver)
@@ -222,7 +222,7 @@ function policy(θ, x, goal;
         state_guess = robodojo_state_initialization(sim, configurations, horizon)
         action_guess = [1.0e-1 * ones(sim.model.nu-3) for t = 1:horizon-1]
         initialize_states!(solver, state_guess) 
-        initialize_controls!(solver, action_guess)
+        initialize_actions!(solver, action_guess)
     end
 
     q = x[1:sim.model.nq] 
@@ -249,7 +249,7 @@ function policy_jacobian_state(θ, x, goal;
             state_guess = robodojo_state_initialization(sim, configurations, horizon)
             action_guess = [1.0e-1 * ones(sim.model.nu-3) for t = 1:horizon-1] # may need to run more than once to get good trajectory
             initialize_states!(solver, state_guess) 
-            initialize_controls!(solver, action_guess)
+            initialize_actions!(solver, action_guess)
         end
 
         q = x[1:sim.model.nq] 
@@ -277,7 +277,7 @@ function policy_jacobian_parameters(θ, x, goal;
             state_guess = robodojo_state_initialization(sim, configurations, horizon)
             action_guess = [1.0e-1 * ones(sim.model.nu-3) for t = 1:horizon-1] # may need to run more than once to get good trajectory
             initialize_states!(solver, state_guess) 
-            initialize_controls!(solver, action_guess)
+            initialize_actions!(solver, action_guess)
         end
         
         q = x[1:sim.model.nq] 
@@ -673,7 +673,7 @@ for i = 1:T
 end
 visualize!(vis, s)
 
-iLQR.initialize_controls!(p, u_guess)
+iLQR.initialize_actions!(p, u_guess)
 iLQR.initialize_states!(p, x_guess)
 dynamics_model.ip.opts.r_tol = 1e-5
 dynamics_model.ip.opts.κ_tol = 1e-4

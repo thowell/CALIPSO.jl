@@ -214,7 +214,7 @@ options=Options(
 # state_guess = robodojo_state_initialization(sim, state_reference, horizon)
 # action_guess = [[slack_reference; 1.0e-3 * randn(8)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
 # initialize_states!(solver, state_guess) 
-# initialize_controls!(solver, action_guess)
+# initialize_actions!(solver, action_guess)
 
 # # ## solve 
 # solve!(solver)
@@ -374,7 +374,7 @@ solver_mpc = Solver(objective_mpc, dynamics_mpc, num_states_mpc, num_actions_mpc
 state_guess = [t == 1 ? [q_mirror[t+1]; q_mirror[t+2]] : [q_mirror[t+1]; z̄_reference[t]] for t = 1:horizon_mpc]
 action_guess = [u_mirror[t] for t = 1:horizon_mpc-1] 
 initialize_states!(solver_mpc, state_guess) 
-initialize_controls!(solver_mpc, action_guess)
+initialize_actions!(solver_mpc, action_guess)
 
 # # ## solve 
 solve!(solver_mpc)
@@ -390,7 +390,7 @@ function policy(x, τ)
     state_guess = [t == 1 ? [x[1:nq]; (x[1:nq] - x[nq .+ (1:nq)] * timestep)] : [q_mirror[t+2]; z̄_reference[t]] for t = 1:horizon_mpc]
     action_guess = [u_mirror[t] for t = 1:horizon_mpc-1] 
     initialize_states!(solver_mpc, state_guess) 
-    initialize_controls!(solver_mpc, action_guess)
+    initialize_actions!(solver_mpc, action_guess)
 
     # optimize
     solve!(solver_mpc)

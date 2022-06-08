@@ -633,14 +633,12 @@ function permute!(x,b,p)
 end
 
 function ipermute!(x,b,p)
- @inbounds for j = 1:length(x)
-     x[p[j]] = b[j];
- end
- return x
+    @inbounds for j = 1:length(x)
+        x[p[j]] = b[j];
+    end
+    return x
 end
 
-
-"Given a sparse symmetric matrix `A` (with only upper triangular entries), return permuted sparse symmetric matrix `P` (only upper triangular) given the inverse permutation vector `iperm`."
 function permute_symmetric(
     A::SparseMatrixCSC{Tf, Ti},
     iperm::AbstractVector{Ti},

@@ -1,3 +1,8 @@
+"""
+    Options 
+
+    CALIPSO solver settings 
+"""
 Base.@kwdef mutable struct Options{T}
     residual_norm::T=1.0
     constraint_norm::T=1.0

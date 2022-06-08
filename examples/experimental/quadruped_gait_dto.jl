@@ -484,7 +484,7 @@ x_interp = [[q_interp[t]; q_interp[t+1]] for t = 1:T]
 u_guess = [max.(0.0, 1.0e-3 * randn(nu)) for t = 1:T-1] # may need to run more than once to get good trajectory
 x_guess = [t == 1 ? x_interp[t] : [x_interp[t]; max.(0.0, 1.0e-3 * randn(nc + 1)); x_interp[t-1]] for t = 1:T]
 
-DTO.initialize_controls!(p, u_guess)
+DTO.initialize_actions!(p, u_guess)
 DTO.initialize_states!(p, x_guess)
 
 # ## solve

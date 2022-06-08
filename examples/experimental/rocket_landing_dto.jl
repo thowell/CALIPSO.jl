@@ -120,7 +120,7 @@ x_interpolation = linear_interpolation(x1, xT, T)
 u_guess = [1.0 * randn(num_action) for t = 1:T-1]
 
 initialize_states!(solver, x_interpolation)
-initialize_controls!(solver, u_guess)
+initialize_actions!(solver, u_guess)
 
 # ## solve
 @time solve!(solver)

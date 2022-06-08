@@ -85,18 +85,41 @@ function Solver(objective, dynamics, num_states::Vector{Int}, num_actions::Vecto
     return solver 
 end
 
+""" 
+    initialize_states!(solver::Solver, states)
+
+    method for initialized primal variables with state trajectory 
+
+    solver: Solver 
+    states: Vector{Vector{Real}} - trajectory of states 
+"""
 function initialize_states!(solver::Solver, states) 
     for (t, idx) in enumerate(solver.problem.custom.indices.states)
         solver.solution.variables[idx] = states[t]
     end
 end
 
-function initialize_controls!(solver::Solver, actions) 
+""" 
+    initialize_actions!(solver::Solver, actions)
+
+    method for initialized primal variables with action trajectory 
+
+    solver: Solver 
+    actions: Vector{Vector{Real}} - trajectory of actions 
+"""
+function initialize_actions!(solver::Solver, actions) 
     for (t, idx) in enumerate(solver.problem.custom.indices.actions)
         solver.solution.variables[idx] = actions[t]
     end
 end
 
+""" 
+    get_trajectory(solver)
+
+    method for returning state and action trajectories from solver 
+
+    solver: Solver
+"""
 function get_trajectory(solver::Solver) 
     states = [solver.solution.variables[idx] for (t, idx) in enumerate(solver.problem.custom.indices.states)]
     actions = [solver.solution.variables[idx] for (t, idx) in enumerate(solver.problem.custom.indices.actions)] 
