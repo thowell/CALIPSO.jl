@@ -69,4 +69,47 @@ With CALIPSO, we employ an equivalent complementarity formulation (right) in ord
 
 
 ## MPC auto-tuning 
+Model-predictive control is utilized to control underactuated robotic systems by tracking a reference $\bar{X}_{1:T}, \bar{U}_{1:T-1}$. The policy,
+
+```math
+\begin{align*}
+		\pi(\hat{X}; \theta) = U^*_1 = \underset{X_{1:H}, \phantom{\,} U_{1:H-1}}{\text{arg min }} & (X_H - \bar{X}_{[t + H]})^T P(\theta) (X_H - \bar{X}_{[t + H]}) + \sum \limits_{\tau = 1}^{H-1} (X_\tau - \bar{X}_{[t + \tau]})^T Q(\theta) (X_\tau - \bar{X}_{[t + \tau]}) + (U_\tau - \bar{U}_{[t + \tau]})^T R(\theta) (U_\tau - \bar{U}_{[t + \tau]}) \\
+		\text{subject to } & F_{\tau}(X_{\tau}, U_{\tau}) = X_{\tau+1}, \quad \tau = 1,\dots,H-1, \\
+		& X_1 = \hat{X}, \phantom{\, _{t+1}} \\
+\end{align*}
+```
+
+computes controls by solving an optimization problem with horizon $H$ using CALIPSO. Auto-tuning is performed to modify the weights in the policy's objective using gradient descent.
+
+### cart-pole
+```@raw html
+<img src="./assets/animations/cartpole_openloop.gif" width="250"/>
+```
+(open-loop)
+
+```@raw html
+<img src="./assets/animations/cartpole_untuned.gif" width="250"/>
+```
+(untuned)
+
+```@raw html
+<img src="./assets/animations/cartpole_tuned.gif" width="250"/>
+```
+(MPC tuned)
+
+### acrobot
+```@raw html
+<img src="./assets/animations/acrobot_openloop.gif" width="250"/>
+```
+(open-loop)
+
+```@raw html
+<img src="./assets/animations/acrobot_untuned.gif" width="250"/>
+```
+(untuned)
+
+```@raw html
+<img src="./assets/animations/acrobot_tuned.gif" width="250"/>
+```
+(MPC tuned)
 
