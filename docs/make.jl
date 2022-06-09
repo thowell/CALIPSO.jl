@@ -29,6 +29,6 @@ makedocs(
     ]
 )
 
-# deploydocs(
-#     repo = "github.com/thowell/CALIPSO.jl.git",
-# )
+deploydocs(
+    repo = "github.com/thowell/CALIPSO.jl.git",
+)
