@@ -10,7 +10,7 @@ for file in files
     cp(joinpath(path_animations, file), joinpath(path_assets_animations, file), force=true)
 end
 
-using Documenter#, CALIPSO
+using Documenter, CALIPSO
 
 makedocs(
     modules = [CALIPSO],

@@ -68,8 +68,8 @@ With CALIPSO, we employ an equivalent complementarity formulation (right) in ord
 ```
 
 
-## MPC auto-tuning 
-Model-predictive control is utilized to control underactuated robotic systems by tracking a reference $\bar{X}_{1:T}, \bar{U}_{1:T-1}$. The policy,
+## Model-predictive control auto-tuning 
+A feedback policy is utilized to control underactuated robotic systems by tracking a reference $\bar{X}_{1:T}, \bar{U}_{1:T-1}$. The model-predictive control policy,
 
 ```math
 \begin{align*}
@@ -79,7 +79,7 @@ Model-predictive control is utilized to control underactuated robotic systems by
 \end{align*}
 ```
 
-computes controls by solving an optimization problem with horizon $H$ using CALIPSO. Auto-tuning is performed to modify the weights in the policy's objective using gradient descent.
+computes controls by solving an optimization problem with horizon $H$ using CALIPSO and applying the first control to the system. Auto-tuning is performed to modify the weights in the policy's objective using gradient descent to minimize a metric that aims to minimize the difference between forward rollouts of the actual system and the reference trajectory.
 
 ### cart-pole
 ```@raw html
