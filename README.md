@@ -71,6 +71,7 @@ with respect to the problem data are efficiently computed.
 <img src="examples/animations/cyberdrift.gif" alt="drawing" width="250"/> 
 
 ### rocket landing with state-triggered constraints 
+<img src="docs/src/assets/figures/stc_rocket.jpg" width="200"/>
 
 ### cart-pole auto-tuning {open-loop (left) tuned MPC (right)}
 <p float="left">
