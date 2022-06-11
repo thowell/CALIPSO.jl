@@ -85,6 +85,15 @@ with respect to the problem data are efficiently computed.
 <img src="examples/animations/acrobot_tuned.gif" width="200"/>
 </p>
 
+## Installation
+CALIPSO can be installed using the Julia package manager for Julia `v1.7` and higher. Inside the Julia REPL, type `]` to enter the Pkg REPL mode then run:
+
+`pkg> add CALIPSO`
+
+If you want to install the latest version from Github run:
+
+`pkg> add CALIPSO#main`
+
 ## Quick start (non-convex problem)
 ```julia
 using CALIPSO
