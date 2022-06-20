@@ -1,8 +1,9 @@
 # ## dependencies
 using Pkg
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
+using CALIPSO
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
-using CALIPSO
 
 # ## problem 
 objective(x) = 2.0 * (x[1]^2 + x[2]^2 - 1.0) - x[1]

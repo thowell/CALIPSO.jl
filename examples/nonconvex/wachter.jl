@@ -1,8 +1,9 @@
 # ## dependencies
 using Pkg
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
+using CALIPSO
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
-using CALIPSO
 
 # ## problem
 objective(x) = x[1]

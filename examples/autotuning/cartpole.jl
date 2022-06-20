@@ -1,10 +1,12 @@
-# ## dependencies 
+# ## dependencies
 using Pkg
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
+using CALIPSO
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
-using CALIPSO
 include("models/cartpole.jl")
 include("autotuning.jl")
+using LinearAlgebra 
 
 ###############
 ## Reference ##

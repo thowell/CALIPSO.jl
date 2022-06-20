@@ -1,8 +1,9 @@
 # ## dependencies
 using Pkg
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
+using CALIPSO
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
-using CALIPSO
 using RoboDojo
 using LinearAlgebra
 using MeshCat, GeometryBasics, CoordinateTransformations, Rotations, Colors

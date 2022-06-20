@@ -1,8 +1,9 @@
-# ## dependencies 
+# ## dependencies
 using Pkg
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
+using CALIPSO
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
-using CALIPSO
 using RoboDojo
 include("models/ball_in_cup.jl")
 

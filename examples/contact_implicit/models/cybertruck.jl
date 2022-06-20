@@ -166,7 +166,7 @@ end
 function visualize!(vis, model::CYBERTRUCK, q;
     scale=0.1,
     Δt = 0.1,
-    path_meshes = joinpath(@__DIR__, "..", "..", "..", "..", "robot_meshes"))
+    path_meshes=joinpath(@__DIR__, "..", "..", "..", "..", "robot_meshes"))
 
     # default_background!(vis)
     

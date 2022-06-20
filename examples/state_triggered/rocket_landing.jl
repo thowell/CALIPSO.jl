@@ -1,11 +1,8 @@
-# CALIPSO
+# ## dependencies
 using Pkg
-Pkg.activate(joinpath(@__DIR__, ".."))
-Pkg.instantiate()
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
 using CALIPSO
-
-# Examples
-Pkg.activate(@__DIR__)
+Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 using LinearAlgebra
 
@@ -14,7 +11,7 @@ T = 51
 
 # ## rocket
 num_state = 6
-num_action = 7 + 4 # [tx;ty;tz;g+;g-;c+;c-]
+num_action = 7 + 4 # [tx; ty; tz; g+; g-; c+; c-]
 num_parameter = 0
 
 function rocket(x, u)
@@ -43,23 +40,23 @@ num_actions = [num_action for t = 1:T-1]
 
 dynamics = [midpoint_implicit for t = 1:T-1]
 
-# # ## initialization
-x1 = [-5.0;0;5;0;0;0]
+# ## initialization
+x1 = [-5.0; 0.0; 5.0; 0.0; 0.0; 0.0]
 xT = [0.0; 0.0; 0.0; 0.0; 0.0; 0.0]
-#
-# # ## objective
-ot = (x, u) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)]) + 0.1 * dot(u[1:3], u[1:3])
-oT = (x, u) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)])
 
-objective = [[ot for t = 1:T-1]..., oT]
+# ## objective
+objective = [
+    [(x, u) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)]) + 0.1 * dot(u[1:3], u[1:3]) for t = 1:T-1]...,
+    (x, u) -> 1.0 * dot(x[1:3] - xT[1:3], x[1:3] - xT[1:3]) + 0.1 * dot(x[3 .+ (1:3)], x[3 .+ (1:3)])
+]
 
-# # ## constraints
-Fx_min = -10.0#-8.0
-Fx_max = 10.0#8.0
-Fy_min = -10.0#-8.0
-Fy_max = 10.0#8.0
-Fz_min = 0.0#6.0
-Fz_max = 20.0#12.5
+# ## constraints
+Fx_min = -10.0 # -8.0
+Fx_max = 10.0 # 8.0
+Fy_min = -10.0 # -8.0
+Fy_max = 10.0 # 8.0
+Fz_min = 0.0 # 6.0
+Fz_max = 20.0 # 12.5
 
 a = -0.5
 b = 3.0
@@ -67,7 +64,7 @@ c = 0.3
 d = 3.0
 
 function stc_con(x,u)
-    tx,ty,tz,g1p,g1m,c1p,c1m,g2p,g2m,c2p,c2m = u
+    tx, ty, tz, g1p, g1m, c1p, c1m, g2p, g2m, c2p, c2m = u
 
     g1 = -x[1] + a # ≧ 0
     c1 = x[3] - b  # ≧ 0
@@ -85,20 +82,34 @@ end
 
 equality = [(x, u) -> x - x1,[stc_con for t = 2:T-1]...,(x, u) -> x - xT]
 
-ineq = [[(x, u) ->
+nonnegative = [[(x, u) ->
     [
         u[1] - Fx_min; Fx_max - u[1];
         u[2] - Fy_min; Fy_max - u[2];
         u[3] - Fz_min; Fz_max - u[3];
         u[4:7];
-        u[8:11]                         # g+,g-,c+,c- all ≥ 0
+        u[8:11]                         # g+, g-, c+, c- all ≥ 0
     ] for t = 1:T-1]..., empty_constraint]
 x_interpolation = linear_interpolation(x1, xT, T)
+
+# ## solver 
+## NOTE: we codegen the entire problem as a single NLP--this make take some time
+solver = Solver(objective, dynamics, num_states, num_actions; 
+    equality=equality, 
+    nonnegative=nonnegative, 
+    options=Options(
+        verbose=true,
+        penalty_initial=1.0e3)
+);
+
+# ## initialization 
 for i = 1:T
     h = 0.05/2
     x_interpolation[i][4:6] = (xT[1:3]-x1[1:3])/(h*T)
 end
+
 u_guess = [zeros(num_action) for t = 1:T-1]
+
 for i = 1:T-1
     u_guess[i][1:3] = [0;0;9.8]
     g1 = -x_interpolation[i][1] + a
@@ -136,57 +147,15 @@ for i = 1:T-1
     end
 end
 
-
-solver = Solver(objective, dynamics, num_states, num_actions;equality = equality, nonnegative = ineq, options=Options(verbose=true,penalty_initial=1.0e3))
 initialize_states!(solver, x_interpolation)
 initialize_actions!(solver, u_guess)
+
+# ## solver
 solve!(solver)
 
+# ## solution
 x_sol, u_sol  = get_trajectory(solver)
 
-Xm = hcat(x_sol...)
-Um = hcat(u_sol...)
-#
-using MATLAB
-# mat"
-# figure
-# hold on
-# plot($Xm(1,:),$Xm(3,:),'bo')
-# s = 10;
-# for i = 1:$T-1
-#     quiver($Xm(1,i),$Xm(3,i),$Um(1,i)/s,$Um(3,i)/s,'r')
-# end
-# patch([-5 $a $a -5],[0 0 $b $b],'b')
-# %patch([$c 5 5 $c],[0 0 $d $d],'b')
-# hold off
-# "
-#
-# mat"
-# figure
-# hold on
-# plot($Um(4:7)')
-# hold off
-# "
+## TODO: add animation
 
-num_actions = [3 for t = 1:T-1]
-equality = [(x, u) -> x - x1,[empty_constraint for t = 2:T-1]...,(x, u) -> x - xT]
-
-ineq = [[(x, u) ->
-    [
-        u[1] - Fx_min; Fx_max - u[1];
-        u[2] - Fy_min; Fy_max - u[2];
-        u[3] - Fz_min; Fz_max - u[3]                         # g+,g-,c+,c- all ≥ 0
-    ] for t = 1:T-1]..., empty_constraint]
-
-u_guess = [[0;0;9.8] for i = 1:T-1]
-# solve without STC constraints
-solver = Solver(objective, dynamics, num_states, num_actions;equality = equality, nonnegative = ineq, options=Options(verbose=true,penalty_initial=1.0e3))
-initialize_states!(solver, x_interpolation)
-initialize_actions!(solver, u_guess)
-solve!(solver)
-
-x_sol, u_sol  = get_trajectory(solver)
-
-Xm2 = hcat(x_sol...)
-Um2 = hcat(u_sol...)
 

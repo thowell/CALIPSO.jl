@@ -1,3 +1,5 @@
+using FiniteDiff 
+
 # ## learning
 function loss(state, action, state_reference, action_reference, state_cost, action_cost)
     J = 0.0 
