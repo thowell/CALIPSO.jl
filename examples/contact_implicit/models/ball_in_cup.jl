@@ -201,3 +201,4 @@ function visualize!(vis, model::BallInCup, q;
 
     RoboDojo.MeshCat.setanimation!(vis, anim)
 end
+

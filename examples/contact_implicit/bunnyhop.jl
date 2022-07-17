@@ -6,7 +6,6 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 using RoboDojo
 using LinearAlgebra
-using MeshCat, GeometryBasics, CoordinateTransformations, Rotations, Colors
 include("models/mountain_bike.jl")
 
 # ## problem indexing for NLP
@@ -152,41 +151,10 @@ solve!(solver)
 qs = [solver.solution.variables[idx_q[i]] for i = 1:N]
 us = [solver.solution.variables[idx_u[i]] for i = 1:N-1]
 
-# ## visualize
-vis = Visualizer()
-black_color = MeshPhongMaterial(color=RGBA(0, 0, 0, 0.5))
-red_color = MeshPhongMaterial(color=RGBA(1, 0, 0, 0.5))
-green_color = MeshPhongMaterial(color=RGBA(0, 1, 0, 0.5))
-sphere2 = Sphere(Point3(0.0), .3)
-setobject!(vis["m3"],sphere2)
+# ## animation 
+@load "visuals/bunny_hop.jld2"
+include("visuals/bunnyhop.jl")
 
-cyl = Cylinder(Point3(0,-.1,0.0),Point3(0,.1,0),0.5)
-setobject!(vis["m1"],cyl,black_color)
-setobject!(vis["m2"],cyl,black_color)
-cyl2 = Cylinder(Point3(-r_wheel_base/2,0,0.0),Point3(r_wheel_base/2,0,0),0.1)
-setobject!(vis["bike"],cyl2,red_color)
-
-anim = MeshCat.Animation(floor(Int,1/0.2))
-
-x_offset = 7
-for k = 1:length(qs)
-    atframe(anim, k) do
-        q = [1;0;0;0]
-        r = [qs[k][1]-x_offset;0;qs[k][2]+.5]
-        settransform!(vis["m1"], compose(Translation(r), LinearMap(UnitQuaternion(q))))
-        q = [1;0;0;0]
-        r = [qs[k][3]-x_offset;0;qs[k][4]+.5]
-        settransform!(vis["m2"], compose(Translation(r), LinearMap(UnitQuaternion(q))))
-        q = [1;0;0;0]
-        r = [qs[k][5]-x_offset;0;qs[k][6]+.5]
-        settransform!(vis["m3"], compose(Translation(r), LinearMap(UnitQuaternion(q))))
+cd(@__DIR__)
 
 
-        bx = normalize(-qs[k][1:2] + qs[k][3:4])
-        θ = atan(bx[2],bx[1])
-        q = [cos(θ/2);0;-sin(θ/2);0]
-        r = 0.5*([qs[k][1]-x_offset;0;qs[k][2]+.5] + [qs[k][3]-x_offset;0;qs[k][4]+.5])
-        settransform!(vis["bike"], compose(Translation(r), LinearMap(UnitQuaternion(q))))
-    end
-end
-setanimation!(vis, anim)

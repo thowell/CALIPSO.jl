@@ -157,5 +157,3 @@ solve!(solver)
 x_sol, u_sol  = get_trajectory(solver)
 
 ## TODO: add animation
-
-

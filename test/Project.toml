@@ -3,10 +3,10 @@ FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 RoboDojo = "2859eb88-988f-4613-a49e-c643bedbc906"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 FiniteDiff = "2.12.0"
-RoboDojo = "0.1.6"
 Symbolics = "0.1.29"

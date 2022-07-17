@@ -140,7 +140,8 @@ solve!(solver)
 x_sol, u_sol = CALIPSO.get_trajectory(solver)
 
 # ## visualize (NOTE: mesh not included)
-# vis = Visualizer()
-# render(vis)
-# set_background!(vis)
-# visualize!(vis, cybertruck, [[x_sol[1] for t = 1:10]..., x_sol..., [x_sol[end] for t = 1:10]...], Δt=timestep)
+vis = Visualizer()
+render(vis)
+set_background!(vis)
+visualize!(vis, cybertruck, [[x_sol[1] for t = 1:10]..., x_sol..., [x_sol[end] for t = 1:10]...], 
+    Δt=timestep)

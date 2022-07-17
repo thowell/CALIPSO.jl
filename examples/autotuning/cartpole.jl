@@ -6,7 +6,8 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 include("models/cartpole.jl")
 include("autotuning.jl")
-using LinearAlgebra 
+using LinearAlgebra
+using RoboDojo
 
 ###############
 ## Reference ##
@@ -223,8 +224,6 @@ function policy_jacobian_state(θ, x, τ)
     solve!(solver_mpc)
 
     return solver_mpc.data.solution_sensitivity[solver_mpc.problem.custom.indices.actions[1], initial_state_index]
-    # xs, us = get_trajectory(solver_mpc)
-    # return us[1]
 end
 
 # ## dynamics 

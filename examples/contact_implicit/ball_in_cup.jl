@@ -161,9 +161,13 @@ vis = Visualizer()
 render(vis)
 
 # ## visualize
-visualize!(vis, ballincup, 
-    [[x[1:4] for x in x_sol]..., x_sol[end][4 .+ (1:4)]], 
-    Δt=timestep,
-    r_cup=0.1,
-    r_ball=0.05
-)
+# visualize!(vis, ballincup, 
+#     x_sol, 
+#     Δt=timestep,
+#     r_cup=0.1,
+#     r_ball=0.05
+# )
+# q_sol = [x_sol[1][1:4], [x[4 .+ (1:4)] for x in x_sol]...] 
+@load "visuals/ballincup.jld2"
+include("visuals/ball_in_cup.jl")
+

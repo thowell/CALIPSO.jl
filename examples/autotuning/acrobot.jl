@@ -6,6 +6,8 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 include("models/acrobot.jl")
 include("autotuning.jl")
+using LinearAlgebra
+using RoboDojo
 
 ###############
 ## Reference ##

@@ -1,8 +1,8 @@
 function build_meshrobot!(vis::Visualizer, model::Quadruped; name::Symbol=:Quadruped, α=1.0)
 	default_background!(vis)
 
-	urdf = joinpath(@__DIR__, "mesh", "a1.urdf")
-	package_path = @__DIR__
+	urdf = joinpath(@__DIR__, "..", "meshes", "a1.urdf")
+	package_path = joinpath(@__DIR__, "..", "meshes")
 	build_meshrobot!(vis, model, urdf, package_path; name=name, α=α)
 end
 
@@ -33,6 +33,7 @@ function convert_config(model::Quadruped, q::AbstractVector)
     # 10. front left  elbow    rotation relative to shoulder along +y
     # 11. back  right elbow    rotation relative to shoulder along +y
     # 12. back  left  elbow    rotation relative to shoulder along +y
+    
     q_ = zeros(12)
     x, z, θ = q[1:3]
     q_[5]  = -q[10] + θ - π/2
@@ -57,7 +58,7 @@ function convert_config(model::Quadruped, q::AbstractVector)
     return q_, tform
 end
 
-function build_meshrobot!(vis::Visualizer, model::ContactModel, urdf::String,
+function build_meshrobot!(vis::Visualizer, model, urdf::String,
     package_path::String; name::Symbol=model_name(model), α=1.0)
     default_background!(vis)
 
@@ -81,8 +82,8 @@ function set_alpha!(visuals::Vector, α)
     end
 end
 
-function set_meshrobot!(vis::Visualizer, mvis::MechanismVisualizer, model::ContactModel,
-    q::AbstractVector; name::Symbol=model_name(model))
+function set_meshrobot!(vis::Visualizer, mvis::MechanismVisualizer, model,
+    q::AbstractVector; name::Symbol=:quadruped)
 
     q_mesh, tform = convert_config(model, q)
     set_configuration!(mvis, q_mesh)
@@ -92,7 +93,7 @@ function set_meshrobot!(vis::Visualizer, mvis::MechanismVisualizer, model::Conta
 end
 
 function animate_meshrobot!(vis::Visualizer, mvis::MechanismVisualizer, anim::MeshCat.Animation,
-    model::ContactModel, q::AbstractVector; name::Symbol=model_name(model))
+    model, q::AbstractVector; name::Symbol=:quadruped)
     for t in 1:length(q)
         MeshCat.atframe(anim, t) do
             set_meshrobot!(vis, mvis, model, q[t], name=name)
@@ -102,7 +103,7 @@ function animate_meshrobot!(vis::Visualizer, mvis::MechanismVisualizer, anim::Me
     return nothing
 end
 
-function visualize_meshrobot!(vis::Visualizer, model::ContactModel, q::AbstractVector;
+function visualize_meshrobot!(vis::Visualizer, model, q::AbstractVector;
     h=0.01,
     anim::MeshCat.Animation=MeshCat.Animation(Int(floor(1/h))),
     name::Symbol=model_name(model),
@@ -114,12 +115,16 @@ function visualize_meshrobot!(vis::Visualizer, model::ContactModel, q::AbstractV
     return anim
 end
 
-function visualize_meshrobot!(vis::Visualizer, model::ContactModel, traj::ContactTraj;
-    sample=max(1, Int(floor(traj.H / 100))), h=traj.h*sample,
+function visualize_meshrobot!(vis::Visualizer, model, traj;
+    h=0.01,
     anim::MeshCat.Animation=MeshCat.Animation(Int(floor(1/h))),
-    name::Symbol=model_name(model),
-    α=1.0)
+    name::Symbol=:quadruped)
 
-    anim = visualize_meshrobot!(vis, model, traj.q[3:sample:end]; anim=anim, name=name, h=h, α=α)
+    anim = visualize_meshrobot!(vis, model, traj; 
+        anim=anim, 
+        name=name, 
+        h=h, 
+        α=1.0)
+    
     return anim
 end

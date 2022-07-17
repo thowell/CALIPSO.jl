@@ -14,7 +14,7 @@ horizon = 41
 
 # ## time steps
 timestep = 0.01
-fixed_timesteps = 3
+fixed_timesteps = 5
 
 # ## RoboDojo dynamics 
 model = RoboDojo.quadruped4
@@ -81,13 +81,13 @@ for t = 1:horizon
     push!(objective, (x, u) -> begin 
             J = 0.0 
             ## controls
-            t < horizon && (J += 1.0e-3 * dot(u[1:3] - slack_reference, u[1:3] - slack_reference))
-            t < horizon && (J += 1.0e-3 * dot(u[3 .+ (1:8)], u[3 .+ (1:8)]))
+            t < horizon && (J += 1.0e-1 * dot(u[1:3] - slack_reference, u[1:3] - slack_reference))
+            t < horizon && (J += 1.0e-1 * dot(u[3 .+ (1:8)], u[3 .+ (1:8)]))
             ## kinematic reference
             J += 100.0 * dot(x[11 .+ (1:11)] - state_reference[t][1:11], x[11 .+ (1:11)] - state_reference[t][1:11])
             ## velocity 
             v = (x[11 .+ (1:11)] - x[1:11]) ./ timestep
-            J += 1.0e-3 * dot(v, v)
+            J += 1.0e-5 * dot(v, v)
             return J
         end
     );
@@ -103,7 +103,7 @@ push!(equality, (x, u) -> begin
             ## 1.0 * (RoboDojo.quadruped4_contact_kinematics[3](q̄) - RoboDojo.quadruped4_contact_kinematics[3](q));
             ## 1.0 * (RoboDojo.quadruped4_contact_kinematics[2](q̄) - RoboDojo.quadruped4_contact_kinematics[2](q));
             ## 1.0 * (RoboDojo.quadruped4_contact_kinematics[4](q̄) - RoboDojo.quadruped4_contact_kinematics[4](q));
-            10.0 * (x[11 .+ (1:11)] - state_reference[1][1:11]);
+            100.0 * (x[11 .+ (1:11)] - state_reference[1][1:11]);
             u[1:3];
         ]
     end
@@ -139,7 +139,7 @@ end
 
 push!(equality, (x, u) -> begin  
         [
-            10.0 * (x[12] - state_reference[horizon][1]);
+            100.0 * (x[12] - state_reference[horizon][1]);
         ]
     end
 )
@@ -151,8 +151,8 @@ function equality_general(z)
     e = x1 - Array(cat(perm, perm, dims=(1, 2))) * xT 
 
     [
-        10.0 * e[2:11]; 
-        10.0 * e[11 .+ (2:11)];
+        100.0 * e[2:11]; 
+        100.0 * e[11 .+ (2:11)];
     ]
 end
 
@@ -165,16 +165,23 @@ options=Options(
         verbose=true, 
         constraint_tensor=true,
         update_factorization=false,  
-        ## linear_solver=:LU,  
+        # linear_solver=:LU,  
 )
 
-## solver 
+# ## solver 
 solver = Solver(objective, dynamics, num_states, num_actions; 
     equality=equality,
     equality_general=equality_general,
     nonnegative=nonnegative,
     second_order=second_order,
     options=options);
+
+# ## options
+solver.options.residual_tolerance = 1.0e-3
+solver.options.optimality_tolerance = 1.0e-3
+solver.options.equality_tolerance = 1.0e-3
+solver.options.complementarity_tolerance = 1.0e-3
+solver.options.slack_tolerance = 1.0e-3
 
 # ## initialize
 state_guess = robodojo_state_initialization(sim, state_reference, horizon)
@@ -185,13 +192,26 @@ initialize_actions!(solver, action_guess)
 # ## solve 
 solve!(solver)
 
-## solution
+# ## solution
+using JLD2
 x_sol, u_sol = CALIPSO.get_trajectory(solver)
+q_sol = [x_sol[1][1:model.nq], [x[model.nq .+ (1:model.nq)] for x in x_sol]...]
+@save joinpath(@__DIR__, "visuals/quadruped_gait.jld2") q_sol
+@load joinpath(@__DIR__, "visuals/quadruped_gait.jld2") q_sol
+
 
 # ## visualizer 
 vis = Visualizer() 
-render(vis)
+open(vis)
 
 # ## visualize
-RoboDojo.visualize!(vis, model, [x_sol[1][1:model.nq], [x_sol[t][model.nq .+ (1:model.nq)] for t = 1:horizon]...], Δt=timestep)
+RoboDojo.visualize!(vis, model, x_sol, 
+    Δt=timestep)
 
+include("visuals/quadruped.jl")
+visualize_meshrobot!(vis, model, x_sol;
+    h=0.01,
+    anim=MeshCat.Animation(Int(floor(1/h))),
+    name=:quadruped)
+
+pwd()
