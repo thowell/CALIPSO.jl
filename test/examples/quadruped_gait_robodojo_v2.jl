@@ -48,6 +48,7 @@ state_reference = trotting_gait(model, horizon;
     body_height=0.25, 
     body_forward_position=0.05,
     foot_height=0.05)
+state_reference = robodojo_state_initialization(sim, state_reference, horizon)
 
 vis = Visualizer() 
 open(vis)
@@ -94,8 +95,8 @@ for t = 1:horizon
             # kinematic reference
             J += 1.0 * dot(x[11 .+ (1:11)] - state_reference[t][1:11], x[11 .+ (1:11)] - state_reference[t][1:11])
             # velocity 
-            # v = (x[11 .+ (1:11)] - x[1:11]) ./ timestep
-            # J += 1.0e-3 * dot(v, v)
+            v = (x[11 .+ (1:11)] - x[1:11]) ./ timestep
+            J += 1.0e-3 * dot(v, v)
             return J
         end
     );
@@ -158,8 +159,8 @@ function equality_general(z)
     x1 = z[1:(2 * model.nq)]
     xT = z[sum(num_states[1:horizon-1]) + sum(num_actions) .+ (1:(2 * model.nq))]
 
-    # e = x1 - Array(cat(perm, perm, dims=(1, 2))) * xT 
-    e = x1 - xT
+    e = x1 - Array(cat(perm, perm, dims=(1, 2))) * xT 
+    # e = x1 - xT
     [
         10.0 * e[2:11]; 
         10.0 * e[11 .+ (2:11)];
@@ -188,7 +189,7 @@ solver = Solver(objective, dynamics, num_states, num_actions;
 # ## callbacks 
 vis = Visualizer()
 open(vis)
-RoboDojo.visualize!(vis, RoboDojo.quadruped4, state_guess, Δt=timestep);
+RoboDojo.visualize!(vis, RoboDojo.quadruped4, state_reference, Δt=timestep);
 
 # function callback_inner(trajopt, solver) 
 #     println("callback inner")
@@ -206,10 +207,10 @@ end
 solver.options.callback_outer = true
 
 # ## initialize
-state_guess = robodojo_state_initialization(sim, state_reference, horizon)
+# state_guess = robodojo_state_initialization(sim, state_reference, horizon)
 action_guess = [[slack_reference; 1.0e-3 * randn(8)] for t = 1:horizon-1] # may need to run more than once to get good trajectory
-initialize_states!(solver, state_guess) 
-initialize_controls!(solver, action_guess)
+initialize_states!(solver, state_reference) 
+initialize_actions!(solver, action_guess)
 
 # ## solve 
 solve!(solver)
