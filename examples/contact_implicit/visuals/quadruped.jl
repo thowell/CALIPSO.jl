@@ -1,13 +1,14 @@
-function build_meshrobot!(vis::Visualizer, model::Quadruped; name::Symbol=:Quadruped, α=1.0)
-	default_background!(vis)
+function build_meshrobot!(vis::Visualizer, model; name::Symbol=:Quadruped, α=1.0)
+	# default_background!(vis)
 
-	urdf = joinpath(@__DIR__, "..", "meshes", "a1.urdf")
-	package_path = joinpath(@__DIR__, "..", "meshes")
+	urdf = joinpath(@__DIR__, "..", "..", "meshes", "a1_mesh/a1.urdf")
+	package_path = joinpath(@__DIR__, "..", "..", "meshes/a1_mesh")
 	build_meshrobot!(vis, model, urdf, package_path; name=name, α=α)
 end
 
-function convert_config(model::Quadruped, q::AbstractVector)
+function convert_config(model, q::AbstractVector)
     # Quadruped configuration
+
     # 1.  position long axis +x
     # 2.  position long axis +z
     # 3.  trunk rotation along -y
@@ -48,11 +49,11 @@ function convert_config(model::Quadruped, q::AbstractVector)
 	r_foot = 0.02
 	trunk_length = 2*0.183
 	trunk_width = 2*0.132
-    tform = compose(
-		Translation(x , trunk_width/2, z+r_foot),
-		compose(
-			LinearMap(AngleAxis(π/2-θ, 0, 1.0, 0)),
-			Translation(trunk_length/2, 0,0)
+    tform = RoboDojo.compose(
+		RoboDojo.Translation(x , trunk_width/2, z+r_foot),
+		RoboDojo.compose(
+			RoboDojo.LinearMap(RoboDojo.AngleAxis(π/2-θ, 0, 1.0, 0)),
+			RoboDojo.Translation(trunk_length/2, 0,0)
 			)
 		)
     return q_, tform
@@ -60,13 +61,13 @@ end
 
 function build_meshrobot!(vis::Visualizer, model, urdf::String,
     package_path::String; name::Symbol=model_name(model), α=1.0)
-    default_background!(vis)
+    # default_background!(vis)
 
     mechanism = MeshCatMechanisms.parse_urdf(urdf)
     visuals = URDFVisuals(urdf, package_path=[package_path])
     state = MeshCatMechanisms.MechanismState(mechanism)
     vis_el = MeshCatMechanisms.visual_elements(mechanism, visuals)
-    set_alpha!(vis_el,α)
+    # set_alpha!(vis_el,α)
 
     mvis = MechanismVisualizer(state, vis[name, :world])
     MeshCatMechanisms._set_mechanism!(mvis, vis_el)
@@ -75,11 +76,11 @@ function build_meshrobot!(vis::Visualizer, model, urdf::String,
 end
 
 function set_alpha!(visuals::Vector, α)
-    for el in visuals
-        c = el.color
-        c_new = RGBA(red(c),green(c),blue(c),α)
-        el.color = c_new
-    end
+    # for el in visuals
+    #     c = el.color
+    #     c_new = RGBA(red(c),green(c),blue(c),α)
+    #     el.color = c_new
+    # end
 end
 
 function set_meshrobot!(vis::Visualizer, mvis::MechanismVisualizer, model,
@@ -107,7 +108,7 @@ function visualize_meshrobot!(vis::Visualizer, model, q::AbstractVector;
     h=0.01,
     anim::MeshCat.Animation=MeshCat.Animation(Int(floor(1/h))),
     name::Symbol=model_name(model),
-    α=α)
+    α=1.0)
 
     mvis = build_meshrobot!(vis, model, name=name, α=α)
     animate_meshrobot!(vis, mvis, anim, model, q, name=name)
