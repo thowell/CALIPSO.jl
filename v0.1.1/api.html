@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>API Documentation · CALIPSO</title><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="index.html">CALIPSO</a></span></div><form class="docs-search" action="search.html"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="index.html">Get Started</a></li><li><a class="tocitem" href="solver.html">Solver</a></li><li><a class="tocitem" href="examples.html">Examples</a></li><li class="is-active"><a class="tocitem" href="api.html">API Documentation</a><ul class="internal"><li><a class="tocitem" href="#Contents"><span>Contents</span></a></li><li><a class="tocitem" href="#Index"><span>Index</span></a></li><li><a class="tocitem" href="#Solver"><span>Solver</span></a></li><li><a class="tocitem" href="#Trajectory-Optimization"><span>Trajectory Optimization</span></a></li></ul></li><li><a class="tocitem" href="contributing.html">Contributing</a></li><li><a class="tocitem" href="citing.html">Citing</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href="api.html">API Documentation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="api.html">API Documentation</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/thowell/CALIPSO.jl/blob/main/docs/src/api.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="API-Documentation"><a class="docs-heading-anchor" href="#API-Documentation">API Documentation</a><a id="API-Documentation-1"></a><a class="docs-heading-anchor-permalink" href="#API-Documentation" title="Permalink"></a></h1><p>Docstrings for CALIPSO.jl interface members can be <a href="https://docs.julialang.org/en/v1/manual/documentation/index.html#Accessing-Documentation-1">accessed through Julia&#39;s built-in documentation system</a> or in the list below.</p><h2 id="Contents"><a class="docs-heading-anchor" href="#Contents">Contents</a><a id="Contents-1"></a><a class="docs-heading-anchor-permalink" href="#Contents" title="Permalink"></a></h2><ul><li><a href="api.html#API-Documentation">API Documentation</a></li><li class="no-marker"><ul><li><a href="api.html#Contents">Contents</a></li><li><a href="api.html#Index">Index</a></li><li><a href="api.html#Solver">Solver</a></li><li><a href="api.html#Trajectory-Optimization">Trajectory Optimization</a></li></ul></li></ul><h2 id="Index"><a class="docs-heading-anchor" href="#Index">Index</a><a id="Index-1"></a><a class="docs-heading-anchor-permalink" href="#Index" title="Permalink"></a></h2><ul><li><a href="api.html#CALIPSO.Constraint"><code>CALIPSO.Constraint</code></a></li><li><a href="api.html#CALIPSO.Constraints"><code>CALIPSO.Constraints</code></a></li><li><a href="api.html#CALIPSO.Cost"><code>CALIPSO.Cost</code></a></li><li><a href="api.html#CALIPSO.Dynamics"><code>CALIPSO.Dynamics</code></a></li><li><a href="api.html#CALIPSO.Options"><code>CALIPSO.Options</code></a></li><li><a href="api.html#CALIPSO.Solver"><code>CALIPSO.Solver</code></a></li><li><a href="api.html#CALIPSO.callback_inner"><code>CALIPSO.callback_inner</code></a></li><li><a href="api.html#CALIPSO.callback_outer"><code>CALIPSO.callback_outer</code></a></li><li><a href="api.html#CALIPSO.empty_constraint"><code>CALIPSO.empty_constraint</code></a></li><li><a href="api.html#CALIPSO.get_trajectory"><code>CALIPSO.get_trajectory</code></a></li><li><a href="api.html#CALIPSO.initialize!"><code>CALIPSO.initialize!</code></a></li><li><a href="api.html#CALIPSO.initialize_actions!"><code>CALIPSO.initialize_actions!</code></a></li><li><a href="api.html#CALIPSO.initialize_states!"><code>CALIPSO.initialize_states!</code></a></li><li><a href="api.html#CALIPSO.linear_interpolation"><code>CALIPSO.linear_interpolation</code></a></li><li><a href="api.html#CALIPSO.solve!"><code>CALIPSO.solve!</code></a></li></ul><h2 id="Solver"><a class="docs-heading-anchor" href="#Solver">Solver</a><a id="Solver-1"></a><a class="docs-heading-anchor-permalink" href="#Solver" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.Solver" href="#CALIPSO.Solver"><code>CALIPSO.Solver</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Solver(methods, num_variables, num_parameters, num_equality, num_cone;
+    parameters, nonnegative_indices, second_order_indices, custom, options)
+
+CALIPSO solver 
+
+methods: ProblemMethods - includes objective and constraint functions, as we as their derivatives 
+num_variables: Int - dimension of primal decision variables 
+num_parameters: Int - dimension of problem data 
+num_equality: Int - dimension of equality constraints 
+num_cone: Int - dimension of cone constraints 
+parameters: Vector{Real} - problem data 
+nonnegative_indices: Vector{Int} - indices of cone constraints corresponding to nonnegative orthant 
+second_order_indices: Vector{Vector{Int}} - indices of cone constraints corresponding to second-order cones
+custom: Any - user-provided type used for solver callbacks 
+options: Options - solver settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/solver/solver.jl#L29-L46">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.solve!" href="#CALIPSO.solve!"><code>CALIPSO.solve!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">solve!(solver) 
+
+method for optimizing a Solver 
+
+solver: Solver</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/solver/solve.jl#L1-L8">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.initialize!" href="#CALIPSO.initialize!"><code>CALIPSO.initialize!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">initialize!(solver, guess) 
+
+method for initializing primal decision variables 
+
+solver: Solver 
+guess: Vector{Real} - user-provided initialization for primal decision variables</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/solver/initialize.jl#L1-L9">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.Options" href="#CALIPSO.Options"><code>CALIPSO.Options</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Options 
+
+CALIPSO solver settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/solver/options.jl#L1-L5">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.empty_constraint" href="#CALIPSO.empty_constraint"><code>CALIPSO.empty_constraint</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">empty_constraint(x, θ)
+
+convenience method for empty constraints 
+
+x: Vector{Real} - primal decision variables 
+θ: Vector{Real} - problem data</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/solver/codegen.jl#L92-L100">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.callback_inner" href="#CALIPSO.callback_inner"><code>CALIPSO.callback_inner</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">callback_inner(custom, solver)
+
+method called during solver&#39;s inner iterations 
+
+custom: Any - user-provided type used for solver callbacks
+solver: Solver</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/solver/solver.jl#L175-L183">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.callback_outer" href="#CALIPSO.callback_outer"><code>CALIPSO.callback_outer</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">callback_outer(custom, solver)
+
+method called during solver&#39;s outer updates 
+
+custom: Any - user-provided type used for solver callbacks
+solver: Solver</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/solver/solver.jl#L185-L193">source</a></section></article><h2 id="Trajectory-Optimization"><a class="docs-heading-anchor" href="#Trajectory-Optimization">Trajectory Optimization</a><a id="Trajectory-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Trajectory-Optimization" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.Cost" href="#CALIPSO.Cost"><code>CALIPSO.Cost</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Cost(cost, num_state, num_action;
+    num_parameter, checkbounds, constraint_tensor)
+
+stage-cost type 
+
+cost: Function 
+num_state: Int - dimension of state 
+num_action: Int - dimension of action 
+num_parameter: Int - dimension of problem data 
+checkbounds: Bool - flag for checking @inbounds for codegen methods 
+constraint_tensor: Bool - flag for generating second-derivative methods</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/trajectory_optimization/costs.jl#L20-L33">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.Constraint" href="#CALIPSO.Constraint"><code>CALIPSO.Constraint</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Constraint(constraint, num_state, num_action;
+    num_parameter, checkbounds, constraint_tensor)
+
+constraint type 
+
+constraint: Function 
+num_state: Int - dimension of state 
+num_action: Int - dimension of action 
+num_parameter: Int - dimension of problem data 
+checkbounds: Bool - flag for checking @inbounds for codegen methods 
+constraint_tensor: Bool - flag for generating second-derivative methods</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/trajectory_optimization/constraints.jl#L37-L50">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.Constraints" href="#CALIPSO.Constraints"><code>CALIPSO.Constraints</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Constraints 
+
+vector of Constraint types</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/trajectory_optimization/constraints.jl#L30-L35">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.Dynamics" href="#CALIPSO.Dynamics"><code>CALIPSO.Dynamics</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Dynamics(dynamics, num_next_state, num_state, num_action;
+    num_parameter, checkbounds, constraint_tensor)
+
+dynamics type 
+
+dynamics: Function 
+num_next_state: Int - dimension of next state
+num_state: Int - dimension of current state 
+num_action: Int - dimension of current action 
+num_parameter: Int - dimension of problem data 
+checkbounds: Bool - flag for checking @inbounds for codegen methods 
+constraint_tensor: Bool - flag for generating second-derivative methods</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/trajectory_optimization/dynamics.jl#L30-L44">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.initialize_states!" href="#CALIPSO.initialize_states!"><code>CALIPSO.initialize_states!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">initialize_states!(solver::Solver, states)
+
+method for initialized primal variables with state trajectory 
+
+solver: Solver 
+states: Vector{Vector{Real}} - trajectory of states</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/trajectory_optimization/solver.jl#L88-L96">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.initialize_actions!" href="#CALIPSO.initialize_actions!"><code>CALIPSO.initialize_actions!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">initialize_actions!(solver::Solver, actions)
+
+method for initialized primal variables with action trajectory 
+
+solver: Solver 
+actions: Vector{Vector{Real}} - trajectory of actions</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/trajectory_optimization/solver.jl#L102-L110">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.get_trajectory" href="#CALIPSO.get_trajectory"><code>CALIPSO.get_trajectory</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">get_trajectory(solver)
+
+method for returning state and action trajectories from solver 
+
+solver: Solver</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/trajectory_optimization/solver.jl#L116-L123">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="CALIPSO.linear_interpolation" href="#CALIPSO.linear_interpolation"><code>CALIPSO.linear_interpolation</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">linear_interpolation(initial_state, final_state, horizon)
+
+method for generating a linear interpolating trajectory 
+
+initial_state: Vector{Real} - first state 
+final_state: Vector{Real} - last state 
+horizon: Int - length of trajectory</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/thowell/CALIPSO.jl/blob/648554d7eef9cef80e5e8f609141cb4abe291e13/src/trajectory_optimization/utilities.jl#L1-L9">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="examples.html">« Examples</a><a class="docs-footer-nextpage" href="contributing.html">Contributing »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.21 on <span class="colophon-date" title="Tuesday 19 July 2022 19:35">Tuesday 19 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
