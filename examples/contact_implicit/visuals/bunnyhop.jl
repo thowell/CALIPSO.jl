@@ -5,7 +5,8 @@ using MeshCat, MeshCatMechanisms
 using Interpolations
 using StaticArrays
 using Rotations
-using GeometryBasics, Colors
+using RoboDojo
+using GeometryBasics
 
 # ## fix static arrays 
 StaticArrays.has_size(::Type{SVector}) = false

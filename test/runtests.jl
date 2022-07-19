@@ -37,7 +37,6 @@ include("examples/cyberdrift.jl")
 include("examples/double_integrator.jl")
 include("examples/hopper_gait.jl")
 
-
 # include("examples/quadruped_drop.jl")
 # include("examples/quadruped_gait.jl")
 

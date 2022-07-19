@@ -1,8 +1,9 @@
 # https://github.com/simon-lc/RobotVisualizer.jl
 using FiniteDiff
 using Quaternions
+using RoboDojo
 
-function build_rope(vis::Visualizer; N::Int=10, color=Colors.RGBA(0,0,0,1),
+function build_rope(vis::Visualizer; N::Int=10, color=RGBA(0,0,0,1),
     rope_type::Symbol=:cylinder, rope_radius=0.02, name=:rope)
 
     if rope_type == :line

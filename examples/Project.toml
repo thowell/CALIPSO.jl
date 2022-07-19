@@ -1,5 +1,4 @@
 [deps]
-Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
 CoordinateTransformations = "150eb455-5306-5404-9cee-2592286d6298"
 DirectTrajectoryOptimization = "a9f42406-efe7-414c-8b71-df971cc98041"
 FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
@@ -18,7 +17,6 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
-Colors = "0.1.1"
 CoordinateTransformations = "0.6.2"
 DirectTrajectoryOptimization = "0.2.0"
 FiniteDiff = "2.13.0"
@@ -34,4 +32,3 @@ RoboDojo = "0.1.6"
 Rotations = "1.0.2"
 StaticArrays = "1.4.4"
 Symbolics = "0.1.29"
-
