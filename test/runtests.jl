@@ -3,7 +3,7 @@ using FiniteDiff
 using SparseArrays
 using Symbolics
 using LinearAlgebra
-using RoboDojo
+# using RoboDojo
 using CALIPSO
 
 # Solver
