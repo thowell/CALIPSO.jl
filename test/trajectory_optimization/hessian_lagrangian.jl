@@ -123,13 +123,13 @@
     # nonnegative constraints
     inequality = [
             [(x, u) -> sin.(x) .- sum(u) for t = 1:horizon-1]...,
-            (x, u) -> cos.(x) .+ sum(u),
+            (x, u) -> cos.(x),# .+ sum(u),
     ]
     ineq = CALIPSO.generate_methods(inequality, num_states, num_actions, num_parameters, :Constraint)
 
     # second-order constraints
     st = (x, u, e) -> e .* tan.(x) .- sqrt(sum(u.^2) + e^2)
-    sT = (x, u, e) -> e .* tan.(x) .+ cos(sum(u) + e^2)
+    sT = (x, u, e) -> e .* tan.(x)# .+ cos(sum(u) + e^2)
     nsi = 2
     rr = [randn(1)[1] for i = 1:nsi]
     sot = [(x, u) -> st(x, u, rr[i]) for i = 1:nsi]

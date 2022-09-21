@@ -4,4 +4,4 @@ end
 
 using Pkg
 Pkg.activate(module_dir())
-using Calipso
+using CALIPSO

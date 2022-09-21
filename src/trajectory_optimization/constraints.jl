@@ -63,7 +63,7 @@ function Constraint(constraint::Function, num_state::Int, num_action::Int;
 
     num_constraint = length(c)
     y = Symbolics.variables(:y, 1:num_constraint)
-    cᵀy = dot(c, y)
+    cᵀy = num_constraint > 0 ? dot(c, y) : 0.0
     cᵀyz = Symbolics.gradient(cᵀy, [x; u])
     cᵀyw = Symbolics.gradient(cᵀy, w)
 
