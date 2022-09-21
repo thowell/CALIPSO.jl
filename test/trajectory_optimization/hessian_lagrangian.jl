@@ -1,14 +1,14 @@
 @testset "Hessian of Lagrangian" begin
-    # horizon 
+    # horizon
     horizon = 3
 
-    # acrobot 
-    num_state = 4 
+    # acrobot
+    num_state = 4
     num_action = 1
     num_parameter = 0
-    num_states = [num_state for t = 1:horizon] 
-    num_actions = [num_action for t = 1:horizon-1] 
-    num_parameters = [num_parameter for t = 1:horizon] 
+    num_states = [num_state for t = 1:horizon]
+    num_actions = [num_action for t = 1:horizon-1]
+    num_parameters = [num_parameter for t = 1:horizon]
 
     function acrobot_continuous(x, u)
         # dimensions
@@ -17,19 +17,19 @@
         d = 0
 
         # link 1
-        mass1 = 1.0  
-        inertia1 = 0.33  
-        length1 = 1.0 
-        lengthcom1 = 0.5 
+        mass1 = 1.0
+        inertia1 = 0.33
+        length1 = 1.0
+        lengthcom1 = 0.5
 
         # link 2
-        mass2 = 1.0  
-        inertia2 = 0.33  
-        length2 = 1.0 
-        lengthcom2 = 0.5 
+        mass2 = 1.0
+        inertia2 = 0.33
+        length2 = 1.0
+        lengthcom2 = 0.5
 
-        gravity = 9.81 
-        friction1 = 0.1 
+        gravity = 9.81
+        friction1 = 0.1
         friction2 = 0.1
 
         # mass matrix
@@ -91,29 +91,29 @@
     end
 
     function acrobot_discrete(y, x, u)
-        timestep = 0.05 # timestep 
+        timestep = 0.05 # timestep
         y - (x + timestep * acrobot_continuous(0.5 * (x + y), u))
     end
 
-    dynamics = [acrobot_discrete for t = 1:horizon-1] 
+    dynamics = [acrobot_discrete for t = 1:horizon-1]
     dyn = CALIPSO.generate_methods(dynamics, num_states, num_actions, num_parameters, :Dynamics)
 
-    # initial state 
-    x1 = [0.0; 0.0; 0.0; 0.0] 
+    # initial state
+    x1 = [0.0; 0.0; 0.0; 0.0]
 
     # goal state
-    xT = [0.0; π; 0.0; 0.0] 
+    xT = [0.0; π; 0.0; 0.0]
 
-    # objective 
+    # objective
     objective = [
-            [(x, u) -> 0.1 * dot(x[3:4], x[3:4]) + 0.1 * dot(u, u) for t = 1:horizon-1]..., 
+            [(x, u) -> 0.1 * dot(x[3:4], x[3:4]) + 0.1 * dot(u, u) for t = 1:horizon-1]...,
             (x, u) -> 0.1 * dot(x[3:4], x[3:4]),
     ]
     obj = CALIPSO.generate_methods(objective, num_states, num_actions, num_parameters, :Cost)
 
     # equality constraints
     equality = [
-            [(x, u) -> [-5.0 * ones(num_actions[t]) - cos.(u) .* sum(x.^2); cos.(x) .* tan.(u) - 5.0 * ones(num_states[t])] for t = 1:horizon-1]..., 
+            [(x, u) -> [-5.0 * ones(num_actions[t]) - cos.(u) .* sum(x.^2); cos.(x) .* tan.(u) - 5.0 * ones(num_states[t])] for t = 1:horizon-1]...,
             (x, u) -> sin.(x.^3.0),
     ]
     eq = CALIPSO.generate_methods(equality, num_states, num_actions, num_parameters, :Constraint)
@@ -122,7 +122,7 @@
 
     # nonnegative constraints
     inequality = [
-            [(x, u) -> sin.(x) .- sum(u) for t = 1:horizon-1]..., 
+            [(x, u) -> sin.(x) .- sum(u) for t = 1:horizon-1]...,
             (x, u) -> cos.(x) .+ sum(u),
     ]
     ineq = CALIPSO.generate_methods(inequality, num_states, num_actions, num_parameters, :Constraint)
@@ -135,13 +135,13 @@
     sot = [(x, u) -> st(x, u, rr[i]) for i = 1:nsi]
     soT = [(x, u) -> sT(x, u, rr[i]) for i = 1:nsi]
     second_order = [[sot for t = 1:horizon-1]..., soT]
-    so = [[Constraint(s, num_states[t], t == horizon ? 0 : num_actions[t]; 
+    so = [[Constraint(s, num_states[t], t == horizon ? 0 : num_actions[t];
             num_parameter=num_parameters[t]) for s in second_order[t]] for t = 1:horizon]
 
-    # data 
+    # data
     trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, eg, ineq, so, constraint_tensor=true);
 
-    # dimensions 
+    # dimensions
     np = num_state + num_action + num_state + num_action + num_state
     nde = num_state + num_state + num_action + num_state + num_action + num_state + num_state
     ndi = horizon * num_state
@@ -151,18 +151,18 @@
     nz = np + nd
 
     # Lagrangian
-    function lagrangian(z) 
-        x1 = z[1:num_state] 
-        u1 = z[num_state .+ (1:num_action)] 
-        x2 = z[num_state + num_action .+ (1:num_state)] 
-        u2 = z[num_state + num_action + num_state .+ (1:num_action)] 
+    function lagrangian(z)
+        x1 = z[1:num_state]
+        u1 = z[num_state .+ (1:num_action)]
+        x2 = z[num_state + num_action .+ (1:num_state)]
+        u2 = z[num_state + num_action + num_state .+ (1:num_action)]
         x3 = z[num_state + num_action + num_state + num_action .+ (1:num_state)]
 
-        λ1_dyn = z[np .+ (1:num_state)] 
-        λ2_dyn = z[np + num_state .+ (1:num_state)] 
+        λ1_dyn = z[np .+ (1:num_state)]
+        λ2_dyn = z[np + num_state .+ (1:num_state)]
 
-        λ1_eq = z[np + num_state + num_state .+ (1:(num_action + num_state))] 
-        λ2_eq = z[np + num_state + num_state + num_action + num_state .+ (1:(num_action + num_state))] 
+        λ1_eq = z[np + num_state + num_state .+ (1:(num_action + num_state))]
+        λ2_eq = z[np + num_state + num_state + num_action + num_state .+ (1:(num_action + num_state))]
         λ3_eq = z[np + num_state + num_state + 2 * (num_action + num_state) .+ (1:num_state)]
 
         λ1_ineq = z[np + nde .+ (1:num_state)]
@@ -173,14 +173,14 @@
         λ2_soc = [z[np + nde + ndi + nsi * num_state + (i - 1) * num_state .+ (1:num_state)] for i = 1:nsi]
         λ3_soc = [z[np + nde + ndi + nsi * num_state + nsi * num_state + (i - 1) * num_state .+ (1:num_state)] for i = 1:nsi]
 
-        L = 0.0 
+        L = 0.0
 
-        L += objective[1](x1, u1) 
-        L += objective[2](x2, u2) 
+        L += objective[1](x1, u1)
+        L += objective[2](x2, u2)
         L += objective[3](x3, zeros(0))
 
-        L += dot(λ1_dyn, acrobot_discrete(x2, x1, u1)) 
-        L += dot(λ2_dyn, acrobot_discrete(x3, x2, u2)) 
+        L += dot(λ1_dyn, acrobot_discrete(x2, x1, u1))
+        L += dot(λ2_dyn, acrobot_discrete(x3, x2, u2))
 
         L += dot(λ1_eq, equality[1](x1, u1))
         L += dot(λ2_eq, equality[2](x2, u2))
@@ -197,7 +197,8 @@
         return L
     end
 
-    @variables z[1:nz]
+    z = Symbolics.variables(:z, 1:nz)
+
     L = lagrangian(z)
     Lxx = Symbolics.hessian(L, z[1:np])
     Lxx_sp = Symbolics.sparsehessian(L, z[1:np])
@@ -222,23 +223,23 @@
     sparsity_second_order_jacobian_variables_parameters = CALIPSO.sparsity_jacobian_variables_parameters(so, trajopt.dimensions.states, trajopt.dimensions.actions, trajopt.dimensions.parameters)
 
     jacobian_variables_variables_sparsity = collect([
-        (sparsity_objective_jacobians_variables_variables...)..., 
-        (sparsity_objective_jacobians_variables_variables...)..., 
-        (sparsity_dynamics_jacobian_variables_variables...)..., 
+        (sparsity_objective_jacobians_variables_variables...)...,
+        (sparsity_objective_jacobians_variables_variables...)...,
+        (sparsity_dynamics_jacobian_variables_variables...)...,
         (sparsity_equality_jacobian_variables_variables...)...,
         (sparsity_nonnegative_jacobian_variables_variables...)...,
         ((sparsity_second_order_jacobian_variables_variables...)...)...,
-        ]) 
+        ])
     sp_vv_key = sort(unique(jacobian_variables_variables_sparsity))
 
     # jacobian_variables_parameters_sparsity = collect([
-    #     (sparsity_objective_jacobians_variables_parameters...)..., 
-    #     (sparsity_objective_jacobians_variables_parameters...)..., 
-    #     (sparsity_dynamics_jacobian_variables_parameters...)..., 
+    #     (sparsity_objective_jacobians_variables_parameters...)...,
+    #     (sparsity_objective_jacobians_variables_parameters...)...,
+    #     (sparsity_dynamics_jacobian_variables_parameters...)...,
     #     (sparsity_equality_jacobian_variables_parameters...)...,
     #     (sparsity_nonnegative_jacobian_variables_parameters...)...,
     #     ((sparsity_second_order_jacobian_variables_parameters...)...)...,
-    #     ]) 
+    #     ])
     # sp_vp_key = sort(unique(jacobian_variables_parameters_sparsity))
 
     # jacobian_variables_parameters_sparsity = Tuple{Int64,Int64}[]
@@ -295,7 +296,7 @@
     end
 
     for (i, idx) in enumerate(vcat(sparsity_dynamics_jacobian_variables_variables..., sparsity_equality_jacobian_variables_variables...))
-        He[idx...] += he[i] 
+        He[idx...] += he[i]
     end
 
     for (i, idx) in enumerate(vcat(sparsity_nonnegative_jacobian_variables_variables..., (sparsity_second_order_jacobian_variables_variables...)...))

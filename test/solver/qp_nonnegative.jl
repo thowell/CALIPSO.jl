@@ -3,17 +3,17 @@
     num_variables = 10
     num_equality = 5
     num_cone = num_variables
-    
+
     # ## problem
-    function objective(x, θ) 
+    function objective(x, θ)
         Pθ = Diagonal(θ[1:num_variables])
         pθ = θ[num_variables .+ (1:num_variables)]
-        
+
         J = 0.0
-        J += 0.5 * transpose(x) * Pθ * x 
+        J += 0.5 * transpose(x) * Pθ * x
         J += transpose(pθ) * x
 
-        return J 
+        return J
     end
 
     function equality(x, θ)
@@ -26,7 +26,7 @@
 
     # ## parameters
     x̂ = max.(0.0, randn(num_variables))
-    Q = rand(num_variables, num_variables) 
+    Q = rand(num_variables, num_variables)
     P = Diagonal(diag(Q' * Q))
     p = randn(num_variables)
     A = rand(num_equality, num_variables)
@@ -34,20 +34,20 @@
 
     parameters = [diag(P); p; vec(A); b]
 
-    # ## options 
+    # ## options
     options=Options(
             differentiate=true)
 
     # solver
-    solver = Solver(objective, equality, cone, num_variables; 
+    solver = Solver(objective, equality, cone, num_variables;
         parameters=parameters,
         options=options);
 
-    # ## initialize    
+    # ## initialize
     x0 = randn(num_variables)
     initialize!(solver, x0)
 
-    # ## solve 
+    # ## solve
     solve!(solver)
 
     # ## solution
@@ -59,27 +59,30 @@
     )
     @test slack_norm < solver.options.slack_tolerance
 
-    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
-    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance
     @test all(solver.solution.variables .> -1.0e-4)
     @test norm(A * solver.solution.variables - b, Inf) < solver.options.equality_tolerance
 
     # ## sensitivity
-    num_parameters = solver.dimensions.parameters 
+    num_parameters = solver.dimensions.parameters
 
-    @variables x[1:num_variables] y[1:num_equality] θ[1:num_parameters]
-    function f1(x, θ) 
+    x = Symbolics.variables(:x, 1:num_variables)
+    y = Symbolics.variables(:y, 1:num_equality)
+    θ = Symbolics.variables(:θ, 1:num_parameters)
+
+    function f1(x, θ)
         Pθ = Diagonal(θ[1:num_variables])
         pθ = θ[num_variables .+ (1:num_variables)]
 
         return Pθ * x + pθ
     end
 
-    function f2(x, θ) 
+    function f2(x, θ)
         equality(x, θ)
     end
 
-    function f3(y, θ) 
+    function f3(y, θ)
         Aθ = reshape(θ[num_variables + num_variables .+ (1:(num_equality * num_variables))], num_equality, num_variables)
         return transpose(Aθ) * y
     end
@@ -91,8 +94,8 @@
     f2θ_func = eval(Symbolics.build_function(f2θ, x, θ)[2])
     f3θ_func = eval(Symbolics.build_function(f3θ, y, θ)[2])
 
-    Pxpθ = zeros(num_variables, num_parameters) 
-    Aᵀyθ = zeros(num_variables, num_parameters) 
+    Pxpθ = zeros(num_variables, num_parameters)
+    Aᵀyθ = zeros(num_variables, num_parameters)
     Axbθ = zeros(num_equality, num_parameters)
 
     f1θ_func(Pxpθ, solver.solution.variables, parameters)
@@ -104,14 +107,14 @@
     @test norm(solver.problem.equality_jacobian_parameters - Axbθ, Inf) < 1.0e-4
 
     rz = [
-            P A' -I; 
+            P A' -I;
             A zeros(num_equality, num_equality) zeros(num_equality, num_cone);
             Diagonal(solver.solution.cone_slack_dual) zeros(num_cone, num_equality) Diagonal(solver.solution.cone_slack)
     ]
 
     rθ = [
-        Pxpθ + Aᵀyθ; 
-        Axbθ; 
+        Pxpθ + Aᵀyθ;
+        Axbθ;
         zeros(num_cone, num_parameters);
     ]
 

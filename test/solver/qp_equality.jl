@@ -1,31 +1,31 @@
 @testset "Solver problem: Quadratic program (w/ equality constraints)" begin
-    # ## variables 
+    # ## variables
     num_variables = 10
     num_equality = 5
-    
+
     # ## problem
-    function objective(x, θ) 
+    function objective(x, θ)
         Pθ = Diagonal(θ[1:num_variables])
         pθ = θ[num_variables .+ (1:num_variables)]
-        
+
         J = 0.0
-        J += 0.5 * transpose(x) * Pθ * x 
+        J += 0.5 * transpose(x) * Pθ * x
         J += transpose(pθ) * x
 
-        return J 
+        return J
     end
 
     function equality(x, θ)
         Aθ = reshape(θ[num_variables + num_variables .+ (1:(num_equality * num_variables))], num_equality, num_variables)
         bθ = θ[num_variables + num_variables + num_equality * num_variables .+ (1:num_equality)]
-        return Aθ * x - bθ 
+        return Aθ * x - bθ
     end
 
     # ## parameters
     num_parameters = num_variables + num_variables + num_equality * num_variables + num_equality
 
     x̂ = max.(0.0, randn(num_variables))
-    Q = rand(num_variables, num_variables) 
+    Q = rand(num_variables, num_variables)
     P = Diagonal(diag(Q' * Q))
     p = randn(num_variables)
     A = rand(num_equality, num_variables)
@@ -33,25 +33,25 @@
 
     parameters = [diag(P); p; vec(A); b]
 
-    # ## options 
+    # ## options
     options = Options(
-        residual_tolerance=1.0e-8, 
+        residual_tolerance=1.0e-8,
         equality_tolerance=1.0e-6,
         complementarity_tolerance=1.0e-6,
-        differentiate=true) 
+        differentiate=true)
 
     # ## solver
-    solver = Solver(objective, equality, empty_constraint, num_variables; 
+    solver = Solver(objective, equality, empty_constraint, num_variables;
         parameters=parameters,
         options=options);
 
-    # ## initialize 
+    # ## initialize
     x0 = randn(num_variables)
     initialize!(solver, x0)
 
-    # ## solve 
+    # ## solve
     solve!(solver)
-    
+
     # ## solution
     @test norm(solver.data.residual.all, solver.options.residual_norm) / solver.dimensions.total < solver.options.residual_tolerance
 
@@ -61,25 +61,28 @@
     )
     @test slack_norm < solver.options.slack_tolerance
 
-    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance 
-    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance 
-    
+    @test norm(solver.problem.equality_constraint, Inf) <= solver.options.equality_tolerance
+    @test norm(solver.problem.cone_product, Inf) <= solver.options.complementarity_tolerance
+
     @test norm(A * solver.solution.variables - b, Inf) < solver.options.equality_tolerance
 
     # ## sensitivity
-    @variables x[1:num_variables] y[1:num_equality] θ[1:num_parameters]
-    function f1(x, θ) 
+    x = Symbolics.variables(:x, 1:num_variables)
+    y = Symbolics.variables(:y, 1:num_equality)
+    θ = Symbolics.variables(:θ, 1:num_parameters)
+
+    function f1(x, θ)
         Pθ = Diagonal(θ[1:num_variables])
         pθ = θ[num_variables .+ (1:num_variables)]
 
         return Pθ * x + pθ
     end
 
-    function f2(x, θ) 
+    function f2(x, θ)
         equality(x, θ)
     end
 
-    function f3(y, θ) 
+    function f3(y, θ)
         Aθ = reshape(θ[num_variables + num_variables .+ (1:(num_equality * num_variables))], num_equality, num_variables)
         return transpose(Aθ) * y
     end
@@ -91,8 +94,8 @@
     f2θ_func = eval(Symbolics.build_function(f2θ, x, θ)[2])
     f3θ_func = eval(Symbolics.build_function(f3θ, y, θ)[2])
 
-    Pxpθ = zeros(num_variables, num_parameters) 
-    Aᵀyθ = zeros(num_variables, num_parameters) 
+    Pxpθ = zeros(num_variables, num_parameters)
+    Aᵀyθ = zeros(num_variables, num_parameters)
     Axbθ = zeros(num_equality, num_parameters)
 
     f1θ_func(Pxpθ, solver.solution.variables, parameters)
@@ -104,13 +107,13 @@
     @test norm(solver.problem.equality_jacobian_parameters - Axbθ, Inf) < 1.0e-4
 
     rz = [
-            P A'; 
+            P A';
             A zeros(num_equality, num_equality);
     ]
 
     rθ = [
-        Pxpθ + Aᵀyθ; 
-        Axbθ; 
+        Pxpθ + Aᵀyθ;
+        Axbθ;
     ]
 
     sensitivity = -1.0 * rz \ rθ
