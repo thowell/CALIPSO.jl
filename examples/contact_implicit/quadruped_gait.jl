@@ -483,12 +483,12 @@ x_guess = [t == 1 ? x_interp[t] : [
 
 # ## problem
 println("creating solver")
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, EqualityGeneral(), ineq, so);
-methods = ProblemMethods(trajopt);
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, CALIPSO.EqualityGeneral(), ineq, so);
+trajopt_methods = CALIPSO.ProblemMethods(trajopt);
 idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
 
 # ## solver
-solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
+solver = Solver(trajopt_methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
     nonnegative_indices=idx_nn, 
     second_order_indices=idx_soc,
     custom=trajopt,
