@@ -5,6 +5,7 @@ using CALIPSO
 Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 using RoboDojo
+using LinearAlgebra
 include("models/cybertruck.jl") 
 
 # ## horizon

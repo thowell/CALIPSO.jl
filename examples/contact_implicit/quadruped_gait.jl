@@ -516,7 +516,7 @@ model = RoboDojo.quadruped
 vis = Visualizer() 
 open(vis)
 q_vis = [x_sol[1][1:model.nq], [x[model.nq .+ (1:model.nq)] for x in x_sol]...]
-for i = 1:2
+for i = 1:1
     horizon = length(q_vis) - 1
     q_vis = mirror_gait(q_vis, horizon)
 end
