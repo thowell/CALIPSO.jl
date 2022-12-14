@@ -1,16 +1,16 @@
 # CALIPSO
 using Pkg 
-Pkg.activate(joinpath(@__DIR__, ".."))
+Pkg.activate(joinpath(@__DIR__, "../.."))
 Pkg.instantiate()
 using CALIPSO 
 
 # Examples
-Pkg.activate(@__DIR__) 
+Pkg.activate(joinpath(@__DIR__, "..")) 
 # Pkg.instantiate()
 using LinearAlgebra
 using RoboDojo
 
-function quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w) 
+function quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u) 
     model = RoboDojo.quadruped
 
     # configurations
@@ -41,25 +41,25 @@ function quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w)
     ]
 end
 
-function quadruped_dyn1(mass_matrix, dynamics_bias, h, y, x, u, w)
+function quadruped_dyn1(mass_matrix, dynamics_bias, h, y, x, u)
     model = RoboDojo.quadruped
     [
-        quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w);
+        quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u);
         y[22 .+ (1:4)] - u[8 .+ (1:4)];
         y[22 + 4 .+ (1:22)] - x[1:22];
     ]
 end
 
-function quadruped_dynt(mass_matrix, dynamics_bias, h, y, x, u, w)
+function quadruped_dynt(mass_matrix, dynamics_bias, h, y, x, u)
     model = RoboDojo.quadruped
     [
-        quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w);
+        quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u);
         y[22 .+ (1:4)] - u[8 .+ (1:4)];
         y[22 + 4 .+ (1:22)] - x[22 + 4 .+ (1:22)];
     ]
 end
 
-function contact_constraints_inequality_1(h, x, u, w) 
+function contact_constraints_inequality_1(h, x, u) 
     model = RoboDojo.quadruped
 
     q2 = x[1:11] 
@@ -79,7 +79,7 @@ function contact_constraints_inequality_1(h, x, u, w)
     ]
 end
 
-function contact_constraints_inequality_t(h, x, u, w) 
+function contact_constraints_inequality_t(h, x, u) 
     model = RoboDojo.quadruped
 
     q2 = x[1:11] 
@@ -102,7 +102,7 @@ function contact_constraints_inequality_t(h, x, u, w)
     ]
 end
 
-function contact_constraints_inequality_T(h, x, u, w) 
+function contact_constraints_inequality_T(h, x, u) 
     model = RoboDojo.quadruped
 
     q2 = x[1:11] 
@@ -116,7 +116,7 @@ function contact_constraints_inequality_T(h, x, u, w)
     ]
 end
 
-function contact_constraints_equality_1(h, x, u, w) 
+function contact_constraints_equality_1(h, x, u) 
     model = RoboDojo.quadruped
 
     q2 = x[1:11] 
@@ -144,7 +144,7 @@ function contact_constraints_equality_1(h, x, u, w)
     ]
 end
 
-function contact_constraints_equality_t(h, x, u, w) 
+function contact_constraints_equality_t(h, x, u) 
     model = RoboDojo.quadruped
 
     q2 = x[1:11] 
@@ -174,7 +174,7 @@ function contact_constraints_equality_t(h, x, u, w)
     ]
 end
 
-function contact_constraints_equality_T(h, x, u, w) 
+function contact_constraints_equality_T(h, x, u) 
     model = RoboDojo.quadruped
 
     q2 = x[1:11] 
@@ -249,7 +249,6 @@ nc = 4
 nq = RoboDojo.quadruped.nq
 nx = 2 * nq
 nu = RoboDojo.quadruped.nu + nc + 8 + nc + 8
-nw = RoboDojo.quadruped.nw
 
 # ## time 
 T = 41 
@@ -277,7 +276,7 @@ pf2 = RoboDojo.quadruped_contact_kinematics[4](q1)
 stride = 2 * (pr1 - pr2)[1]
 qT = Array(perm) * copy(q1)
 qT[1] += 0.5 * stride
-
+qT
 zh = 0.05
 
 xr1 = [pr1[1] for t = 1:T]
@@ -308,15 +307,15 @@ pf2_ref = [[xf2[t]; zf2[t]] for t = 1:T]
 # ## model
 println("codegen dynamics")
 mass_matrix, dynamics_bias = RoboDojo.codegen_dynamics(RoboDojo.quadruped)
-d1 = CALIPSO.Dynamics((y, x, u, w) -> quadruped_dyn1(mass_matrix, dynamics_bias, [h], y, x, u, w), nx + nc + nx, nx, nu)
-dt = CALIPSO.Dynamics((y, x, u, w) -> quadruped_dynt(mass_matrix, dynamics_bias, [h], y, x, u, w), nx + nc + nx, nx + nc + nx, nu)
+d1 = CALIPSO.Dynamics((y, x, u) -> quadruped_dyn1(mass_matrix, dynamics_bias, [h], y, x, u), nx + nc + nx, nx, nu)
+dt = CALIPSO.Dynamics((y, x, u) -> quadruped_dynt(mass_matrix, dynamics_bias, [h], y, x, u), nx + nc + nx, nx + nc + nx, nu)
 dyn = [d1, [dt for t = 2:T-1]...]
 println("codegen dynamics complete!")
 
 # ## objective
 obj = CALIPSO.Cost{Float64}[]
 
-function obj1(x, u, w)
+function obj1(x, u)
     u_ctrl = u[1:8]
     q = x[11 .+ (1:11)]
 
@@ -330,7 +329,7 @@ end
 push!(obj, CALIPSO.Cost(obj1, nx, nu))
 
 for t = 2:T-1
-    function objt(x, u, w)
+    function objt(x, u)
         u_ctrl = u[1:8]
         q = x[11 .+ (1:11)]
 
@@ -347,7 +346,7 @@ for t = 2:T-1
     push!(obj, CALIPSO.Cost(objt, nx + nc + nx, nu))
 end
 
-function objT(x, u, w)
+function objT(x, u)
     q = x[11 .+ (1:11)]
 
     J = 0.0 
@@ -364,7 +363,7 @@ push!(obj, CALIPSO.Cost(objT, nx + nc + nx, 0))
 # control limits
 
 # pinned feet constraints 
-function pinned1(x, u, w, t) 
+function pinned1(x, u, t) 
     q = x[1:11]
     [
         pr1_ref[t] - RoboDojo.quadruped_contact_kinematics[1](q);
@@ -372,75 +371,78 @@ function pinned1(x, u, w, t)
     ] 
 end 
 
-function pinned2(x, u, w, t) 
+function pinned2(x, u, t) 
     q = x[1:11]
     [
         pr2_ref[t] - RoboDojo.quadruped_contact_kinematics[2](q);
         pf2_ref[t] - RoboDojo.quadruped_contact_kinematics[4](q);
     ]
 end
-
+nc
 # loop constraints 
-function loop(x, u, w) 
+function loop(x, u) 
     xT = x[1:22] 
     x1 = x[22 + nc .+ (1:22)] 
     e = x1 - Array(cat(perm, perm, dims = (1,2))) * xT 
     return [e[2:11]; e[11 .+ (2:11)]]
 end
 
+loop(x_sol[end], zeros(0))
+x_sol[2][nq .+ (1:nq)]
+q1
 eq = CALIPSO.Constraint{Float64}[]
-function equality_1(x, u, w) 
+function equality_1(x, u) 
     [
-        pinned1(x, u, w, 1); 
-        pinned2(x, u, w, 1);
+        pinned1(x, u, 1); 
+        pinned2(x, u, 1);
         x[11 .+ (1:11)] - q1;
-        contact_constraints_equality_1(h, x, u, w); 
+        contact_constraints_equality_1(h, x, u); 
     ]
 end
 push!(eq, CALIPSO.Constraint(equality_1, nx, nu))
 
 for t = 2:T_fix
-    function equality_t(x, u, w) 
+    function equality_t(x, u) 
         [
-            pinned1(x, u, w, t);
-            pinned2(x, u, w, t);
-            contact_constraints_equality_t(h, x, u, w); 
+            pinned1(x, u, t);
+            pinned2(x, u, t);
+            contact_constraints_equality_t(h, x, u); 
         ]
     end
     push!(eq, CALIPSO.Constraint(equality_t, nx + nc + nx, nu))
 end
 
 for t = (T_fix + 1):(T-1) 
-    function equality_t(x, u, w) 
+    function equality_t(x, u) 
         [
-            pinned1(x, u, w, t);
-            contact_constraints_equality_t(h, x, u, w); 
+            pinned1(x, u, t);
+            contact_constraints_equality_t(h, x, u); 
         ]
     end
     push!(eq, CALIPSO.Constraint(equality_t, nx + nc + nx, nu))
 end
 
-function equality_T(x, u, w) 
+function equality_T(x, u) 
     [
-    loop(x, u, w);
+    loop(x, u);
     x[11 + 1] - qT[1];
     ]
 end
 push!(eq, CALIPSO.Constraint(equality_T, nx + nc + nx, 0))
 
 ineq = CALIPSO.Constraint{Float64}[]
-function inequality_1(x, u, w) 
+function inequality_1(x, u) 
     [
-        contact_constraints_inequality_1(h, x, u, w);
+        contact_constraints_inequality_1(h, x, u);
         u[8 .+ (1:(nu - 8))];
     ]
 end
 push!(ineq, CALIPSO.Constraint(inequality_1, nx, nu))
 
 for t = 2:T_fix
-    function inequality_t(x, u, w) 
+    function inequality_t(x, u) 
         [
-            contact_constraints_inequality_t(h, x, u, w);
+            contact_constraints_inequality_t(h, x, u);
             u[8 .+ (1:(nu - 8))];
         ]
     end
@@ -448,18 +450,18 @@ for t = 2:T_fix
 end
 
 for t = (T_fix + 1):(T-1) 
-    function inequality_t(x, u, w) 
+    function inequality_t(x, u) 
         [
-            contact_constraints_inequality_t(h, x, u, w);
+            contact_constraints_inequality_t(h, x, u);
             u[8 .+ (1:(nu - 8))];
         ]
     end
     push!(ineq, CALIPSO.Constraint(inequality_t, nx + nc + nx, nu))
 end
 
-function inequality_T(x, u, w) 
+function inequality_T(x, u) 
     [
-        contact_constraints_inequality_T(h, x, u, w);
+        contact_constraints_inequality_T(h, x, u);
     ]
 end
 push!(ineq, CALIPSO.Constraint(inequality_T, nx + nc + nx, 0))
@@ -474,14 +476,15 @@ x_guess = [t == 1 ? x_interp[t] : [x_interp[t]; max.(0.0, 1.0e-3 * randn(nc)); x
 
 # ## problem
 println("creating solver")
-trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, ineq, so);
-methods = ProblemMethods(trajopt);
+trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, CALIPSO.EqualityGeneral(), ineq, so);
+trajopt_methods = CALIPSO.ProblemMethods(trajopt);
 idx_nn, idx_soc = CALIPSO.cone_indices(trajopt)
 
 # ## solver
-solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
+solver = Solver(trajopt_methods, trajopt.dimensions.total_variables, trajopt.dimensions.total_parameters, trajopt.dimensions.total_equality, trajopt.dimensions.total_cone,
     nonnegative_indices=idx_nn, 
     second_order_indices=idx_soc,
+    custom=trajopt,
     options=Options(
         verbose=true, 
         penalty_initial=1.0, 
@@ -492,27 +495,33 @@ solver = Solver(methods, trajopt.dimensions.total_variables, trajopt.dimensions.
         complementarity_tolerance=1.0e-2,
 ));
 
-initialize_states!(solver, trajopt, x_guess);
-initialize_actions!(solver, trajopt, u_guess);
+solver.options.residual_tolerance = 1.0e-4
+equality_tolerance = 1.0e-4
+complementarity_tolerance = 1.0e-4
+CALIPSO.initialize_states!(solver, x_guess);
+CALIPSO.initialize_actions!(solver, u_guess);
 println("solver instantiated and initialized!")
 
 # solve 
 solve!(solver)
 
 # ## solution
-x_sol, u_sol = CALIPSO.get_trajectory(solver, trajopt)
+x_sol, u_sol = CALIPSO.get_trajectory(solver)
 
-norm(solver.data.residual, Inf) < 1.0e-3
+norm(solver.data.residual.all, Inf) < 1.0e-3
 norm(solver.problem.equality_constraint, Inf) < 1.0e-2 
 norm(solver.problem.cone_product, Inf) < 1.0e-2 
 
 # ## visualize 
+model = RoboDojo.quadruped
 vis = Visualizer() 
 open(vis)
-q_vis = [x_sol[1][1:RoboDojo.quadruped.nq], [x[RoboDojo.quadruped.nq .+ (1:RoboDojo.quadruped.nq)] for x in x_sol]...]
-for i = 1:3
-    T = length(q_vis) - 1
-    q_vis = mirror_gait(q_vis, T)
+q_vis = [x_sol[1][1:model.nq], [x[model.nq .+ (1:model.nq)] for x in x_sol]...]
+for i = 1:1
+    horizon = length(q_vis) - 1
+    q_vis = mirror_gait(q_vis, horizon)
 end
-length(q_vis)
-RoboDojo.visualize!(vis, RoboDojo.quadruped, q_vis, Δt=h)
+RoboDojo.visualize!(vis, model, q_vis, Δt=h)
+
+x_sol[1][1 * nq .+ (1:nq)]
+x_sol[end][0 * nq .+ (1:nq)]

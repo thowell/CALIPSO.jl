@@ -8,7 +8,8 @@ using RoboDojo
 using LinearAlgebra
 using MeshCatMechanisms
 
-RoboDojo.quadruped.friction_foot_world = [0.2, 0.2, 0.2, 0.2]
+RoboDojo.quadruped.friction_foot_world = [0.25, 0.25, 0.25, 0.25]
+RoboDojo.quadruped.J_torso = 0.01683 + 4 * 0.696 * 0.183^2.0
 
 function quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w) 
     model = RoboDojo.quadruped
@@ -51,6 +52,8 @@ function quadruped_dyn1(mass_matrix, dynamics_bias, h, y, x, u, w)
         quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w);
         y[22 .+ (1:4)] - u[8 .+ (1:4)];
         y[22 + 4 .+ (1:22)] - x[1:22];
+        y[22 + 4 + 22 .+ (1:8)] - u[1:8];
+        y[22 + 4 + 22 + 8 .+ (1:4)] - u[[14; 16; 18; 20]];
     ]
 end
 
@@ -60,6 +63,8 @@ function quadruped_dynt(mass_matrix, dynamics_bias, h, y, x, u, w)
         quadruped_dyn(mass_matrix, dynamics_bias, h, y, x, u, w);
         y[22 .+ (1:4)] - u[8 .+ (1:4)];
         y[22 + 4 .+ (1:22)] - x[22 + 4 .+ (1:22)];
+        y[22 + 4 + 22 .+ (1:8)] - u[1:8];
+        y[22 + 4 + 22 + 8 .+ (1:4)] - u[[14; 16; 18; 20]];
     ]
 end
 
@@ -252,7 +257,7 @@ nw = RoboDojo.quadruped.nw
 
 # ## time 
 T = 31 
-T_fix = 5
+T_fix = 7
 h = 0.015625
 
 # ## initial configuration
@@ -277,7 +282,7 @@ stride = 2 * (pr1 - pr2)[1]
 qT = Array(perm) * copy(q1)
 qT[1] += 0.5 * stride
 
-zh = 0.05
+zh = 0.075
 
 xr1 = [pr1[1] for t = 1:T]
 zr1 = [pr1[2] for t = 1:T]
@@ -307,8 +312,8 @@ pf2_ref = [[xf2[t]; zf2[t]] for t = 1:T]
 # ## model
 println("codegen dynamics")
 mass_matrix, dynamics_bias = RoboDojo.codegen_dynamics(RoboDojo.quadruped)
-d1 = CALIPSO.Dynamics((y, x, u) -> quadruped_dyn1(mass_matrix, dynamics_bias, [h], y, x, u, zeros(0)), nx + nc + nx, nx, nu);
-dt = CALIPSO.Dynamics((y, x, u) -> quadruped_dynt(mass_matrix, dynamics_bias, [h], y, x, u, zeros(0)), nx + nc + nx, nx + nc + nx, nu);
+d1 = CALIPSO.Dynamics((y, x, u) -> quadruped_dyn1(mass_matrix, dynamics_bias, [h], y, x, u, zeros(0)), nx + nc + nx + 8 + 4, nx, nu);
+dt = CALIPSO.Dynamics((y, x, u) -> quadruped_dynt(mass_matrix, dynamics_bias, [h], y, x, u, zeros(0)), nx + nc + nx + 8 + 4, nx + nc + nx + 8 + 4, nu);
 dyn = [d1, [dt for t = 2:T-1]...];
 println("codegen dynamics complete!")
 
@@ -322,10 +327,10 @@ function obj1(x, u)
     J = 0.0 
     J += 1.0e-2 * dot(u_ctrl, u_ctrl)
     J += 1.0e-3 * dot(q - qT, q - qT)
-    J += 1.0 * dot(RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2])
-    J += 1.0 * dot(RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2])
+    J += 10.0 * dot(RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2])
+    J += 10.0 * dot(RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2])
     v = (q - x[1:11]) ./ h
-    J += 1.0e-3 * dot(v, v)
+    J += 1.0e-4 * dot(v, v)
     return J
 end
 push!(obj, CALIPSO.Cost(obj1, nx, nu))
@@ -338,15 +343,26 @@ for t = 2:T-1
         J = 0.0 
         J += 1.0e-2 * dot(u_ctrl, u_ctrl)
         J += 1.0e-3 * dot(q - qT, q - qT)
-        J += 1.0 * dot(RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2])
-        J += 1.0 * dot(RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2])
-        J += 1.0 * sum((pr2_ref[t] - RoboDojo.quadruped_contact_kinematics[2](q)).^2.0)
-        J += 1.0 * sum((pf2_ref[t] - RoboDojo.quadruped_contact_kinematics[4](q)).^2.0)
+        J += 10.0 * dot(RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2])
+        J += 10.0 * dot(RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2])
+        J += 10.0 * sum((pr2_ref[t] - RoboDojo.quadruped_contact_kinematics[2](q)).^2.0)
+        J += 10.0 * sum((pf2_ref[t] - RoboDojo.quadruped_contact_kinematics[4](q)).^2.0)
         v = (q - x[1:11]) ./ h
-        J += 1.0e-3 * dot(v, v)
+        J += 1.0e-4 * dot(v, v)
+
+        # prev
+        γ = u[8 .+ (1:4)]
+        γ_prev = x[22 .+ (1:4)]
+        u_prev = x[22 + 4 + 22 .+ (1:8)]
+        b = u[[14; 16; 18; 20]]
+        b_prev = x[22 + 4 + 22 + 8 .+ (1:4)]
+
+        J += 1.0e-1 * dot(γ - γ_prev, γ - γ_prev);
+        J += 1.0e-1 * dot(u_ctrl - u_prev, u_ctrl - u_prev);
+        J += 1.0e-1 * dot(b - b_prev, b - b_prev);
         return J
     end
-    push!(obj, CALIPSO.Cost(objt, nx + nc + nx, nu));
+    push!(obj, CALIPSO.Cost(objt, nx + nc + nx + 8 + 4, nu));
 end
 
 function objT(x, u)
@@ -354,32 +370,38 @@ function objT(x, u)
 
     J = 0.0 
     J += 1.0e-3 * dot(q - qT, q - qT)
-    J += 1.0 * dot(RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2])
-    J += 1.0 * dot(RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2])
-    J += 1.0 * sum((pr2_ref[T] - RoboDojo.quadruped_contact_kinematics[2](q)).^2.0)
-    J += 1.0 * sum((pf2_ref[T] - RoboDojo.quadruped_contact_kinematics[4](q)).^2.0)
+    J += 10.0 * dot(RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[9](q)[2] - qT[2])
+    J += 10.0 * dot(RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2], RoboDojo.quadruped_contact_kinematics[10](q)[2] - qT[2])
+    J += 10.0 * sum((pr2_ref[T] - RoboDojo.quadruped_contact_kinematics[2](q)).^2.0)
+    J += 10.0 * sum((pf2_ref[T] - RoboDojo.quadruped_contact_kinematics[4](q)).^2.0)
     v = (q - x[1:11]) ./ h
-    J += 1.0e-3 * dot(v, v)
+    J += 1.0e-4 * dot(v, v)
     return J
 end
-push!(obj, CALIPSO.Cost(objT, nx + nc + nx, 0));
+push!(obj, CALIPSO.Cost(objT, nx + nc + nx + 8 + 4, 0));
 
 # control limits
 
 # pinned feet constraints 
 function pinned1(x, u, w, t) 
-    q = x[1:11]
+    q1 = x[1:11]
+    q2 = x[11 .+ (1:11)]
     [
-        pr1_ref[t] - RoboDojo.quadruped_contact_kinematics[1](q);
-        pf1_ref[t] - RoboDojo.quadruped_contact_kinematics[3](q);
+        pr1_ref[t] - RoboDojo.quadruped_contact_kinematics[1](q1);
+        pf1_ref[t] - RoboDojo.quadruped_contact_kinematics[3](q1);
+        pr1_ref[t] - RoboDojo.quadruped_contact_kinematics[1](q2);
+        pf1_ref[t] - RoboDojo.quadruped_contact_kinematics[3](q2);
     ] 
 end 
 
 function pinned2(x, u, w, t) 
-    q = x[1:11]
+    q1 = x[1:11]
+    q2 = x[11 .+ (1:11)]
     [
-        pr2_ref[t] - RoboDojo.quadruped_contact_kinematics[2](q);
-        pf2_ref[t] - RoboDojo.quadruped_contact_kinematics[4](q);
+        pr2_ref[t] - RoboDojo.quadruped_contact_kinematics[2](q1);
+        pf2_ref[t] - RoboDojo.quadruped_contact_kinematics[4](q1);
+        pr2_ref[t] - RoboDojo.quadruped_contact_kinematics[2](q2);
+        pf2_ref[t] - RoboDojo.quadruped_contact_kinematics[4](q2);
     ]
 end
 
@@ -412,7 +434,7 @@ for t = 2:T_fix
             contact_constraints_equality_t(h, x, u, w); 
         ]
     end
-    push!(eq, CALIPSO.Constraint(equality_t, nx + nc + nx, nu));
+    push!(eq, CALIPSO.Constraint(equality_t, nx + nc + nx + 8 + 4, nu));
 end
 
 for t = (T_fix + 1):(T-1) 
@@ -423,7 +445,7 @@ for t = (T_fix + 1):(T-1)
             contact_constraints_equality_t(h, x, u, w); 
         ]
     end
-    push!(eq, CALIPSO.Constraint(equality_t, nx + nc + nx, nu));
+    push!(eq, CALIPSO.Constraint(equality_t, nx + nc + nx + 8 + 4, nu));
 end
 
 function equality_T(x, u) 
@@ -433,7 +455,7 @@ function equality_T(x, u)
     x[11 + 1] - qT[1];
     ]
 end
-push!(eq, CALIPSO.Constraint(equality_T, nx + nc + nx, 0));
+push!(eq, CALIPSO.Constraint(equality_T, nx + nc + nx + 8 + 4, 0));
 
 ineq = CALIPSO.Constraint{Float64}[]
 function inequality_1(x, u)
@@ -451,7 +473,7 @@ for t = 2:T_fix
             contact_constraints_inequality_t(h, x, u, w);
         ]
     end
-    push!(ineq, CALIPSO.Constraint(inequality_t, nx + nc + nx, nu));
+    push!(ineq, CALIPSO.Constraint(inequality_t, nx + nc + nx + 8 + 4, nu));
 end
 
 for t = (T_fix + 1):(T-1) 
@@ -461,7 +483,7 @@ for t = (T_fix + 1):(T-1)
             contact_constraints_inequality_t(h, x, u, w);
         ]
     end
-    push!(ineq, CALIPSO.Constraint(inequality_t, nx + nc + nx, nu));
+    push!(ineq, CALIPSO.Constraint(inequality_t, nx + nc + nx + 8 + 4, nu));
 end
 
 function inequality_T(x, u)
@@ -470,11 +492,11 @@ function inequality_T(x, u)
         contact_constraints_inequality_T(h, x, u, w);
     ]
 end
-push!(ineq, CALIPSO.Constraint(inequality_T, nx + nc + nx, 0));
+push!(ineq, CALIPSO.Constraint(inequality_T, nx + nc + nx + 8 + 4, 0));
 
 so = [
         [Constraint((x, u) -> u[8 + (i - 1) * 2 .+ (1:2)], nx, nu) for i = 1:8],
-        [[Constraint((x, u) -> u[8 + (i - 1) * 2 .+ (1:2)], 2nx + 4, nu) for i = 1:8] for t = 2:T-1]...,
+        [[Constraint((x, u) -> u[8 + (i - 1) * 2 .+ (1:2)], 2nx + 4 + 8 + 4, nu) for i = 1:8] for t = 2:T-1]...,
         [Constraint()],
     ] 
 
@@ -485,9 +507,11 @@ u_guess = [max.(0.0, 1.0e-3 * randn(nu)) for t = 1:T-1] # may need to run more t
 x_guess = [t == 1 ? x_interp[t] : [
         x_interp[t]; 
         max.(0.0, 1.0e-3 * randn(nc)); 
-        x_interp[t-1]] for t = 1:T]
+        x_interp[t-1];
+        1.0e-3 * randn(8);
+        max.(0.0, 1.0e-3 * randn(4))] for t = 1:T]
 
-# ## problem
+        # ## problem
 println("creating solver")
 trajopt = CALIPSO.TrajectoryOptimizationProblem(dyn, obj, eq, CALIPSO.EqualityGeneral(), ineq, so);
 trajopt_methods = CALIPSO.ProblemMethods(trajopt);
@@ -526,7 +550,7 @@ q_vis = [x_sol[1][1:model.nq], [x[model.nq .+ (1:model.nq)] for x in x_sol]...]
 #     horizon = length(q_vis) - 1
 #     q_vis = mirror_gait(q_vis, horizon)
 # end
-RoboDojo.visualize!(vis, model, q_vis, Δt=h)
+RoboDojo.visualize!(vis, model, qm, Δt=h)
 
 # include("visuals/quadruped.jl")
 # visualize_meshrobot!(vis, model, q_vis;
@@ -570,10 +594,12 @@ uu = [u[1:8] for u in u_sol]
 function get_βη(βs, ηs)
     βl = zeros(2)
     ηl = [ηs[2] + ηs[1]; -ηs[2] + ηs[1]]
-    if norm(ηl) < 1.0e-6
-        βl[1] = 0.0
-        βl[2] = 0.0
-    elseif norm(ηl[1]) < 1.0e-6
+    if (norm(ηl) < 1.0e-3)
+        println("hello!!!")
+        βl = [1 1; 1 -1] \ βs
+        @show βl 
+        @show βs
+    elseif norm(ηl[1]) < 1.0e-3
         βl[1] = βs[1]
         βl[2] = 0.0
     else
@@ -647,7 +673,7 @@ hm = h
 μm = sum(model.friction_foot_world) / length(model.friction_foot_world)
 
 using JLD2
-@save joinpath(@__DIR__, "calipso_gait3.jld2") qm um γm bm ψm ηm μm hm
+@save joinpath(@__DIR__, "calipso_gait11.jld2") qm um γm bm ψm ηm μm hm
 # @load joinpath(@__DIR__, "quadruped_mirror_gait.jld2") qm um γm bm ψm ηm μm hm
 
 
